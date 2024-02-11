@@ -70,20 +70,24 @@ func logError(message string) {
 }
 
 func usage() {
-	fmt.Println("Usage: gollo <SUBCOMMAND> ./examples/foo.gll")
+	fmt.Println("Usage: gollo <SUBCOMMAND> ./examples/foo.glo")
 	fmt.Println("SUBCOMMANDS:")
 	fmt.Println("    run       Instantly run program")
 	fmt.Println("    compile   Compile program into an object code")
 }
 
-func execute(cmd ...string) {
+func execute(logOutput bool, cmd ...string) {
 	sv := strings.Join(cmd, " ")
 	fmt.Printf("[CMD]: %s\n", sv)
 	command := exec.Command(cmd[0], cmd[1:]...)
-	err := command.Run()
+	output, err := command.Output()
 	if err != nil {
 		logError("can't execute command: " + err.Error())
 		os.Exit(1)
+	}
+
+	if logOutput {
+		fmt.Printf("%s", string(output))
 	}
 }
 
@@ -298,19 +302,30 @@ func main() {
 		program := loadProgramFromFile(filepath)
 		run(program)
 	case "compile":
-		filepath, _ := chop(args)
+		runAfterCompile := false
+
+		filepath, args := chop(args)
+		if filepath == "-r" {
+			runAfterCompile = true
+			filepath, _ = chop(args)
+		}
+
 		program := loadProgramFromFile(filepath)
 		name := getNameFromPath(filepath)
 
 		switch runtime.GOARCH {
 		case "amd64":
 			compile_x86_64(fmt.Sprintf("%s.asm", name), program)
-			execute("nasm", "-felf64", "-o", fmt.Sprintf("%s.o", name), fmt.Sprintf("%s.asm", name))
-			execute("ld", "-o", name, fmt.Sprintf("%s.o", name))
-			execute("rm", fmt.Sprintf("%s.o", name))
+			execute(false, "nasm", "-felf64", "-o", fmt.Sprintf("%s.o", name), fmt.Sprintf("%s.asm", name))
+			execute(false, "ld", "-o", name, fmt.Sprintf("%s.o", name))
+			execute(false, "rm", fmt.Sprintf("%s.o", name))
 			logInfo("compiled to " + name)
 		default:
 			logError("unsupported platform: " + runtime.GOARCH)
+		}
+
+		if runAfterCompile {
+			execute(true, name)
 		}
 	default:
 		usage()
