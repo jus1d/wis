@@ -51,7 +51,7 @@ func assert(cond bool, message string) {
 	}
 }
 
-func chop[T any](arr []T) (T, []T) {
+func chop(arr []string) (string, []string) {
 	if len(arr) == 0 {
 		panic("ERROR: can't chop")
 	}
@@ -134,14 +134,32 @@ func compile(program []Operation) {
 }
 
 func main() {
-	//program := []Operation{
-	//	push(34),
-	//	push(35),
-	//	plus(),
-	//	dump(),
-	//}
+	args := os.Args
+	_, args = chop(args)
 
-	program := loadProgramFromFile("./examples/foo.gll")
+	if len(args) < 1 {
+		usage()
+		fmt.Printf("ERROR: no subcommand provided\n")
+		os.Exit(1)
+	}
+	subcommand, args := chop(args)
 
-	run(program)
+	if len(args) < 1 {
+		usage()
+		fmt.Printf("ERROR: no filepath provided\n")
+		os.Exit(1)
+	}
+	switch subcommand {
+	case "run":
+		filepath, _ := chop(args)
+		program := loadProgramFromFile(filepath)
+		run(program)
+	case "compile":
+		filepath, _ := chop(args)
+		program := loadProgramFromFile(filepath)
+		compile(program)
+	default:
+		usage()
+		fmt.Printf("ERROR: unknown subcommand provided\n")
+	}
 }
