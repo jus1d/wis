@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gollo/stack"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -63,6 +64,21 @@ func usage() {
 	fmt.Println("SUBCOMMANDS:")
 	fmt.Println("    run       Instantly run program")
 	fmt.Println("    compile   Compile program into an object code")
+}
+
+func execute(cmd ...string) {
+	sv := strings.Join(cmd, " ")
+	fmt.Printf("[CMD]: %s\n", sv)
+	command := exec.Command(cmd[0], cmd[1:]...)
+	err := command.Run()
+	if err != nil {
+		fmt.Printf("ERROR: can't execute command: %s\n", err.Error())
+		os.Exit(1)
+	}
+}
+
+func info(message string) {
+	fmt.Printf("[INFO]: %s\n", message)
 }
 
 func loadProgramFromFile(filepath string) []Operation {
@@ -129,8 +145,36 @@ func run(program []Operation) {
 	}
 }
 
-func compile(program []Operation) {
-	assert(false, "not implemented")
+func compileArm64(program []Operation) {
+	info("generating assembly")
+	file, err := os.Create("output.s")
+	if err != nil {
+		fmt.Printf("ERROR: can't create an assembly file\n")
+		os.Exit(1)
+	}
+	_ = file
+	var content string
+	content += ".text\n"
+	content += ".global _main\n"
+	content += "\n"
+	content += "_main:\n"
+	for _, op := range program {
+		switch op.Code {
+		case OperationPush:
+			content += fmt.Sprintf("    // -- Push %d --\n", op.Value)
+			content += fmt.Sprintf("    str %d, [sp, #-16]!\n", op.Value)
+		}
+	}
+	content += "    // -- Exit -- \n"
+	content += "    mov x0, #0\n"
+	content += "    mov x8, #93\n"
+	content += "    svc #0\n"
+
+	_, err = file.WriteString(content)
+	if err != nil {
+		fmt.Printf("ERROR: can't write assembly file\n")
+		os.Exit(1)
+	}
 }
 
 func main() {
@@ -157,7 +201,11 @@ func main() {
 	case "compile":
 		filepath, _ := chop(args)
 		program := loadProgramFromFile(filepath)
-		compile(program)
+		compileArm64(program)
+		execute("as", "-o", "output.o", "output.s")
+		execute("ld", "-o", "output", "output.o")
+		execute("rm", "output.o")
+		info("compiled to ./output")
 	default:
 		usage()
 		fmt.Printf("ERROR: unknown subcommand provided\n")

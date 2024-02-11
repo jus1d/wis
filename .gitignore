@@ -2,3 +2,5 @@
 gollo*
 *.o
 *.out
+*.asm
+*.s
