@@ -325,20 +325,20 @@ func main() {
 	}
 	switch subcommand {
 	case "run":
-		filepath, _ := chop(args)
-		program := loadProgramFromFile(filepath)
+		path, _ := chop(args)
+		program := loadProgramFromFile(path)
 		run(program)
 	case "compile":
 		runAfterCompile := false
 
-		filepath, args := chop(args)
-		if filepath == "-r" {
+		path, args := chop(args)
+		if path == "-r" {
 			runAfterCompile = true
-			filepath, _ = chop(args)
+			path, _ = chop(args)
 		}
 
-		program := loadProgramFromFile(filepath)
-		name := getNameFromPath(filepath)
+		program := loadProgramFromFile(path)
+		name := getNameFromPath(path)
 
 		switch runtime.GOARCH {
 		case "amd64":
