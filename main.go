@@ -3,13 +3,16 @@ package main
 import (
 	"fmt"
 	"gollo/stack"
+	"os"
+	"strconv"
+	"strings"
 )
 
 const (
 	OperationPush = iota
 	OperationPlus
+	OperationMinus
 	OperationDump
-	OperationCount
 )
 
 type Operation struct {
@@ -27,6 +30,12 @@ func push(value int64) Operation {
 func plus() Operation {
 	return Operation{
 		Code: OperationPlus,
+	}
+}
+
+func minus() Operation {
+	return Operation{
+		Code: OperationMinus,
 	}
 }
 
@@ -49,17 +58,73 @@ func chop[T any](arr []T) (T, []T) {
 	return arr[0], arr[1:]
 }
 
+func usage() {
+	fmt.Println("Usage: gollo <SUBCOMMAND> ./examples/foo.gll")
+	fmt.Println("SUBCOMMANDS:")
+	fmt.Println("    run       Instantly run program")
+	fmt.Println("    compile   Compile program into an object code")
+}
+
+func loadProgramFromFile(filepath string) []Operation {
+	_, err := os.Stat(filepath)
+	if err != nil {
+		usage()
+		fmt.Printf("ERROR: can't found a file: '%s'\n", filepath)
+		os.Exit(1)
+	}
+
+	byteContent, err := os.ReadFile(filepath)
+	if err != nil {
+		usage()
+		fmt.Printf("ERROR: can't read provided file: %s", err.Error())
+		os.Exit(1)
+	}
+
+	source := string(byteContent)
+
+	words := strings.FieldsFunc(source, func(r rune) bool {
+		return r == ' ' || r == '\n'
+	})
+
+	program := make([]Operation, 0)
+
+	for _, word := range words {
+		if word == "+" {
+			program = append(program, plus())
+		} else if word == "-" {
+			program = append(program, minus())
+		} else if word == "put" {
+			program = append(program, dump())
+		} else {
+			val, err := strconv.ParseInt(word, 10, 64)
+			if err != nil {
+				fmt.Printf("ERROR: can't parse token as integer: %s", word)
+			}
+			program = append(program, push(val))
+		}
+	}
+
+	return program
+}
+
 func run(program []Operation) {
 	st := stack.New()
 	for _, op := range program {
-		if op.Code == OperationPush {
+		switch op.Code {
+		case OperationPush:
 			st.Push(op.Value)
-		} else if op.Code == OperationPlus {
+		case OperationPlus:
 			a := st.Pop()
 			b := st.Pop()
 			st.Push(a + b)
-		} else if op.Code == OperationDump {
+		case OperationMinus:
+			a := st.Pop()
+			b := st.Pop()
+			st.Push(b - a)
+		case OperationDump:
 			fmt.Println(st.Pop())
+		default:
+			assert(false, "unreachable")
 		}
 	}
 }
@@ -69,12 +134,14 @@ func compile(program []Operation) {
 }
 
 func main() {
-	program := []Operation{
-		push(34),
-		push(35),
-		plus(),
-		dump(),
-	}
+	//program := []Operation{
+	//	push(34),
+	//	push(35),
+	//	plus(),
+	//	dump(),
+	//}
+
+	program := loadProgramFromFile("./examples/foo.gll")
 
 	run(program)
 }
