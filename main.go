@@ -143,6 +143,7 @@ func loadProgramFromFile(filepath string) []Operation {
 			val, err := strconv.ParseInt(word, 10, 64)
 			if err != nil {
 				logError("can't parse token as integer: " + word)
+				os.Exit(1)
 			}
 			program = append(program, push(val))
 		}
