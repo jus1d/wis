@@ -61,6 +61,14 @@ func chop(arr []string) (string, []string) {
 	return arr[0], arr[1:]
 }
 
+func logInfo(message string) {
+	fmt.Printf("INFO: %s\n", message)
+}
+
+func logError(message string) {
+	fmt.Printf("ERROR: %s\n", message)
+}
+
 func usage() {
 	fmt.Println("Usage: gollo <SUBCOMMAND> ./examples/foo.gll")
 	fmt.Println("SUBCOMMANDS:")
@@ -74,27 +82,23 @@ func execute(cmd ...string) {
 	command := exec.Command(cmd[0], cmd[1:]...)
 	err := command.Run()
 	if err != nil {
-		fmt.Printf("ERROR: can't execute command: %s\n", err.Error())
+		logError("can't execute command: " + err.Error())
 		os.Exit(1)
 	}
-}
-
-func log_info(message string) {
-	fmt.Printf("[INFO]: %s\n", message)
 }
 
 func loadProgramFromFile(filepath string) []Operation {
 	_, err := os.Stat(filepath)
 	if err != nil {
 		usage()
-		fmt.Printf("ERROR: can't found a file: '%s'\n", filepath)
+		logError("can't found a file: " + filepath)
 		os.Exit(1)
 	}
 
 	byteContent, err := os.ReadFile(filepath)
 	if err != nil {
 		usage()
-		fmt.Printf("ERROR: can't read provided file: %s", err.Error())
+		logError("can't read provided file: " + err.Error())
 		os.Exit(1)
 	}
 
@@ -116,7 +120,7 @@ func loadProgramFromFile(filepath string) []Operation {
 		} else {
 			val, err := strconv.ParseInt(word, 10, 64)
 			if err != nil {
-				fmt.Printf("ERROR: can't parse token as integer: %s", word)
+				logError("can't parse token as integer: " + word)
 			}
 			program = append(program, push(val))
 		}
@@ -179,10 +183,10 @@ func run(program []Operation) {
 // }
 
 func compile_x86_64(filepath string, program []Operation) {
-	log_info("generating assembly")
+	logInfo("generating assembly")
 	file, err := os.Create(filepath)
 	if err != nil {
-		fmt.Printf("ERROR: can't create an assembly file\n")
+		logError("can't create an assembly file")
 		os.Exit(1)
 	}
 	_ = file
@@ -257,7 +261,7 @@ func compile_x86_64(filepath string, program []Operation) {
 
 	_, err = file.WriteString(content)
 	if err != nil {
-		fmt.Printf("ERROR: can't write assembly file\n")
+		logError("can't write assembly file")
 		os.Exit(1)
 	}
 }
@@ -265,7 +269,7 @@ func compile_x86_64(filepath string, program []Operation) {
 func getNameFromPath(path string) string {
 	filename := filepath.Base(path)
 	extension := filepath.Ext(filename)
-	return strings.TrimSuffix(filename, extension)
+	return strings.TrimSuffix(path, extension)
 }
 
 func completeString(s *string, content string) {
@@ -278,14 +282,14 @@ func main() {
 
 	if len(args) < 1 {
 		usage()
-		fmt.Printf("ERROR: no subcommand provided\n")
+		logError("no subcommand provided")
 		os.Exit(1)
 	}
 	subcommand, args := chop(args)
 
 	if len(args) < 1 {
 		usage()
-		fmt.Printf("ERROR: no filepath provided\n")
+		logError("no filepath provided")
 		os.Exit(1)
 	}
 	switch subcommand {
@@ -304,12 +308,12 @@ func main() {
 			execute("nasm", "-felf64", "-o", fmt.Sprintf("%s.o", name), fmt.Sprintf("%s.asm", name))
 			execute("ld", "-o", name, fmt.Sprintf("%s.o", name))
 			execute("rm", fmt.Sprintf("%s.o", name))
-			log_info("compiled to ./" + name)
+			logInfo("compiled to " + name)
 		default:
-			fmt.Printf("ERROR: unsupported platform: %s\n", runtime.GOARCH)
+			logError("unsupported platform: " + runtime.GOARCH)
 		}
 	default:
 		usage()
-		fmt.Printf("ERROR: unknown subcommand provided\n")
+		logError("unknown subcommand provided")
 	}
 }
