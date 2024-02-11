@@ -6,5 +6,7 @@ gollo*
 output*
 *.o
 *.out
+
+# Ignore assembly files
 *.asm
 *.s

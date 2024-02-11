@@ -5,6 +5,7 @@ import (
 	"gollo/stack"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -177,9 +178,9 @@ func run(program []Operation) {
 // 	}
 // }
 
-func compile_x86_64(program []Operation) {
+func compile_x86_64(filepath string, program []Operation) {
 	log_info("generating assembly")
-	file, err := os.Create("output.asm")
+	file, err := os.Create(filepath)
 	if err != nil {
 		fmt.Printf("ERROR: can't create an assembly file\n")
 		os.Exit(1)
@@ -261,6 +262,12 @@ func compile_x86_64(program []Operation) {
 	}
 }
 
+func getNameFromPath(path string) string {
+	filename := filepath.Base(path)
+	extension := filepath.Ext(filename)
+	return strings.TrimSuffix(filename, extension)
+}
+
 func completeString(s *string, content string) {
 	*s += content + "\n"
 }
@@ -289,14 +296,15 @@ func main() {
 	case "compile":
 		filepath, _ := chop(args)
 		program := loadProgramFromFile(filepath)
+		name := getNameFromPath(filepath)
 
 		switch runtime.GOARCH {
 		case "amd64":
-			compile_x86_64(program)
-			execute("nasm", "-felf64", "-o", "output.o", "output.asm")
-			execute("ld", "-o", "output", "output.o")
-			execute("rm", "output.o")
-			log_info("compiled to ./output")
+			compile_x86_64(fmt.Sprintf("%s.asm", name), program)
+			execute("nasm", "-felf64", "-o", fmt.Sprintf("%s.o", name), fmt.Sprintf("%s.asm", name))
+			execute("ld", "-o", name, fmt.Sprintf("%s.o", name))
+			execute("rm", fmt.Sprintf("%s.o", name))
+			log_info("compiled to ./" + name)
 		default:
 			fmt.Printf("ERROR: unsupported platform: %s\n", runtime.GOARCH)
 		}
