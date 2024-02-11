@@ -15,6 +15,8 @@ const (
 	OperationPush = iota
 	OperationPlus
 	OperationMinus
+	OperationMultiply
+	OperationDivision
 	OperationDump
 )
 
@@ -39,6 +41,18 @@ func plus() Operation {
 func minus() Operation {
 	return Operation{
 		Code: OperationMinus,
+	}
+}
+
+func multiply() Operation {
+	return Operation{
+		Code: OperationMultiply,
+	}
+}
+
+func division() Operation {
+	return Operation{
+		Code: OperationDivision,
 	}
 }
 
@@ -119,6 +133,10 @@ func loadProgramFromFile(filepath string) []Operation {
 			program = append(program, plus())
 		} else if word == "-" {
 			program = append(program, minus())
+		} else if word == "*" {
+			program = append(program, multiply())
+		} else if word == "/" {
+			program = append(program, division())
 		} else if word == "put" {
 			program = append(program, dump())
 		} else {
@@ -147,6 +165,14 @@ func run(program []Operation) {
 			a := st.Pop()
 			b := st.Pop()
 			st.Push(b - a)
+		case OperationMultiply:
+			a := st.Pop()
+			b := st.Pop()
+			st.Push(b * a)
+		case OperationDivision:
+			a := st.Pop()
+			b := st.Pop()
+			st.Push(b / a)
 		case OperationDump:
 			fmt.Println(st.Pop())
 		default:
