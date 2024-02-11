@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"gollo/stack"
+	stck "gollo/stack"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -153,29 +153,29 @@ func loadProgramFromFile(filepath string) []Operation {
 }
 
 func run(program []Operation) {
-	st := stack.New()
+	stack := stck.New()
 	for _, op := range program {
 		switch op.Code {
 		case OperationPush:
-			st.Push(op.Value)
+			stack.Push(op.Value)
 		case OperationPlus:
-			a := st.Pop()
-			b := st.Pop()
-			st.Push(a + b)
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(a + b)
 		case OperationMinus:
-			a := st.Pop()
-			b := st.Pop()
-			st.Push(b - a)
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(b - a)
 		case OperationMultiply:
-			a := st.Pop()
-			b := st.Pop()
-			st.Push(b * a)
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(b * a)
 		case OperationDivision:
-			a := st.Pop()
-			b := st.Pop()
-			st.Push(b / a)
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(b / a)
 		case OperationDump:
-			fmt.Println(st.Pop())
+			fmt.Println(stack.Pop())
 		default:
 			assert(false, "unreachable")
 		}
