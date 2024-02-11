@@ -5,6 +5,7 @@ import (
 	"gollo/stack"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -77,7 +78,7 @@ func execute(cmd ...string) {
 	}
 }
 
-func info(message string) {
+func log_info(message string) {
 	fmt.Printf("[INFO]: %s\n", message)
 }
 
@@ -145,30 +146,75 @@ func run(program []Operation) {
 	}
 }
 
-func compileArm64(program []Operation) {
-	info("generating assembly")
-	file, err := os.Create("output.s")
+// func compile_arm64(program []Operation) {
+// 	info("generating assembly")
+// 	file, err := os.Create("output.s")
+// 	if err != nil {
+// 		fmt.Printf("ERROR: can't create an assembly file\n")
+// 		os.Exit(1)
+// 	}
+// 	_ = file
+// 	var content string
+// 	content += ".text\n"
+// 	content += ".global _main\n"
+// 	content += "\n"
+// 	content += "_main:\n"
+// 	for _, op := range program {
+// 		switch op.Code {
+// 		case OperationPush:
+// 			content += fmt.Sprintf("    // -- Push %d --\n", op.Value)
+// 			content += fmt.Sprintf("    str %d, [sp, #-16]!\n", op.Value)
+// 		}
+// 	}
+// 	content += "    // -- Exit -- \n"
+// 	content += "    mov x0, #0\n"
+// 	content += "    mov x8, #93\n"
+// 	content += "    svc #0\n"
+// 	_, err = file.WriteString(content)
+// 	if err != nil {
+// 		fmt.Printf("ERROR: can't write assembly file\n")
+// 		os.Exit(1)
+// 	}
+// }
+
+func compile_x86_64(program []Operation) {
+	log_info("generating assembly")
+	file, err := os.Create("output.asm")
 	if err != nil {
 		fmt.Printf("ERROR: can't create an assembly file\n")
 		os.Exit(1)
 	}
 	_ = file
 	var content string
-	content += ".text\n"
-	content += ".global _main\n"
-	content += "\n"
-	content += "_main:\n"
+	content += "section .text\n"
+    content += "    global _start\n\n"
+	content += "_start:\n"
 	for _, op := range program {
 		switch op.Code {
 		case OperationPush:
-			content += fmt.Sprintf("    // -- Push %d --\n", op.Value)
-			content += fmt.Sprintf("    str %d, [sp, #-16]!\n", op.Value)
+			content += fmt.Sprintf("    ; -- Push %d --\n", op.Value)
+			content += fmt.Sprintf("    push %d\n", op.Value)
+		case OperationPlus:
+			content += "    ; -- Plus --\n"
+			content += "    pop rax\n"
+			content += "    pop rbx\n"
+			content += "    add rax, rbx\n"
+			content += "    push rax\n"
+		case OperationMinus:
+			content += "    ; -- Plus --\n"
+			content += "    pop rax\n"
+			content += "    pop rbx\n"
+			content += "    sub rbx, rxx\n"
+			content += "    push rbx\n"
+		case OperationDump:
+			// assert(false, "not implemented")
 		}
 	}
-	content += "    // -- Exit -- \n"
-	content += "    mov x0, #0\n"
-	content += "    mov x8, #93\n"
-	content += "    svc #0\n"
+	content += "    ; -- Exit --\n"
+	content += "    mov rax, 60\n"
+	content += "    mov rdi, 0\n"
+	content += "    syscall"
+
 
 	_, err = file.WriteString(content)
 	if err != nil {
@@ -201,11 +247,17 @@ func main() {
 	case "compile":
 		filepath, _ := chop(args)
 		program := loadProgramFromFile(filepath)
-		compileArm64(program)
-		execute("as", "-o", "output.o", "output.s")
-		execute("ld", "-o", "output", "output.o")
-		execute("rm", "output.o")
-		info("compiled to ./output")
+
+		switch runtime.GOARCH {
+		case "amd64":
+			compile_x86_64(program)
+			execute("nasm", "-felf64", "-o", "output.o", "output.asm")
+			execute("ld", "-o", "output", "output.o")
+			execute("rm", "output.o")
+			log_info("compiled to ./output")
+		default:
+			fmt.Printf("ERROR: unsupported platform: %s\n", runtime.GOARCH)
+		}
 	default:
 		usage()
 		fmt.Printf("ERROR: unknown subcommand provided\n")

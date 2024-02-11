@@ -1,5 +1,9 @@
+# Ignore IDE generated files
 .idea/
+
+# Ignore output files
 gollo*
+output*
 *.o
 *.out
 *.asm
