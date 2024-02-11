@@ -186,41 +186,83 @@ func compile_x86_64(program []Operation) {
 	}
 	_ = file
 	var content string
-	content += "section .text\n"
-    content += "    global _start\n\n"
-	content += "_start:\n"
+
+	completeString(&content, "dump:")
+	completeString(&content, "    mov     r9, -3689348814741910323")
+	completeString(&content, "    sub     rsp, 40")
+	completeString(&content, "    mov     BYTE [rsp+31], 10")
+	completeString(&content, "    lea     rcx, [rsp+30]")
+	completeString(&content, ".L2:")
+	completeString(&content, "    mov     rax, rdi")
+	completeString(&content, "    lea     r8, [rsp+32]")
+	completeString(&content, "    mul     r9")
+	completeString(&content, "    mov     rax, rdi")
+	completeString(&content, "    sub     r8, rcx")
+	completeString(&content, "    shr     rdx, 3")
+	completeString(&content, "    lea     rsi, [rdx+rdx*4]")
+	completeString(&content, "    add     rsi, rsi")
+	completeString(&content, "    sub     rax, rsi")
+	completeString(&content, "    add     eax, 48")
+	completeString(&content, "    mov     BYTE [rcx], al")
+	completeString(&content, "    mov     rax, rdi")
+	completeString(&content, "    mov     rdi, rdx")
+	completeString(&content, "    mov     rdx, rcx")
+	completeString(&content, "    sub     rcx, 1")
+	completeString(&content, "    cmp     rax, 9")
+	completeString(&content, "    ja      .L2")
+	completeString(&content, "    lea     rax, [rsp+32]")
+	completeString(&content, "    mov     edi, 1")
+	completeString(&content, "    sub     rdx, rax")
+	completeString(&content, "    xor     eax, eax")
+	completeString(&content, "    lea     rsi, [rsp+32+rdx]")
+	completeString(&content, "    mov     rdx, r8")
+	completeString(&content, "    mov     rax, 1")
+	completeString(&content, "    syscall")
+	completeString(&content, "    add     rsp, 40")
+	completeString(&content, "    ret")
+	completeString(&content, "\n")
+	completeString(&content, "section .text")
+	completeString(&content, "    global _start")
+	completeString(&content, "_start:")
+
 	for _, op := range program {
 		switch op.Code {
 		case OperationPush:
-			content += fmt.Sprintf("    ; -- Push %d --\n", op.Value)
-			content += fmt.Sprintf("    push %d\n", op.Value)
+			completeString(&content, fmt.Sprintf("    ; -- Push %d --", op.Value))
+			completeString(&content, fmt.Sprintf("    push %d", op.Value))
 		case OperationPlus:
-			content += "    ; -- Plus --\n"
-			content += "    pop rax\n"
-			content += "    pop rbx\n"
-			content += "    add rax, rbx\n"
-			content += "    push rax\n"
+			completeString(&content, "    ; -- Plus --")
+			completeString(&content, "    pop rax")
+			completeString(&content, "    pop rbx")
+			completeString(&content, "    add rax, rbx")
+			completeString(&content, "    push rax")
 		case OperationMinus:
-			content += "    ; -- Plus --\n"
-			content += "    pop rax\n"
-			content += "    pop rbx\n"
-			content += "    sub rbx, rxx\n"
-			content += "    push rbx\n"
+			completeString(&content, "    ; -- Minus --")
+			completeString(&content, "    pop rax")
+			completeString(&content, "    pop rbx")
+			completeString(&content, "    sub rbx, rax")
+			completeString(&content, "    push rbx")
 		case OperationDump:
-			// assert(false, "not implemented")
+			completeString(&content, "    ; -- Dump --")
+			completeString(&content, "    pop rdi")
+			completeString(&content, "    call dump")
 		}
 	}
-	content += "    ; -- Exit --\n"
-	content += "    mov rax, 60\n"
-	content += "    mov rdi, 0\n"
-	content += "    syscall"
 
+	completeString(&content, "    ; -- Exit --")
+	completeString(&content, "    mov rax, 60")
+	completeString(&content, "    mov rdi, 0")
+	completeString(&content, "    syscall")
 
 	_, err = file.WriteString(content)
 	if err != nil {
 		fmt.Printf("ERROR: can't write assembly file\n")
 		os.Exit(1)
 	}
+}
+
+func completeString(s *string, content string) {
+	*s += content + "\n"
 }
 
 func main() {
