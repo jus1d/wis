@@ -57,9 +57,13 @@ func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 		op := program[i]
 		if op.Code == operation.OpIf {
 			stack.Push(i)
+		} else if op.Code == operation.OpElse {
+			pos := stack.Pop()
+			program[pos].JumpTo = i + 1
+			stack.Push(i)
 		} else if op.Code == operation.OpEnd {
-			ifPosition := stack.Pop()
-			program[ifPosition].End = i
+			pos := stack.Pop()
+			program[pos].JumpTo = i
 		}
 		i++
 	}
@@ -92,7 +96,7 @@ func lexLine(filepath string, number int, line string) []Token {
 func parseTokensAsOperations(tokens []Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.Count == 17, "Exhaustive handling in lexer.parseTokensAsOperations()")
+	assert.Assert(operation.Count == 18, "Exhaustive handling in lexer.parseTokensAsOperations()")
 
 	for _, token := range tokens {
 		switch token.Word {
@@ -118,6 +122,8 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 			program = append(program, operation.GreaterOrEqual())
 		case "if":
 			program = append(program, operation.If())
+		case "else":
+			program = append(program, operation.Else())
 		case "end":
 			program = append(program, operation.End())
 		case "put":

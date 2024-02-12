@@ -13,6 +13,7 @@ const (
 	OpLessOrEqual
 	OpGreaterOrEqual
 	OpIf
+	OpElse
 	OpEnd
 	OpDump
 	OpCopy
@@ -22,9 +23,9 @@ const (
 )
 
 type Operation struct {
-	Code  int
-	Value int
-	End   int
+	Code   int
+	Value  int
+	JumpTo int
 }
 
 func Push(value int) Operation {
@@ -121,6 +122,12 @@ func Drop() Operation {
 func If() Operation {
 	return Operation{
 		Code: OpIf,
+	}
+}
+
+func Else() Operation {
+	return Operation{
+		Code: OpElse,
 	}
 }
 

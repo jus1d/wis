@@ -165,7 +165,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    mov     rbx, 0")
 			str.Complete(&content, "    cmp     rax, rbx")
-			str.Complete(&content, fmt.Sprintf("    je      _addr_%d", op.End))
+			str.Complete(&content, fmt.Sprintf("    je      _addr_%d", op.JumpTo))
 		case operation.OpEnd:
 			str.Complete(&content, "    ; -- End --")
 			str.Complete(&content, fmt.Sprintf("_addr_%d", i))

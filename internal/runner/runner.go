@@ -8,7 +8,7 @@ import (
 )
 
 func Run(program []operation.Operation) {
-	assert.Assert(operation.Count == 17, "Exhaustive handling in runner.Run()")
+	assert.Assert(operation.Count == 18, "Exhaustive handling in runner.Run()")
 
 	stack := st.New()
 
@@ -96,10 +96,12 @@ func Run(program []operation.Operation) {
 		case operation.OpIf:
 			a := stack.Pop()
 			if a == 0 {
-				i = op.End
+				i = op.JumpTo
 			} else {
 				i++
 			}
+		case operation.OpElse:
+			i = op.JumpTo
 		case operation.OpEnd:
 			i++
 		case operation.OpDump:

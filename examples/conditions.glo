@@ -1,5 +1,5 @@
 34 35 + 69 == if
     69 put
+else
+    420 put
 end
-
-420 put
