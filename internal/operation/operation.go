@@ -9,6 +9,8 @@ const (
 	OpEqual
 	OpLess
 	OpGreater
+	OpLessOrEqual
+	OpGreaterOrEqual
 	OpDump
 	OpCopy
 	OpSwap
@@ -66,6 +68,18 @@ func Less() Operation {
 func Greater() Operation {
 	return Operation{
 		Code: OpGreater,
+	}
+}
+
+func LessOrEqual() Operation {
+	return Operation{
+		Code: OpLessOrEqual,
+	}
+}
+
+func GreaterOrEqual() Operation {
+	return Operation{
+		Code: OpGreaterOrEqual,
 	}
 }
 
