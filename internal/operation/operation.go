@@ -7,8 +7,16 @@ const (
 	OpMultiply
 	OpDivision
 	OpEqual
+	OpNotEqual
+	OpLess
+	OpGreater
+	OpLessOrEqual
+	OpGreaterOrEqual
 	OpDump
-	OpCount
+	OpCopy
+	OpSwap
+	OpDrop
+	Count
 )
 
 type Operation struct {
@@ -53,8 +61,56 @@ func Equal() Operation {
 	}
 }
 
+func NotEqual() Operation {
+	return Operation{
+		Code: OpNotEqual,
+	}
+}
+
+func Less() Operation {
+	return Operation{
+		Code: OpLess,
+	}
+}
+
+func Greater() Operation {
+	return Operation{
+		Code: OpGreater,
+	}
+}
+
+func LessOrEqual() Operation {
+	return Operation{
+		Code: OpLessOrEqual,
+	}
+}
+
+func GreaterOrEqual() Operation {
+	return Operation{
+		Code: OpGreaterOrEqual,
+	}
+}
+
 func Dump() Operation {
 	return Operation{
 		Code: OpDump,
+	}
+}
+
+func Copy() Operation {
+	return Operation{
+		Code: OpCopy,
+	}
+}
+
+func Swap() Operation {
+	return Operation{
+		Code: OpSwap,
+	}
+}
+
+func Drop() Operation {
+	return Operation{
+		Code: OpDrop,
 	}
 }

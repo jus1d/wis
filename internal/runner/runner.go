@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"gollo/internal/operation"
 	"gollo/pkg/assert"
-	stck "gollo/pkg/stack"
+	st "gollo/pkg/stack"
 )
 
 func Run(program []operation.Operation) {
-	stack := stck.New()
-	assert.Assert(operation.OpCount == 7, "Exhaustive handling in run()")
+	assert.Assert(operation.Count == 15, "Exhaustive handling in runner.Run()")
+
+	stack := st.New()
+
 	for _, op := range program {
 		switch op.Code {
 		case operation.OpPush:
@@ -38,8 +40,57 @@ func Run(program []operation.Operation) {
 			} else {
 				stack.Push(0)
 			}
+		case operation.OpNotEqual:
+			a := stack.Pop()
+			b := stack.Pop()
+			if a != b {
+				stack.Push(1)
+			} else {
+				stack.Push(0)
+			}
+		case operation.OpLess:
+			a := stack.Pop()
+			b := stack.Pop()
+			if b < a {
+				stack.Push(1)
+			} else {
+				stack.Push(0)
+			}
+		case operation.OpGreater:
+			a := stack.Pop()
+			b := stack.Pop()
+			if b > a {
+				stack.Push(1)
+			} else {
+				stack.Push(0)
+			}
+		case operation.OpLessOrEqual:
+			a := stack.Pop()
+			b := stack.Pop()
+			if b <= a {
+				stack.Push(1)
+			} else {
+				stack.Push(0)
+			}
+		case operation.OpGreaterOrEqual:
+			a := stack.Pop()
+			b := stack.Pop()
+			if b >= a {
+				stack.Push(1)
+			} else {
+				stack.Push(0)
+			}
 		case operation.OpDump:
 			fmt.Println(stack.Pop())
+		case operation.OpCopy:
+			stack.Push(stack.Peek())
+		case operation.OpSwap:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(a)
+			stack.Push(b)
+		case operation.OpDrop:
+			_ = stack.Pop()
 		default:
 			assert.Assert(false, "unreachable")
 		}

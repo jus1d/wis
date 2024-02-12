@@ -18,8 +18,10 @@ func CMD(command ...string) {
 }
 
 func Usage() {
-	fmt.Println("Usage: gollo <SUBCOMMAND> ./examples/foo.glo")
+	fmt.Println("Usage: gollo <SUBCOMMAND> [ARGS] ./examples/foo.glo")
 	fmt.Println("SUBCOMMANDS:")
-	fmt.Println("    run       Instantly run program")
-	fmt.Println("    compile   Compile program into an object code")
+	fmt.Println("    run        Simulately run program")
+	fmt.Println("    compile    Compile program into an executable")
+	fmt.Println("ARGS:")
+	fmt.Println("    -r         Instantly run compiled program after compilation")
 }

@@ -20,11 +20,13 @@ func Compile(name string, program []operation.Operation) {
 		command.Execute(false, "rm", fmt.Sprintf("%s.o", name))
 		log.Info("compiled to " + name)
 	default:
-		assert.Assert(false, "unsupported platform")
+		assert.Assert(false, "unsupported platform: "+runtime.GOARCH)
 	}
 }
 
 func compile_x86_64(filepath string, program []operation.Operation) {
+	assert.Assert(operation.Count == 15, "Exhaustive handling in compiler.compile_x86_64()")
+
 	log.Info("generating assembly")
 	file, err := os.Create(filepath)
 	if err != nil {
@@ -72,8 +74,6 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
 
-	assert.Assert(operation.OpCount == 7, "Exhaustive handling in compile_x86_64()")
-
 	for _, op := range program {
 		switch op.Code {
 		case operation.OpPush:
@@ -113,10 +113,71 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmp rax, rbx")
 			str.Complete(&content, "    cmove rcx, rdx")
 			str.Complete(&content, "    push rcx")
+		case operation.OpNotEqual:
+			str.Complete(&content, "    ; -- Not Equal --")
+			str.Complete(&content, "    mov rcx, 0")
+			str.Complete(&content, "    mov rdx, 1")
+			str.Complete(&content, "    pop rax")
+			str.Complete(&content, "    pop rbx")
+			str.Complete(&content, "    cmp rax, rbx")
+			str.Complete(&content, "    cmovne rcx, rdx")
+			str.Complete(&content, "    push rcx")
+		case operation.OpLess:
+			str.Complete(&content, "    ; -- Less --")
+			str.Complete(&content, "    mov rcx, 0")
+			str.Complete(&content, "    mov rdx, 1")
+			str.Complete(&content, "    pop rax")
+			str.Complete(&content, "    pop rbx")
+			str.Complete(&content, "    cmp rbx, rax")
+			str.Complete(&content, "    cmovl rcx, rdx")
+			str.Complete(&content, "    push rcx")
+		case operation.OpGreater:
+			str.Complete(&content, "    ; -- Greater --")
+			str.Complete(&content, "    mov rcx, 0")
+			str.Complete(&content, "    mov rdx, 1")
+			str.Complete(&content, "    pop rax")
+			str.Complete(&content, "    pop rbx")
+			str.Complete(&content, "    cmp rbx, rax")
+			str.Complete(&content, "    cmovg rcx, rdx")
+			str.Complete(&content, "    push rcx")
+		case operation.OpLessOrEqual:
+			str.Complete(&content, "    ; -- Less --")
+			str.Complete(&content, "    mov rcx, 0")
+			str.Complete(&content, "    mov rdx, 1")
+			str.Complete(&content, "    pop rax")
+			str.Complete(&content, "    pop rbx")
+			str.Complete(&content, "    cmp rbx, rax")
+			str.Complete(&content, "    cmovle rcx, rdx")
+			str.Complete(&content, "    push rcx")
+		case operation.OpGreaterOrEqual:
+			str.Complete(&content, "    ; -- Greater --")
+			str.Complete(&content, "    mov rcx, 0")
+			str.Complete(&content, "    mov rdx, 1")
+			str.Complete(&content, "    pop rax")
+			str.Complete(&content, "    pop rbx")
+			str.Complete(&content, "    cmp rbx, rax")
+			str.Complete(&content, "    cmovge rcx, rdx")
+			str.Complete(&content, "    push rcx")
 		case operation.OpDump:
 			str.Complete(&content, "    ; -- Dump --")
 			str.Complete(&content, "    pop rdi")
 			str.Complete(&content, "    call dump")
+		case operation.OpCopy:
+			str.Complete(&content, "    ; -- Copy --")
+			str.Complete(&content, "    pop rax")
+			str.Complete(&content, "    push rax")
+			str.Complete(&content, "    push rax")
+		case operation.OpSwap:
+			str.Complete(&content, "    ; -- Swap --")
+			str.Complete(&content, "    pop rax")
+			str.Complete(&content, "    pop rbx")
+			str.Complete(&content, "    push rax")
+			str.Complete(&content, "    push rbx")
+		case operation.OpDrop:
+			str.Complete(&content, "    ; -- Drop --")
+			str.Complete(&content, "    pop rax")
+		default:
+			assert.Assert(false, "unreachable")
 		}
 	}
 
