@@ -10,6 +10,7 @@ const (
 	OpLess
 	OpGreater
 	OpDump
+	OpCopy
 	OpCount
 )
 
@@ -70,5 +71,11 @@ func Greater() Operation {
 func Dump() Operation {
 	return Operation{
 		Code: OpDump,
+	}
+}
+
+func Copy() Operation {
+	return Operation{
+		Code: OpCopy,
 	}
 }
