@@ -1,0 +1,23 @@
+34 35 + 69 == if 
+    69 put
+else
+    420 put
+end
+
+34 35 + 69 != if 
+    69 put
+else
+    420 put
+end
+
+1 if 
+    1 put
+else
+    0 put
+end
+
+0 if 
+    0 put
+else
+    1 put
+end
