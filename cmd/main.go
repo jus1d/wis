@@ -13,17 +13,17 @@ import (
 
 func main() {
 	args := os.Args
-	_, args = slice.Chop(args)
+	compilerName, args := slice.Chop(args)
 
 	if len(args) < 1 {
-		log.Usage()
+		log.Usage(compilerName)
 		log.Error("no subcommand provided")
 		os.Exit(1)
 	}
 	subcommand, args := slice.Chop(args)
 
 	if len(args) < 1 {
-		log.Usage()
+		log.Usage(compilerName)
 		log.Error("no filepath provided")
 		os.Exit(1)
 	}
@@ -37,7 +37,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		program := lexer.LexFile(path)
+		program := lexer.LexFile(compilerName, path)
 		runner.Run(program)
 	case "compile":
 		runAfterCompile := false
@@ -54,7 +54,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		program := lexer.LexFile(path)
+		program := lexer.LexFile(compilerName, path)
 		name := file.GetName(path)
 
 		compiler.Compile(name, program)
@@ -63,7 +63,7 @@ func main() {
 			command.Execute(true, name)
 		}
 	default:
-		log.Usage()
+		log.Usage(compilerName)
 		log.Error("unknown subcommand provided")
 	}
 }

@@ -17,17 +17,17 @@ type Token struct {
 	Word     string
 }
 
-func LexFile(filepath string) []operation.Operation {
+func LexFile(compiler string, filepath string) []operation.Operation {
 	_, err := os.Stat(filepath)
 	if err != nil {
-		log.Usage()
+		log.Usage(compiler)
 		log.Error("can't found a file: " + filepath)
 		os.Exit(1)
 	}
 
 	byteContent, err := os.ReadFile(filepath)
 	if err != nil {
-		log.Usage()
+		log.Usage(compiler)
 		log.Error("can't read provided file: " + err.Error())
 		os.Exit(1)
 	}

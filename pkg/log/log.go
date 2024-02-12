@@ -17,8 +17,8 @@ func CMD(command ...string) {
 	fmt.Printf("[CMD]: %s\n", strings.Join(command, " "))
 }
 
-func Usage() {
-	fmt.Println("Usage: gollo <SUBCOMMAND> [ARGS] ./examples/foo.glo")
+func Usage(compiler string) {
+	fmt.Printf("Usage: %s <SUBCOMMAND> [ARGS] ./examples/foo.glo\n", compiler)
 	fmt.Println("SUBCOMMANDS:")
 	fmt.Println("    run        Simulately run program")
 	fmt.Println("    compile    Compile program into an executable")
