@@ -1,15 +1,22 @@
 package lexer
 
 import (
+	"fmt"
 	"gollo/internal/operation"
-	"gollo/pkg/assert"
 	"gollo/pkg/log"
 	"os"
 	"strconv"
 	"strings"
 )
 
-func LoadProgramFromFile(filepath string) []operation.Operation {
+type Token struct {
+	Filepath string
+	Line     int
+	Col      int
+	Word     string
+}
+
+func LexFile(filepath string) []operation.Operation {
 	_, err := os.Stat(filepath)
 	if err != nil {
 		log.Usage()
@@ -26,16 +33,46 @@ func LoadProgramFromFile(filepath string) []operation.Operation {
 
 	source := string(byteContent)
 
-	words := strings.FieldsFunc(source, func(r rune) bool {
-		return r == ' ' || r == '\n'
-	})
+	lines := strings.Split(source, "\n")
 
+	tokens := make([]Token, 0)
+
+	for i := 0; i < len(lines); i++ {
+		tokens = append(tokens, LexLine(filepath, i+1, lines[i]+"\n")...)
+	}
+
+	program := ParseTokensAsOperations(tokens)
+
+	return program
+}
+
+func LexLine(filepath string, number int, line string) []Token {
+	tokens := make([]Token, 0)
+	var cur string
+
+	for i := 0; i < len(line); i++ {
+		if (line[i] == ' ' || line[i] == '\n') && cur != "" {
+			tokens = append(tokens, Token{
+				Filepath: filepath,
+				Line:     number,
+				Col:      i - len(cur) + 1,
+				Word:     cur,
+			})
+			cur = ""
+		}
+		if line[i] != ' ' && line[i] != '\n' {
+			cur += string(line[i])
+		}
+	}
+
+	return tokens
+}
+
+func ParseTokensAsOperations(tokens []Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.OpCount == 14, "Exhaustive handling in lexer.LoadProgramFromFile()")
-
-	for _, word := range words {
-		switch word {
+	for _, token := range tokens {
+		switch token.Word {
 		case "+":
 			program = append(program, operation.Plus())
 		case "-":
@@ -63,14 +100,13 @@ func LoadProgramFromFile(filepath string) []operation.Operation {
 		case "drop":
 			program = append(program, operation.Drop())
 		default:
-			val, err := strconv.ParseInt(word, 10, 64)
+			val, err := strconv.ParseInt(token.Word, 10, 64)
 			if err != nil {
-				log.Error("can't parse token as integer: " + word)
+				log.Error(fmt.Sprintf("%s:%d:%d: can't parse token: %s", token.Filepath, token.Line, token.Col, token.Word))
 				os.Exit(1)
 			}
 			program = append(program, operation.Push(val))
 		}
 	}
-
 	return program
 }

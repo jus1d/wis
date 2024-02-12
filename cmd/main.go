@@ -37,7 +37,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		program := lexer.LoadProgramFromFile(path)
+		program := lexer.LexFile(path)
 		runner.Run(program)
 	case "compile":
 		runAfterCompile := false
@@ -54,7 +54,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		program := lexer.LoadProgramFromFile(path)
+		program := lexer.LexFile(path)
 		name := file.GetName(path)
 
 		compiler.Compile(name, program)
