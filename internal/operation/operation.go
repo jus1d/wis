@@ -14,6 +14,7 @@ const (
 	OpDump
 	OpCopy
 	OpSwap
+	OpDrop
 	OpCount
 )
 
@@ -98,5 +99,11 @@ func Copy() Operation {
 func Swap() Operation {
 	return Operation{
 		Code: OpSwap,
+	}
+}
+
+func Drop() Operation {
+	return Operation{
+		Code: OpDrop,
 	}
 }

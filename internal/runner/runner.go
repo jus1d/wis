@@ -9,7 +9,7 @@ import (
 
 func Run(program []operation.Operation) {
 	stack := st.New()
-	assert.Assert(operation.OpCount == 13, "Exhaustive handling in runner.Run()")
+	assert.Assert(operation.OpCount == 14, "Exhaustive handling in runner.Run()")
 	for _, op := range program {
 		switch op.Code {
 		case operation.OpPush:
@@ -79,6 +79,8 @@ func Run(program []operation.Operation) {
 			b := stack.Pop()
 			stack.Push(a)
 			stack.Push(b)
+		case operation.OpDrop:
+			_ = stack.Pop()
 		default:
 			assert.Assert(false, "unreachable")
 		}

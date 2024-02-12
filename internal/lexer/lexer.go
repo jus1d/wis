@@ -32,7 +32,7 @@ func LoadProgramFromFile(filepath string) []operation.Operation {
 
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.OpCount == 13, "Exhaustive handling in lexer.LoadProgramFromFile()")
+	assert.Assert(operation.OpCount == 14, "Exhaustive handling in lexer.LoadProgramFromFile()")
 
 	for _, word := range words {
 		switch word {
@@ -60,6 +60,8 @@ func LoadProgramFromFile(filepath string) []operation.Operation {
 			program = append(program, operation.Copy())
 		case "swap":
 			program = append(program, operation.Swap())
+		case "drop":
+			program = append(program, operation.Drop())
 		default:
 			val, err := strconv.ParseInt(word, 10, 64)
 			if err != nil {
