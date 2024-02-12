@@ -2,21 +2,21 @@ package stack
 
 // Stack represents a stack data structure
 type Stack struct {
-	items []int64
+	items []int
 }
 
 // New returns a pointer to a new instance of Stack
 func New() *Stack {
-	return &Stack{items: make([]int64, 0)}
+	return &Stack{items: make([]int, 0)}
 }
 
 // Push adds an item to the top of the stack
-func (s *Stack) Push(item int64) {
+func (s *Stack) Push(item int) {
 	s.items = append(s.items, item)
 }
 
 // Pop removes and returns the top item from the stack
-func (s *Stack) Pop() int64 {
+func (s *Stack) Pop() int {
 	if len(s.items) == 0 {
 		return 0
 	}
@@ -27,7 +27,7 @@ func (s *Stack) Pop() int64 {
 }
 
 // Peek returns the top item from the stack without removing it
-func (s *Stack) Peek() int64 {
+func (s *Stack) Peek() int {
 	if len(s.items) == 0 {
 		return 0
 	}
