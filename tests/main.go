@@ -2,51 +2,36 @@ package main
 
 import (
 	"fmt"
+	"gollo/pkg/command"
+	"gollo/pkg/log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
 
 func build() error {
-	cmd := exec.Command("make", "build")
-	_, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("error running gollo: %v", err)
-	}
-	return nil
+	_, err := command.Execute(true, "make", "build")
+	return err
 }
 
-func runGollo(file string) (string, error) {
-	cmd := exec.Command("./gollo", "run", file)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("error running gollo: %v", err)
-	}
-	return string(output), nil
+func run(file string) (string, error) {
+	return command.Execute(false, "./gollo", "run", file)
 }
 
-func compileAndRun(file string) (string, error) {
-	cmd := exec.Command("./gollo", "compile", file)
-	_, err := cmd.CombinedOutput()
+func compile(file string) (string, error) {
+	_, err := command.Execute(false, "./gollo", "compile", file)
 	if err != nil {
 		return "", fmt.Errorf("error running gollo: %v", err)
 	}
 
 	file = strings.TrimSuffix(file, filepath.Ext(file))
-	cmd = exec.Command(file)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("error while running compiled file: %v", err)
-	}
-
-	return string(output), nil
+	return command.Execute(false, file)
 }
 
 func main() {
 	err := build()
 	if err != nil {
-		fmt.Printf("Can't build ./gollo: %s", err.Error())
+		log.Error("can't build a compiler: " + err.Error())
 		os.Exit(1)
 	}
 
@@ -71,13 +56,13 @@ func main() {
 				continue
 			}
 
-			actualRunOutput, err := runGollo(gloFilePath)
+			actualRunOutput, err := run(gloFilePath)
 			if err != nil {
 				fmt.Printf("Error running gollo for %s: %v\n", gloFilePath, err)
 				continue
 			}
 
-			actualCompileOutput, err := compileAndRun(gloFilePath)
+			actualCompileOutput, err := compile(gloFilePath)
 			if err != nil {
 				fmt.Printf("Error compiling gollo for %s: %v\n", gloFilePath, err)
 				continue
@@ -85,10 +70,6 @@ func main() {
 
 			if strings.TrimSpace(actualRunOutput) != strings.TrimSpace(string(expectedOutput)) {
 				fmt.Printf("Test failed for RUN: %s\n", gloFilePath)
-				// fmt.Println("Expected output:")
-				// fmt.Println(string(expectedOutput))
-				// fmt.Println("Actual output:")
-				// fmt.Println(actualRunOutput)
 				gotErrors = true
 			} else {
 				fmt.Printf("Test passed for RUN: %s\n", gloFilePath)
@@ -96,10 +77,6 @@ func main() {
 
 			if strings.TrimSpace(actualCompileOutput) != strings.TrimSpace(string(expectedOutput)) {
 				fmt.Printf("Test failed for COMPILE: %s\n", gloFilePath)
-				// fmt.Println("Expected output:")
-				// fmt.Println(string(expectedOutput))
-				// fmt.Println("Actual output:")
-				// fmt.Println(actualCompileOutput)
 				gotErrors = true
 			} else {
 				fmt.Printf("Test passed for COMPILE: %s\n", gloFilePath)
