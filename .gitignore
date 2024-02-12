@@ -5,7 +5,7 @@
 gollo*
 *.o
 *.out
-./examples/test
+./examples/test*
 
 # Ignore assembly files
 *.asm
