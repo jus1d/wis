@@ -25,6 +25,8 @@ func Compile(name string, program []operation.Operation) {
 }
 
 func compile_x86_64(filepath string, program []operation.Operation) {
+	assert.Assert(operation.OpCount == 15, "Exhaustive handling in compiler.compile_x86_64()")
+
 	log.Info("generating assembly")
 	file, err := os.Create(filepath)
 	if err != nil {
@@ -72,8 +74,6 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
 
-	assert.Assert(operation.OpCount == 14, "Exhaustive handling in compile_x86_64()")
-
 	for _, op := range program {
 		switch op.Code {
 		case operation.OpPush:
@@ -112,6 +112,15 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    pop rbx")
 			str.Complete(&content, "    cmp rax, rbx")
 			str.Complete(&content, "    cmove rcx, rdx")
+			str.Complete(&content, "    push rcx")
+		case operation.OpNotEqual:
+			str.Complete(&content, "    ; -- Not Equal --")
+			str.Complete(&content, "    mov rcx, 0")
+			str.Complete(&content, "    mov rdx, 1")
+			str.Complete(&content, "    pop rax")
+			str.Complete(&content, "    pop rbx")
+			str.Complete(&content, "    cmp rax, rbx")
+			str.Complete(&content, "    cmovne rcx, rdx")
 			str.Complete(&content, "    push rcx")
 		case operation.OpLess:
 			str.Complete(&content, "    ; -- Less --")

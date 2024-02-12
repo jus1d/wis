@@ -3,6 +3,7 @@ package lexer
 import (
 	"fmt"
 	"gollo/internal/operation"
+	"gollo/pkg/assert"
 	"gollo/pkg/log"
 	"os"
 	"strconv"
@@ -38,15 +39,15 @@ func LexFile(filepath string) []operation.Operation {
 	tokens := make([]Token, 0)
 
 	for i := 0; i < len(lines); i++ {
-		tokens = append(tokens, LexLine(filepath, i+1, lines[i]+"\n")...)
+		tokens = append(tokens, lexLine(filepath, i+1, lines[i]+"\n")...)
 	}
 
-	program := ParseTokensAsOperations(tokens)
+	program := parseTokensAsOperations(tokens)
 
 	return program
 }
 
-func LexLine(filepath string, number int, line string) []Token {
+func lexLine(filepath string, number int, line string) []Token {
 	tokens := make([]Token, 0)
 	var cur string
 
@@ -68,8 +69,10 @@ func LexLine(filepath string, number int, line string) []Token {
 	return tokens
 }
 
-func ParseTokensAsOperations(tokens []Token) []operation.Operation {
+func parseTokensAsOperations(tokens []Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
+
+	assert.Assert(operation.OpCount == 15, "Exhaustive handling in lexer.LexFile()")
 
 	for _, token := range tokens {
 		switch token.Word {
@@ -83,6 +86,8 @@ func ParseTokensAsOperations(tokens []Token) []operation.Operation {
 			program = append(program, operation.Division())
 		case "==":
 			program = append(program, operation.Equal())
+		case "!=":
+			program = append(program, operation.NotEqual())
 		case "<":
 			program = append(program, operation.Less())
 		case ">":

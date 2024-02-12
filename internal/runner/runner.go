@@ -8,8 +8,10 @@ import (
 )
 
 func Run(program []operation.Operation) {
+	assert.Assert(operation.OpCount == 15, "Exhaustive handling in runner.Run()")
+
 	stack := st.New()
-	assert.Assert(operation.OpCount == 14, "Exhaustive handling in runner.Run()")
+
 	for _, op := range program {
 		switch op.Code {
 		case operation.OpPush:
@@ -34,6 +36,14 @@ func Run(program []operation.Operation) {
 			a := stack.Pop()
 			b := stack.Pop()
 			if a == b {
+				stack.Push(1)
+			} else {
+				stack.Push(0)
+			}
+		case operation.OpNotEqual:
+			a := stack.Pop()
+			b := stack.Pop()
+			if a != b {
 				stack.Push(1)
 			} else {
 				stack.Push(0)
