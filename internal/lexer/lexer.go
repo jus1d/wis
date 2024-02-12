@@ -5,6 +5,7 @@ import (
 	"gollo/internal/operation"
 	"gollo/pkg/assert"
 	"gollo/pkg/log"
+	st "gollo/pkg/stack"
 	"os"
 	"strconv"
 	"strings"
@@ -43,6 +44,25 @@ func LexFile(compiler string, filepath string) []operation.Operation {
 	}
 
 	program := parseTokensAsOperations(tokens)
+	crossreferehcedProgram := crossreferenceBlocks(program)
+
+	return crossreferehcedProgram
+}
+
+func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
+	stack := st.New()
+
+	i := 0
+	for i < len(program) {
+		op := program[i]
+		if op.Code == operation.OpIf {
+			stack.Push(i)
+		} else if op.Code == operation.OpEnd {
+			ifPosition := stack.Pop()
+			program[ifPosition].End = i
+		}
+		i++
+	}
 
 	return program
 }
@@ -72,7 +92,7 @@ func lexLine(filepath string, number int, line string) []Token {
 func parseTokensAsOperations(tokens []Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.Count == 15, "Exhaustive handling in lexer.LexFile()")
+	assert.Assert(operation.Count == 17, "Exhaustive handling in lexer.parseTokensAsOperations()")
 
 	for _, token := range tokens {
 		switch token.Word {
@@ -96,6 +116,10 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 			program = append(program, operation.LessOrEqual())
 		case ">=":
 			program = append(program, operation.GreaterOrEqual())
+		case "if":
+			program = append(program, operation.If())
+		case "end":
+			program = append(program, operation.End())
 		case "put":
 			program = append(program, operation.Dump())
 		case "copy":
@@ -105,7 +129,7 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 		case "drop":
 			program = append(program, operation.Drop())
 		default:
-			val, err := strconv.ParseInt(token.Word, 10, 64)
+			val, err := strconv.Atoi(token.Word)
 			if err != nil {
 				log.Error(fmt.Sprintf("%s:%d:%d: can't parse token: %s", token.Filepath, token.Line, token.Col, token.Word))
 				os.Exit(1)

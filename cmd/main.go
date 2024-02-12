@@ -27,6 +27,7 @@ func main() {
 		log.Error("no filepath provided")
 		os.Exit(1)
 	}
+
 	switch subcommand {
 	case "run":
 		path, _ := slice.Chop(args)

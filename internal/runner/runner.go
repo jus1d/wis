@@ -8,30 +8,37 @@ import (
 )
 
 func Run(program []operation.Operation) {
-	assert.Assert(operation.Count == 15, "Exhaustive handling in runner.Run()")
+	assert.Assert(operation.Count == 17, "Exhaustive handling in runner.Run()")
 
 	stack := st.New()
 
-	for _, op := range program {
+	i := 0
+	for i < len(program) {
+		op := program[i]
 		switch op.Code {
 		case operation.OpPush:
 			stack.Push(op.Value)
+			i++
 		case operation.OpPlus:
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(a + b)
+			i++
 		case operation.OpMinus:
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(b - a)
+			i++
 		case operation.OpMultiply:
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(b * a)
+			i++
 		case operation.OpDivision:
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(b / a)
+			i++
 		case operation.OpEqual:
 			a := stack.Pop()
 			b := stack.Pop()
@@ -40,6 +47,7 @@ func Run(program []operation.Operation) {
 			} else {
 				stack.Push(0)
 			}
+			i++
 		case operation.OpNotEqual:
 			a := stack.Pop()
 			b := stack.Pop()
@@ -48,6 +56,7 @@ func Run(program []operation.Operation) {
 			} else {
 				stack.Push(0)
 			}
+			i++
 		case operation.OpLess:
 			a := stack.Pop()
 			b := stack.Pop()
@@ -56,6 +65,7 @@ func Run(program []operation.Operation) {
 			} else {
 				stack.Push(0)
 			}
+			i++
 		case operation.OpGreater:
 			a := stack.Pop()
 			b := stack.Pop()
@@ -64,6 +74,7 @@ func Run(program []operation.Operation) {
 			} else {
 				stack.Push(0)
 			}
+			i++
 		case operation.OpLessOrEqual:
 			a := stack.Pop()
 			b := stack.Pop()
@@ -72,6 +83,7 @@ func Run(program []operation.Operation) {
 			} else {
 				stack.Push(0)
 			}
+			i++
 		case operation.OpGreaterOrEqual:
 			a := stack.Pop()
 			b := stack.Pop()
@@ -80,17 +92,31 @@ func Run(program []operation.Operation) {
 			} else {
 				stack.Push(0)
 			}
+			i++
+		case operation.OpIf:
+			a := stack.Pop()
+			if a == 0 {
+				i = op.End
+			} else {
+				i++
+			}
+		case operation.OpEnd:
+			i++
 		case operation.OpDump:
 			fmt.Println(stack.Pop())
+			i++
 		case operation.OpCopy:
 			stack.Push(stack.Peek())
+			i++
 		case operation.OpSwap:
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(a)
 			stack.Push(b)
+			i++
 		case operation.OpDrop:
 			_ = stack.Pop()
+			i++
 		default:
 			assert.Assert(false, "unreachable")
 		}
