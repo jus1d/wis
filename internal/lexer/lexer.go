@@ -72,7 +72,7 @@ func lexLine(filepath string, number int, line string) []Token {
 func parseTokensAsOperations(tokens []Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.OpCount == 15, "Exhaustive handling in lexer.LexFile()")
+	assert.Assert(operation.Count == 15, "Exhaustive handling in lexer.LexFile()")
 
 	for _, token := range tokens {
 		switch token.Word {

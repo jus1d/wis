@@ -16,7 +16,7 @@ const (
 	OpCopy
 	OpSwap
 	OpDrop
-	OpCount
+	Count
 )
 
 type Operation struct {

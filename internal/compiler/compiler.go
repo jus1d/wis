@@ -25,7 +25,7 @@ func Compile(name string, program []operation.Operation) {
 }
 
 func compile_x86_64(filepath string, program []operation.Operation) {
-	assert.Assert(operation.OpCount == 15, "Exhaustive handling in compiler.compile_x86_64()")
+	assert.Assert(operation.Count == 15, "Exhaustive handling in compiler.compile_x86_64()")
 
 	log.Info("generating assembly")
 	file, err := os.Create(filepath)
