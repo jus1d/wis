@@ -348,6 +348,11 @@ func getNameFromPath(path string) string {
 	return strings.TrimSuffix(path, extension)
 }
 
+func getExtensionFromPath(path string) string {
+	filename := filepath.Base(path)
+	return filepath.Ext(filename)
+}
+
 func completeString(s *string, content string) {
 	*s += content + "\n"
 }
@@ -371,6 +376,13 @@ func main() {
 	switch subcommand {
 	case "run":
 		path, _ := chop(args)
+
+		ext := getExtensionFromPath(path)
+		if ext != ".glo" {
+			logError("unknown file extension: " + ext)
+			os.Exit(1)
+		}
+
 		program := loadProgramFromFile(path)
 		run(program)
 	case "compile":
@@ -380,6 +392,12 @@ func main() {
 		if path == "-r" {
 			runAfterCompile = true
 			path, _ = chop(args)
+		}
+
+		ext := getExtensionFromPath(path)
+		if ext != ".glo" {
+			logError("unknown file extension: " + ext)
+			os.Exit(1)
 		}
 
 		program := loadProgramFromFile(path)
