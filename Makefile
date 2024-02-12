@@ -1,2 +1,2 @@
-build: main.go
-	go build -o gollo ./main.go
+build: ./cmd/main.go
+	go build -o ./gollo ./cmd/main.go
