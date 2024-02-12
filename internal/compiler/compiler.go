@@ -25,8 +25,6 @@ func Compile(name string, program []operation.Operation) {
 }
 
 func compile_x86_64(filepath string, program []operation.Operation) {
-	assert.Assert(operation.Count == 17, "Exhaustive handling in compiler.compile_x86_64()")
-
 	log.Info("generating assembly")
 	file, err := os.Create(filepath)
 	if err != nil {
@@ -73,6 +71,8 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "section .text")
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
+
+	assert.Assert(operation.Count == 18, "Exhaustive handling in compiler.compile_x86_64()")
 
 	for i := 0; i < len(program); i++ {
 		op := program[i]
@@ -166,6 +166,10 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    mov     rbx, 0")
 			str.Complete(&content, "    cmp     rax, rbx")
 			str.Complete(&content, fmt.Sprintf("    je      _addr_%d", op.JumpTo))
+		case operation.OpElse:
+			str.Complete(&content, "    ; -- Else --")
+			str.Complete(&content, fmt.Sprintf("    jmp     _addr_%d", op.JumpTo))
+			str.Complete(&content, fmt.Sprintf("_addr_%d:", i+1))
 		case operation.OpEnd:
 			str.Complete(&content, "    ; -- End --")
 			str.Complete(&content, fmt.Sprintf("_addr_%d", i))
