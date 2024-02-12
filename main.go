@@ -17,6 +17,7 @@ const (
 	OperationMinus
 	OperationMultiply
 	OperationDivision
+	OperationEqual
 	OperationDump
 )
 
@@ -53,6 +54,12 @@ func multiply() Operation {
 func division() Operation {
 	return Operation{
 		Code: OperationDivision,
+	}
+}
+
+func equal() Operation {
+	return Operation{
+		Code: OperationEqual,
 	}
 }
 
@@ -137,6 +144,8 @@ func loadProgramFromFile(filepath string) []Operation {
 			program = append(program, multiply())
 		} else if word == "/" {
 			program = append(program, division())
+		} else if word == "==" {
+			program = append(program, equal())
 		} else if word == "put" {
 			program = append(program, dump())
 		} else {
@@ -174,6 +183,14 @@ func run(program []Operation) {
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(b / a)
+		case OperationEqual:
+			a := stack.Pop()
+			b := stack.Pop()
+			if a == b {
+				stack.Push(1)
+			} else {
+				stack.Push(0)
+			}
 		case OperationDump:
 			fmt.Println(stack.Pop())
 		default:
