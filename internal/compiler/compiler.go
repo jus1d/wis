@@ -72,7 +72,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
 
-	assert.Assert(operation.OpCount == 7, "Exhaustive handling in compile_x86_64()")
+	assert.Assert(operation.OpCount == 9, "Exhaustive handling in compile_x86_64()")
 
 	for _, op := range program {
 		switch op.Code {
@@ -112,6 +112,24 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    pop rbx")
 			str.Complete(&content, "    cmp rax, rbx")
 			str.Complete(&content, "    cmove rcx, rdx")
+			str.Complete(&content, "    push rcx")
+		case operation.OpLess:
+			str.Complete(&content, "    ; -- Less --")
+			str.Complete(&content, "    mov rcx, 0")
+			str.Complete(&content, "    mov rdx, 1")
+			str.Complete(&content, "    pop rax")
+			str.Complete(&content, "    pop rbx")
+			str.Complete(&content, "    cmp rbx, rax")
+			str.Complete(&content, "    cmovl rcx, rdx")
+			str.Complete(&content, "    push rcx")
+		case operation.OpGreater:
+			str.Complete(&content, "    ; -- Greater --")
+			str.Complete(&content, "    mov rcx, 0")
+			str.Complete(&content, "    mov rdx, 1")
+			str.Complete(&content, "    pop rax")
+			str.Complete(&content, "    pop rbx")
+			str.Complete(&content, "    cmp rbx, rax")
+			str.Complete(&content, "    cmovg rcx, rdx")
 			str.Complete(&content, "    push rcx")
 		case operation.OpDump:
 			str.Complete(&content, "    ; -- Dump --")
