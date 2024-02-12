@@ -19,6 +19,7 @@ const (
 	OperationDivision
 	OperationEqual
 	OperationDump
+	OperationCount
 )
 
 type Operation struct {
@@ -135,6 +136,8 @@ func loadProgramFromFile(filepath string) []Operation {
 
 	program := make([]Operation, 0)
 
+	assert(OperationCount == 7, "Exhaustive handling in loadProgramFromFile()")
+
 	for _, word := range words {
 		if word == "+" {
 			program = append(program, plus())
@@ -163,6 +166,7 @@ func loadProgramFromFile(filepath string) []Operation {
 
 func run(program []Operation) {
 	stack := stck.New()
+	assert(OperationCount == 7, "Exhaustive handling in run()")
 	for _, op := range program {
 		switch op.Code {
 		case OperationPush:
@@ -278,6 +282,8 @@ func compile_x86_64(filepath string, program []Operation) {
 	completeString(&content, "    global _start")
 	completeString(&content, "_start:")
 
+	assert(OperationCount == 7, "Exhaustive handling in compile_x86_64()")
+
 	for _, op := range program {
 		switch op.Code {
 		case OperationPush:
@@ -295,6 +301,28 @@ func compile_x86_64(filepath string, program []Operation) {
 			completeString(&content, "    pop rbx")
 			completeString(&content, "    sub rbx, rax")
 			completeString(&content, "    push rbx")
+		case OperationMultiply:
+			completeString(&content, "    ; -- Multiply --")
+			completeString(&content, "    pop rax")
+			completeString(&content, "    pop rbx")
+			completeString(&content, "    imul rax, rbx")
+			completeString(&content, "    push rax")
+		case OperationDivision:
+			completeString(&content, "    ; -- Division --")
+			completeString(&content, "    pop rbx")
+			completeString(&content, "    pop rax")
+			completeString(&content, "    xor rdx, rdx")
+			completeString(&content, "    div rbx")
+			completeString(&content, "    push rax")
+		case OperationEqual:
+			completeString(&content, "    ; -- Equal --")
+			completeString(&content, "    mov rcx, 0")
+			completeString(&content, "    mov rdx, 1")
+			completeString(&content, "    pop rax")
+			completeString(&content, "    pop rbx")
+			completeString(&content, "    cmp rax, rbx")
+			completeString(&content, "    cmove rcx, rdx")
+			completeString(&content, "    push rcx")
 		case OperationDump:
 			completeString(&content, "    ; -- Dump --")
 			completeString(&content, "    pop rdi")
