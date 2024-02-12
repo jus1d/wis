@@ -7,6 +7,8 @@ const (
 	OpMultiply
 	OpDivision
 	OpEqual
+	OpLess
+	OpGreater
 	OpDump
 	OpCount
 )
@@ -50,6 +52,18 @@ func Division() Operation {
 func Equal() Operation {
 	return Operation{
 		Code: OpEqual,
+	}
+}
+
+func Less() Operation {
+	return Operation{
+		Code: OpLess,
+	}
+}
+
+func Greater() Operation {
+	return Operation{
+		Code: OpGreater,
 	}
 }
 

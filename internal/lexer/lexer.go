@@ -32,22 +32,27 @@ func LoadProgramFromFile(filepath string) []operation.Operation {
 
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.OpCount == 7, "Exhaustive handling in loadProgramFromFile()")
+	assert.Assert(operation.OpCount == 9, "Exhaustive handling in loadProgramFromFile()")
 
 	for _, word := range words {
-		if word == "+" {
+		switch word {
+		case "+":
 			program = append(program, operation.Plus())
-		} else if word == "-" {
+		case "-":
 			program = append(program, operation.Minus())
-		} else if word == "*" {
+		case "*":
 			program = append(program, operation.Multiply())
-		} else if word == "/" {
+		case "/":
 			program = append(program, operation.Division())
-		} else if word == "==" {
+		case "==":
 			program = append(program, operation.Equal())
-		} else if word == "put" {
+		case "<":
+			program = append(program, operation.Less())
+		case ">":
+			program = append(program, operation.Greater())
+		case "put":
 			program = append(program, operation.Dump())
-		} else {
+		default:
 			val, err := strconv.ParseInt(word, 10, 64)
 			if err != nil {
 				log.Error("can't parse token as integer: " + word)
