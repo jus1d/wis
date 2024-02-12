@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"gollo/internal/operation"
 	"gollo/pkg/assert"
-	stck "gollo/pkg/stack"
+	st "gollo/pkg/stack"
 )
 
 func Run(program []operation.Operation) {
-	stack := stck.New()
+	stack := st.New()
 	assert.Assert(operation.OpCount == 11, "Exhaustive handling in runner.Run()")
 	for _, op := range program {
 		switch op.Code {
