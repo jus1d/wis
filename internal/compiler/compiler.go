@@ -25,7 +25,7 @@ func Compile(name string, program []operation.Operation) {
 }
 
 func compile_x86_64(filepath string, program []operation.Operation) {
-	assert.Assert(operation.Count == 15, "Exhaustive handling in compiler.compile_x86_64()")
+	assert.Assert(operation.Count == 17, "Exhaustive handling in compiler.compile_x86_64()")
 
 	log.Info("generating assembly")
 	file, err := os.Create(filepath)
@@ -74,7 +74,9 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
 
-	for _, op := range program {
+	for i := 0; i < len(program); i++ {
+		op := program[i]
+
 		switch op.Code {
 		case operation.OpPush:
 			str.Complete(&content, fmt.Sprintf("    ; -- Push %d --", op.Value))
@@ -158,6 +160,15 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmp     rbx, rax")
 			str.Complete(&content, "    cmovge  rcx, rdx")
 			str.Complete(&content, "    push    rcx")
+		case operation.OpIf:
+			str.Complete(&content, "    ; -- If --")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    mov     rbx, 0")
+			str.Complete(&content, "    cmp     rax, rbx")
+			str.Complete(&content, fmt.Sprintf("    je      _addr_%d", op.End))
+		case operation.OpEnd:
+			str.Complete(&content, "    ; -- End --")
+			str.Complete(&content, fmt.Sprintf("_addr_%d", i))
 		case operation.OpDump:
 			str.Complete(&content, "    ; -- Dump --")
 			str.Complete(&content, "    pop     rdi")
