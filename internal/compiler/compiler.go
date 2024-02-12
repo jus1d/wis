@@ -20,7 +20,7 @@ func Compile(name string, program []operation.Operation) {
 		command.Execute(false, "rm", fmt.Sprintf("%s.o", name))
 		log.Info("compiled to " + name)
 	default:
-		assert.Assert(false, "unsupported platform")
+		assert.Assert(false, "unsupported platform: "+runtime.GOARCH)
 	}
 }
 
@@ -117,6 +117,8 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    ; -- Dump --")
 			str.Complete(&content, "    pop rdi")
 			str.Complete(&content, "    call dump")
+		default:
+			assert.Assert(false, "unreachable")
 		}
 	}
 
