@@ -2,36 +2,16 @@ package compiler
 
 import (
 	"fmt"
-	"gollo/internal/lexer"
 	"gollo/internal/operation"
 	"gollo/pkg/assert"
 	"gollo/pkg/command"
-	"gollo/pkg/file"
 	"gollo/pkg/log"
-	"gollo/pkg/slice"
 	"gollo/pkg/str"
 	"os"
 	"runtime"
 )
 
-func Compile(args []string) {
-	runAfterCompile := false
-
-	path, args := slice.Chop(args)
-	if path == "-r" {
-		runAfterCompile = true
-		path, _ = slice.Chop(args)
-	}
-
-	ext := file.GetExtension(path)
-	if ext != ".glo" {
-		log.Error("unknown file extension: " + ext)
-		os.Exit(1)
-	}
-
-	program := lexer.LoadProgramFromFile(path)
-	name := file.GetName(path)
-
+func Compile(name string, program []operation.Operation) {
 	switch runtime.GOARCH {
 	case "amd64":
 		compile_x86_64(fmt.Sprintf("%s.asm", name), program)
@@ -41,10 +21,6 @@ func Compile(args []string) {
 		log.Info("compiled to " + name)
 	default:
 		assert.Assert(false, "unsupported platform")
-	}
-
-	if runAfterCompile {
-		command.Execute(true, name)
 	}
 }
 
