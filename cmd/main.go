@@ -11,6 +11,30 @@ import (
 	"os"
 )
 
+func exploreProvidedFilepath(path string) string {
+	info, err := os.Stat(path)
+	if err != nil {
+		log.Error("can't read path: " + path)
+		os.Exit(1)
+	}
+
+	if info.IsDir() {
+		if path[len(path)-1] == '/' {
+			path += "main.glo"
+		} else {
+			path += "/main.glo"
+		}
+	}
+
+	ext := file.GetExtension(path)
+	if ext != ".glo" {
+		log.Error("unknown file extension: " + ext)
+		os.Exit(1)
+	}
+
+	return path
+}
+
 func main() {
 	args := os.Args
 	compilerName, args := slice.Chop(args)
@@ -32,11 +56,7 @@ func main() {
 	case "run":
 		path, _ := slice.Chop(args)
 
-		ext := file.GetExtension(path)
-		if ext != ".glo" {
-			log.Error("unknown file extension: " + ext)
-			os.Exit(1)
-		}
+		path = exploreProvidedFilepath(path)
 
 		program := lexer.LexFile(compilerName, path)
 		runner.Run(program)
@@ -49,11 +69,7 @@ func main() {
 			path, _ = slice.Chop(args)
 		}
 
-		ext := file.GetExtension(path)
-		if ext != ".glo" {
-			log.Error("unknown file extension: " + ext)
-			os.Exit(1)
-		}
+		path = exploreProvidedFilepath(path)
 
 		program := lexer.LexFile(compilerName, path)
 		name := file.GetName(path)
