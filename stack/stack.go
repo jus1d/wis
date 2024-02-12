@@ -5,6 +5,7 @@ type Stack struct {
 	items []int64
 }
 
+// New returns a pointer to a new instance of Stack
 func New() *Stack {
 	return &Stack{items: make([]int64, 0)}
 }
