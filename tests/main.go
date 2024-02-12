@@ -8,6 +8,15 @@ import (
 	"strings"
 )
 
+func build() error {
+	cmd := exec.Command("make", "build")
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("error running gollo: %v", err)
+	}
+	return nil
+}
+
 func runGollo(file string) (string, error) {
 	cmd := exec.Command("./gollo", "run", file)
 	output, err := cmd.CombinedOutput()
@@ -35,6 +44,12 @@ func compileAndRun(file string) (string, error) {
 }
 
 func main() {
+	err := build()
+	if err != nil {
+		fmt.Printf("Can't build ./gollo: %s", err.Error())
+		os.Exit(1)
+	}
+
 	directoryPath := "./tests/"
 
 	files, err := os.ReadDir(directoryPath)
