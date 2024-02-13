@@ -72,7 +72,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
 
-	assert.Assert(operation.Count == 18, "Exhaustive handling in compiler.compile_x86_64()")
+	assert.Assert(operation.Count == 20, "Exhaustive handling in compiler.compile_x86_64()")
 
 	for i := 0; i < len(program); i++ {
 		op := program[i]
@@ -172,7 +172,19 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, fmt.Sprintf("_addr_%d:", i+1))
 		case operation.END:
 			str.Complete(&content, "    ; -- End --")
+			if program[op.JumpTo].Code == operation.WHILE {
+				str.Complete(&content, fmt.Sprintf("    jmp     _addr_%d", op.JumpTo))
+			}
 			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
+		case operation.WHILE:
+			str.Complete(&content, "    ; -- While --")
+			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
+		case operation.DO:
+			str.Complete(&content, "    ; -- Do --")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    mov     rbx, 0")
+			str.Complete(&content, "    cmp     rax, rbx")
+			str.Complete(&content, "    je      "+fmt.Sprintf("_addr_%d", op.JumpTo-1))
 		case operation.DUMP:
 			str.Complete(&content, "    ; -- Dump --")
 			str.Complete(&content, "    pop     rdi")
