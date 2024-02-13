@@ -8,13 +8,14 @@ import (
 )
 
 func Run(program []operation.Operation) {
-	assert.Assert(operation.Count == 18, "Exhaustive handling in runner.Run()")
+	assert.Assert(operation.Count == 20, "Exhaustive handling in runner.Run()")
 
 	stack := st.New()
 
 	i := 0
 	for i < len(program) {
 		op := program[i]
+
 		switch op.Code {
 		case operation.PUSH:
 			stack.Push(op.Value)
@@ -103,7 +104,20 @@ func Run(program []operation.Operation) {
 		case operation.ELSE:
 			i = op.JumpTo
 		case operation.END:
+			if program[op.JumpTo].Code == operation.WHILE {
+				i = op.JumpTo
+			} else {
+				i++
+			}
+		case operation.WHILE:
 			i++
+		case operation.DO:
+			a := stack.Pop()
+			if a == 0 {
+				i = op.JumpTo
+			} else {
+				i++
+			}
 		case operation.DUMP:
 			fmt.Println(stack.Pop())
 			i++
