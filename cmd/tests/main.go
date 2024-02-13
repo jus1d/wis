@@ -52,34 +52,34 @@ func main() {
 
 			expectedOutput, err := os.ReadFile(outputFilePath)
 			if err != nil {
-				fmt.Printf("Error reading expected output file %s: %v\n", outputFilePath, err)
+				log.Error("Error reading expected output file: " + err.Error())
 				continue
 			}
 
 			actualRunOutput, err := run(gloFilePath)
 			if err != nil {
-				fmt.Printf("Error running gollo for %s: %v\n", gloFilePath, err)
+				log.Error("Error running gollo: " + err.Error())
 				continue
 			}
 
 			actualCompileOutput, err := compile(gloFilePath)
 			if err != nil {
-				fmt.Printf("Error compiling gollo for %s: %v\n", gloFilePath, err)
+				log.Error("Error compiling gollo for: " + err.Error())
 				continue
 			}
 
 			if strings.TrimSpace(actualRunOutput) != strings.TrimSpace(string(expectedOutput)) {
-				fmt.Printf("Test failed for RUN: %s\n", gloFilePath)
+				log.Error("Running: Test failed for: " + gloFilePath)
 				gotErrors = true
 			} else {
-				fmt.Printf("Test passed for RUN: %s\n", gloFilePath)
+				log.Info("Running: Test passed for: " + gloFilePath)
 			}
 
 			if strings.TrimSpace(actualCompileOutput) != strings.TrimSpace(string(expectedOutput)) {
-				fmt.Printf("Test failed for COMPILE: %s\n", gloFilePath)
+				log.Error("Compilation: Test failed for: " + gloFilePath)
 				gotErrors = true
 			} else {
-				fmt.Printf("Test passed for COMPILE: %s\n", gloFilePath)
+				log.Info("Compilation: Test passed for: " + gloFilePath)
 			}
 		}
 	}

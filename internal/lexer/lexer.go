@@ -52,19 +52,38 @@ func LexFile(compiler string, filepath string) []operation.Operation {
 func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	stack := st.New()
 
+	assert.Assert(operation.Count == 20, "Exhaustive handling in lexer.parseTokensAsOperations(). Not all operations should be handled in here.")
+
 	i := 0
 	for i < len(program) {
 		op := program[i]
-		if op.Code == operation.OpIf {
+
+		switch op.Code {
+		case operation.IF:
 			stack.Push(i)
-		} else if op.Code == operation.OpElse {
+		case operation.ELSE:
 			pos := stack.Pop()
 			program[pos].JumpTo = i + 1
 			stack.Push(i)
-		} else if op.Code == operation.OpEnd {
+		case operation.DO:
+			program[i].JumpTo = stack.Pop()
+			stack.Push(i)
+		case operation.WHILE:
+			stack.Push(i)
+		case operation.END:
 			pos := stack.Pop()
-			program[pos].JumpTo = i
+
+			if program[pos].Code == operation.IF || program[pos].Code == operation.ELSE {
+				program[pos].JumpTo = i
+			} else if program[pos].Code == operation.DO {
+				program[i].JumpTo = program[pos].JumpTo
+				program[pos].JumpTo = i + 1
+
+				// program[pos].JumpTo = i + 1
+				// program[i].JumpTo = stack.Pop()
+			}
 		}
+
 		i++
 	}
 
@@ -76,6 +95,9 @@ func lexLine(filepath string, number int, line string) []Token {
 	var cur string
 
 	for i := 0; i < len(line); i++ {
+		if cur == "//" {
+			return tokens
+		}
 		if (line[i] == ' ' || line[i] == '\n') && cur != "" {
 			tokens = append(tokens, Token{
 				Filepath: filepath,
@@ -96,7 +118,7 @@ func lexLine(filepath string, number int, line string) []Token {
 func parseTokensAsOperations(tokens []Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.Count == 18, "Exhaustive handling in lexer.parseTokensAsOperations()")
+	assert.Assert(operation.Count == 20, "Exhaustive handling in lexer.parseTokensAsOperations()")
 
 	for _, token := range tokens {
 		switch token.Word {
@@ -126,6 +148,10 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 			program = append(program, operation.Else())
 		case "end":
 			program = append(program, operation.End())
+		case "do":
+			program = append(program, operation.Do())
+		case "while":
+			program = append(program, operation.While())
 		case "put":
 			program = append(program, operation.Dump())
 		case "copy":
@@ -143,5 +169,6 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 			program = append(program, operation.Push(val))
 		}
 	}
+
 	return program
 }

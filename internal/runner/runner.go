@@ -8,38 +8,39 @@ import (
 )
 
 func Run(program []operation.Operation) {
-	assert.Assert(operation.Count == 18, "Exhaustive handling in runner.Run()")
+	assert.Assert(operation.Count == 20, "Exhaustive handling in runner.Run()")
 
 	stack := st.New()
 
 	i := 0
 	for i < len(program) {
 		op := program[i]
+
 		switch op.Code {
-		case operation.OpPush:
+		case operation.PUSH:
 			stack.Push(op.Value)
 			i++
-		case operation.OpPlus:
+		case operation.PLUS:
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(a + b)
 			i++
-		case operation.OpMinus:
+		case operation.MINUS:
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(b - a)
 			i++
-		case operation.OpMultiply:
+		case operation.MUL:
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(b * a)
 			i++
-		case operation.OpDivision:
+		case operation.DIV:
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(b / a)
 			i++
-		case operation.OpEqual:
+		case operation.EQ:
 			a := stack.Pop()
 			b := stack.Pop()
 			if a == b {
@@ -48,7 +49,7 @@ func Run(program []operation.Operation) {
 				stack.Push(0)
 			}
 			i++
-		case operation.OpNotEqual:
+		case operation.NE:
 			a := stack.Pop()
 			b := stack.Pop()
 			if a != b {
@@ -57,7 +58,7 @@ func Run(program []operation.Operation) {
 				stack.Push(0)
 			}
 			i++
-		case operation.OpLess:
+		case operation.LT:
 			a := stack.Pop()
 			b := stack.Pop()
 			if b < a {
@@ -66,7 +67,7 @@ func Run(program []operation.Operation) {
 				stack.Push(0)
 			}
 			i++
-		case operation.OpGreater:
+		case operation.GT:
 			a := stack.Pop()
 			b := stack.Pop()
 			if b > a {
@@ -75,7 +76,7 @@ func Run(program []operation.Operation) {
 				stack.Push(0)
 			}
 			i++
-		case operation.OpLessOrEqual:
+		case operation.LE:
 			a := stack.Pop()
 			b := stack.Pop()
 			if b <= a {
@@ -84,7 +85,7 @@ func Run(program []operation.Operation) {
 				stack.Push(0)
 			}
 			i++
-		case operation.OpGreaterOrEqual:
+		case operation.GE:
 			a := stack.Pop()
 			b := stack.Pop()
 			if b >= a {
@@ -93,30 +94,43 @@ func Run(program []operation.Operation) {
 				stack.Push(0)
 			}
 			i++
-		case operation.OpIf:
+		case operation.IF:
 			a := stack.Pop()
 			if a == 0 {
 				i = op.JumpTo
 			} else {
 				i++
 			}
-		case operation.OpElse:
+		case operation.ELSE:
 			i = op.JumpTo
-		case operation.OpEnd:
+		case operation.END:
+			if program[op.JumpTo].Code == operation.WHILE {
+				i = op.JumpTo
+			} else {
+				i++
+			}
+		case operation.WHILE:
 			i++
-		case operation.OpDump:
+		case operation.DO:
+			a := stack.Pop()
+			if a == 0 {
+				i = op.JumpTo
+			} else {
+				i++
+			}
+		case operation.DUMP:
 			fmt.Println(stack.Pop())
 			i++
-		case operation.OpCopy:
+		case operation.COPY:
 			stack.Push(stack.Peek())
 			i++
-		case operation.OpSwap:
+		case operation.SWAP:
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(a)
 			stack.Push(b)
 			i++
-		case operation.OpDrop:
+		case operation.DROP:
 			_ = stack.Pop()
 			i++
 		default:
