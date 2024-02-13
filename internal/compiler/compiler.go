@@ -72,7 +72,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
 
-	assert.Assert(operation.Count == 21, "Exhaustive handling in compiler.compile_x86_64()")
+	assert.Assert(operation.Count == 22, "Exhaustive handling in compiler.compile_x86_64()")
 
 	for i := 0; i < len(program); i++ {
 		op := program[i]
@@ -211,6 +211,13 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 		case operation.DROP:
 			str.Complete(&content, "    ; -- Drop --")
 			str.Complete(&content, "    pop     rax")
+		case operation.OVER:
+			str.Complete(&content, "    ; -- Over --")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    pop     rbx")
+			str.Complete(&content, "    push    rbx")
+			str.Complete(&content, "    push    rax")
+			str.Complete(&content, "    push    rbx")
 		default:
 			assert.Assert(false, "unreachable")
 		}

@@ -19,3 +19,7 @@
 // Test two copy operation
 1 2 2copy
 put put put put
+
+// Test over operation
+1 2 over
+put put put

@@ -52,7 +52,7 @@ func LexFile(compiler string, filepath string) []operation.Operation {
 func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	stack := st.New()
 
-	assert.Assert(operation.Count == 21, "Exhaustive handling in lexer.parseTokensAsOperations(). Not all operations should be handled in here.")
+	assert.Assert(operation.Count == 22, "Exhaustive handling in lexer.parseTokensAsOperations(). Not all operations should be handled in here.")
 
 	i := 0
 	for i < len(program) {
@@ -117,7 +117,7 @@ func lexLine(filepath string, number int, line string) []Token {
 func parseTokensAsOperations(tokens []Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.Count == 21, "Exhaustive handling in lexer.parseTokensAsOperations()")
+	assert.Assert(operation.Count == 22, "Exhaustive handling in lexer.parseTokensAsOperations()")
 
 	for _, token := range tokens {
 		switch token.Word {
@@ -161,6 +161,8 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 			program = append(program, operation.Swap())
 		case "drop":
 			program = append(program, operation.Drop())
+		case "over":
+			program = append(program, operation.Over())
 		default:
 			val, err := strconv.Atoi(token.Word)
 			if err != nil {
