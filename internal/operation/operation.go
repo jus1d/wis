@@ -19,6 +19,7 @@ const (
 	WHILE
 	DUMP
 	COPY
+	TWOCOPY
 	SWAP
 	DROP
 	Count
@@ -129,6 +130,12 @@ func Dump() Operation {
 func Copy() Operation {
 	return Operation{
 		Code: COPY,
+	}
+}
+
+func TwoCopy() Operation {
+	return Operation{
+		Code: TWOCOPY,
 	}
 }
 

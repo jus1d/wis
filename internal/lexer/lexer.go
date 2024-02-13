@@ -52,7 +52,7 @@ func LexFile(compiler string, filepath string) []operation.Operation {
 func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	stack := st.New()
 
-	assert.Assert(operation.Count == 20, "Exhaustive handling in lexer.parseTokensAsOperations(). Not all operations should be handled in here.")
+	assert.Assert(operation.Count == 21, "Exhaustive handling in lexer.parseTokensAsOperations(). Not all operations should be handled in here.")
 
 	i := 0
 	for i < len(program) {
@@ -78,9 +78,8 @@ func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 			} else if program[pos].Code == operation.DO {
 				program[i].JumpTo = program[pos].JumpTo
 				program[pos].JumpTo = i + 1
-
-				// program[pos].JumpTo = i + 1
-				// program[i].JumpTo = stack.Pop()
+			} else {
+				assert.Assert(false, "`end` can only close `if-else` and `do-while` blocks")
 			}
 		}
 
@@ -118,7 +117,7 @@ func lexLine(filepath string, number int, line string) []Token {
 func parseTokensAsOperations(tokens []Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.Count == 20, "Exhaustive handling in lexer.parseTokensAsOperations()")
+	assert.Assert(operation.Count == 21, "Exhaustive handling in lexer.parseTokensAsOperations()")
 
 	for _, token := range tokens {
 		switch token.Word {
@@ -156,6 +155,8 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 			program = append(program, operation.Dump())
 		case "copy":
 			program = append(program, operation.Copy())
+		case "2copy":
+			program = append(program, operation.TwoCopy())
 		case "swap":
 			program = append(program, operation.Swap())
 		case "drop":
