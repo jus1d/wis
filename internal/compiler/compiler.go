@@ -72,41 +72,41 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
 
-	assert.Assert(operation.Count == 18, "Exhaustive handling in compiler.compile_x86_64()")
+	assert.Assert(operation.Count == 20, "Exhaustive handling in compiler.compile_x86_64()")
 
 	for i := 0; i < len(program); i++ {
 		op := program[i]
 
 		switch op.Code {
-		case operation.OpPush:
+		case operation.PUSH:
 			str.Complete(&content, fmt.Sprintf("    ; -- Push %d --", op.Value))
 			str.Complete(&content, fmt.Sprintf("    push    %d", op.Value))
-		case operation.OpPlus:
+		case operation.PLUS:
 			str.Complete(&content, "    ; -- Plus --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    add     rax, rbx")
 			str.Complete(&content, "    push    rax")
-		case operation.OpMinus:
+		case operation.MINUS:
 			str.Complete(&content, "    ; -- Minus --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    sub     rbx, rax")
 			str.Complete(&content, "    push    rbx")
-		case operation.OpMultiply:
+		case operation.MUL:
 			str.Complete(&content, "    ; -- Multiply --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    imul    rax, rbx")
 			str.Complete(&content, "    push    rax")
-		case operation.OpDivision:
+		case operation.DIV:
 			str.Complete(&content, "    ; -- Division --")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    xor     rdx, rdx")
 			str.Complete(&content, "    div     rbx")
 			str.Complete(&content, "    push    rax")
-		case operation.OpEqual:
+		case operation.EQ:
 			str.Complete(&content, "    ; -- Equal --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
@@ -115,7 +115,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmp     rax, rbx")
 			str.Complete(&content, "    cmove   rcx, rdx")
 			str.Complete(&content, "    push    rcx")
-		case operation.OpNotEqual:
+		case operation.NE:
 			str.Complete(&content, "    ; -- Not Equal --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
@@ -124,7 +124,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmp     rax, rbx")
 			str.Complete(&content, "    cmovne  rcx, rdx")
 			str.Complete(&content, "    push    rcx")
-		case operation.OpLess:
+		case operation.LT:
 			str.Complete(&content, "    ; -- Less --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
@@ -133,7 +133,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmp     rbx, rax")
 			str.Complete(&content, "    cmovl   rcx, rdx")
 			str.Complete(&content, "    push    rcx")
-		case operation.OpGreater:
+		case operation.GT:
 			str.Complete(&content, "    ; -- Greater --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
@@ -142,8 +142,8 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmp     rbx, rax")
 			str.Complete(&content, "    cmovg   rcx, rdx")
 			str.Complete(&content, "    push    rcx")
-		case operation.OpLessOrEqual:
-			str.Complete(&content, "    ; -- Less --")
+		case operation.LE:
+			str.Complete(&content, "    ; -- Less or equal --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
 			str.Complete(&content, "    pop     rax")
@@ -151,8 +151,8 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmp     rbx, rax")
 			str.Complete(&content, "    cmovle  rcx, rdx")
 			str.Complete(&content, "    push    rcx")
-		case operation.OpGreaterOrEqual:
-			str.Complete(&content, "    ; -- Greater --")
+		case operation.GE:
+			str.Complete(&content, "    ; -- Greater or equal --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
 			str.Complete(&content, "    pop     rax")
@@ -160,35 +160,47 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmp     rbx, rax")
 			str.Complete(&content, "    cmovge  rcx, rdx")
 			str.Complete(&content, "    push    rcx")
-		case operation.OpIf:
+		case operation.IF:
 			str.Complete(&content, "    ; -- If --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    mov     rbx, 0")
 			str.Complete(&content, "    cmp     rax, rbx")
 			str.Complete(&content, fmt.Sprintf("    je      _addr_%d", op.JumpTo))
-		case operation.OpElse:
+		case operation.ELSE:
 			str.Complete(&content, "    ; -- Else --")
 			str.Complete(&content, fmt.Sprintf("    jmp     _addr_%d", op.JumpTo))
 			str.Complete(&content, fmt.Sprintf("_addr_%d:", i+1))
-		case operation.OpEnd:
+		case operation.END:
 			str.Complete(&content, "    ; -- End --")
+			if program[op.JumpTo].Code == operation.WHILE {
+				str.Complete(&content, fmt.Sprintf("    jmp     _addr_%d", op.JumpTo))
+			}
 			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
-		case operation.OpDump:
+		case operation.WHILE:
+			str.Complete(&content, "    ; -- While --")
+			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
+		case operation.DO:
+			str.Complete(&content, "    ; -- Do --")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    mov     rbx, 0")
+			str.Complete(&content, "    cmp     rax, rbx")
+			str.Complete(&content, "    je      "+fmt.Sprintf("_addr_%d", op.JumpTo-1))
+		case operation.DUMP:
 			str.Complete(&content, "    ; -- Dump --")
 			str.Complete(&content, "    pop     rdi")
 			str.Complete(&content, "    call    dump")
-		case operation.OpCopy:
+		case operation.COPY:
 			str.Complete(&content, "    ; -- Copy --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    push    rax")
 			str.Complete(&content, "    push    rax")
-		case operation.OpSwap:
+		case operation.SWAP:
 			str.Complete(&content, "    ; -- Swap --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    push    rax")
 			str.Complete(&content, "    push    rbx")
-		case operation.OpDrop:
+		case operation.DROP:
 			str.Complete(&content, "    ; -- Drop --")
 			str.Complete(&content, "    pop     rax")
 		default:

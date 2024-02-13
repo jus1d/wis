@@ -1,26 +1,51 @@
 package operation
 
 const (
-	OpPush = iota
-	OpPlus
-	OpMinus
-	OpMultiply
-	OpDivision
-	OpEqual
-	OpNotEqual
-	OpLess
-	OpGreater
-	OpLessOrEqual
-	OpGreaterOrEqual
-	OpIf
-	OpElse
-	OpEnd
-	OpDump
-	OpCopy
-	OpSwap
-	OpDrop
+	PUSH = iota
+	PLUS
+	MINUS
+	MUL
+	DIV
+	EQ
+	NE
+	LT
+	GT
+	LE
+	GE
+	IF
+	ELSE
+	END
+	DO
+	WHILE
+	DUMP
+	COPY
+	SWAP
+	DROP
 	Count
 )
+
+var Ops map[int]string = map[int]string{
+	0:  "push",
+	1:  "plus",
+	2:  "minus",
+	3:  "mul",
+	4:  "div",
+	5:  "equal",
+	6:  "not equal",
+	7:  "less",
+	8:  "greater",
+	9:  "le",
+	10: "ge",
+	11: "if",
+	12: "else",
+	13: "end",
+	14: "do",
+	15: "while",
+	16: "dump",
+	17: "copy",
+	18: "swap",
+	19: "drop",
+}
 
 type Operation struct {
 	Code   int
@@ -30,109 +55,121 @@ type Operation struct {
 
 func Push(value int) Operation {
 	return Operation{
-		Code:  OpPush,
+		Code:  PUSH,
 		Value: value,
 	}
 }
 
 func Plus() Operation {
 	return Operation{
-		Code: OpPlus,
+		Code: PLUS,
 	}
 }
 
 func Minus() Operation {
 	return Operation{
-		Code: OpMinus,
+		Code: MINUS,
 	}
 }
 
 func Multiply() Operation {
 	return Operation{
-		Code: OpMultiply,
+		Code: MUL,
 	}
 }
 
 func Division() Operation {
 	return Operation{
-		Code: OpDivision,
+		Code: DIV,
 	}
 }
 
 func Equal() Operation {
 	return Operation{
-		Code: OpEqual,
+		Code: EQ,
 	}
 }
 
 func NotEqual() Operation {
 	return Operation{
-		Code: OpNotEqual,
+		Code: NE,
 	}
 }
 
 func Less() Operation {
 	return Operation{
-		Code: OpLess,
+		Code: LT,
 	}
 }
 
 func Greater() Operation {
 	return Operation{
-		Code: OpGreater,
+		Code: GT,
 	}
 }
 
 func LessOrEqual() Operation {
 	return Operation{
-		Code: OpLessOrEqual,
+		Code: LE,
 	}
 }
 
 func GreaterOrEqual() Operation {
 	return Operation{
-		Code: OpGreaterOrEqual,
+		Code: GE,
 	}
 }
 
 func Dump() Operation {
 	return Operation{
-		Code: OpDump,
+		Code: DUMP,
 	}
 }
 
 func Copy() Operation {
 	return Operation{
-		Code: OpCopy,
+		Code: COPY,
 	}
 }
 
 func Swap() Operation {
 	return Operation{
-		Code: OpSwap,
+		Code: SWAP,
 	}
 }
 
 func Drop() Operation {
 	return Operation{
-		Code: OpDrop,
+		Code: DROP,
 	}
 }
 
 func If() Operation {
 	return Operation{
-		Code: OpIf,
+		Code: IF,
 	}
 }
 
 func Else() Operation {
 	return Operation{
-		Code: OpElse,
+		Code: ELSE,
 	}
 }
 
 func End() Operation {
 	return Operation{
-		Code: OpEnd,
+		Code: END,
+	}
+}
+
+func Do() Operation {
+	return Operation{
+		Code: DO,
+	}
+}
+
+func While() Operation {
+	return Operation{
+		Code: WHILE,
 	}
 }

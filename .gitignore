@@ -8,6 +8,7 @@ gollo*
 examples/*
 tests/*
 foo*
+goo*
 
 # Ignore assembly files
 *.asm
