@@ -1,25 +1,35 @@
+// Test equal operation
 34 35 == put
 
+34 34 == put
+
+// Test not equal operation
 34 35 != put
 
+34 34 != put
+
+// Test greater operation
 12 23 > put
 
 23 12 > put
 
 23 23 > put
 
+// Test less operation
 12 23 < put
 
 23 12 < put
 
 23 23 < put
 
+// Test greater or equal operation
 12 23 >= put
 
 23 12 >= put
 
 23 23 >= put
 
+// Test less or equal operation
 12 23 <= put
 
 23 12 <= put
