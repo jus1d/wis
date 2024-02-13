@@ -19,33 +19,12 @@ const (
 	WHILE
 	DUMP
 	COPY
+	TWOCOPY
 	SWAP
 	DROP
+	OVER
 	Count
 )
-
-var Ops map[int]string = map[int]string{
-	0:  "push",
-	1:  "plus",
-	2:  "minus",
-	3:  "mul",
-	4:  "div",
-	5:  "equal",
-	6:  "not equal",
-	7:  "less",
-	8:  "greater",
-	9:  "le",
-	10: "ge",
-	11: "if",
-	12: "else",
-	13: "end",
-	14: "do",
-	15: "while",
-	16: "dump",
-	17: "copy",
-	18: "swap",
-	19: "drop",
-}
 
 type Operation struct {
 	Code   int
@@ -132,6 +111,12 @@ func Copy() Operation {
 	}
 }
 
+func TwoCopy() Operation {
+	return Operation{
+		Code: TWOCOPY,
+	}
+}
+
 func Swap() Operation {
 	return Operation{
 		Code: SWAP,
@@ -141,6 +126,12 @@ func Swap() Operation {
 func Drop() Operation {
 	return Operation{
 		Code: DROP,
+	}
+}
+
+func Over() Operation {
+	return Operation{
+		Code: OVER,
 	}
 }
 
