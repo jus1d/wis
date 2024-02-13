@@ -55,13 +55,13 @@ func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	i := 0
 	for i < len(program) {
 		op := program[i]
-		if op.Code == operation.OpIf {
+		if op.Code == operation.IF {
 			stack.Push(i)
-		} else if op.Code == operation.OpElse {
+		} else if op.Code == operation.ELSE {
 			pos := stack.Pop()
 			program[pos].JumpTo = i + 1
 			stack.Push(i)
-		} else if op.Code == operation.OpEnd {
+		} else if op.Code == operation.END {
 			pos := stack.Pop()
 			program[pos].JumpTo = i
 		}
