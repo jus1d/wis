@@ -15,8 +15,8 @@ func Compile(name string, program []operation.Operation) {
 	switch runtime.GOARCH {
 	case "amd64":
 		compile_x86_64(fmt.Sprintf("%s.asm", name), program)
-		command.Execute(false, "nasm", "-felf64", "-o", fmt.Sprintf("%s.o", name), fmt.Sprintf("%s.asm", name))
-		command.Execute(false, "ld", "-o", name, fmt.Sprintf("%s.o", name))
+		command.MustExecute(false, "nasm", "-felf64", "-o", fmt.Sprintf("%s.o", name), fmt.Sprintf("%s.asm", name))
+		command.MustExecute(false, "ld", "-o", name, fmt.Sprintf("%s.o", name))
 		command.Execute(false, "rm", fmt.Sprintf("%s.o", name))
 		log.Info("Compiled to " + name)
 	default:

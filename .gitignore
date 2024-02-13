@@ -7,6 +7,7 @@ gollo*
 *.out
 examples/*
 tests/*
+foo*
 
 # Ignore assembly files
 *.asm
