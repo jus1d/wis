@@ -18,14 +18,14 @@ func Compile(name string, program []operation.Operation) {
 		command.Execute(false, "nasm", "-felf64", "-o", fmt.Sprintf("%s.o", name), fmt.Sprintf("%s.asm", name))
 		command.Execute(false, "ld", "-o", name, fmt.Sprintf("%s.o", name))
 		command.Execute(false, "rm", fmt.Sprintf("%s.o", name))
-		log.Info("compiled to " + name)
+		log.Info("Compiled to " + name)
 	default:
 		assert.Assert(false, "unsupported platform: "+runtime.GOARCH)
 	}
 }
 
 func compile_x86_64(filepath string, program []operation.Operation) {
-	log.Info("generating assembly")
+	log.Info("Generating assembly")
 	file, err := os.Create(filepath)
 	if err != nil {
 		log.Error("can't create an assembly file")
