@@ -172,7 +172,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, fmt.Sprintf("_addr_%d:", i+1))
 		case operation.OpEnd:
 			str.Complete(&content, "    ; -- End --")
-			str.Complete(&content, fmt.Sprintf("_addr_%d", i))
+			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
 		case operation.OpDump:
 			str.Complete(&content, "    ; -- Dump --")
 			str.Complete(&content, "    pop     rdi")
