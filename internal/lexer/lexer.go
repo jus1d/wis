@@ -76,6 +76,9 @@ func lexLine(filepath string, number int, line string) []Token {
 	var cur string
 
 	for i := 0; i < len(line); i++ {
+		if cur == "//" {
+			return tokens
+		}
 		if (line[i] == ' ' || line[i] == '\n') && cur != "" {
 			tokens = append(tokens, Token{
 				Filepath: filepath,
@@ -143,5 +146,6 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 			program = append(program, operation.Push(val))
 		}
 	}
+
 	return program
 }
