@@ -49,6 +49,8 @@ func main() {
 
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".glo") {
+			totalTests++
+			
 			name := strings.TrimSuffix(filepath.Join(testsDirectory, file.Name()), ".glo")
 
 			outputFilepath := fmt.Sprintf("%s.output.txt", name)
@@ -64,17 +66,20 @@ func main() {
 			if err != nil {
 				log.TestFailed(fmt.Sprintf("%s.glo: Running exitted abnormally: %s", name, err.Error()))
 				runsFailed++
+				continue
 			}
 
 			actualCompileOutput, err := compile(golloFilepath)
 			if err != nil {
 				log.TestFailed(fmt.Sprintf("%s.glo: Compiling exitted abnormally: %s", name, err.Error()))
 				compilesFailed++
+				continue
 			}
 
 			if strings.TrimSpace(actualRunOutput) != strings.TrimSpace(string(expectedOutput)) {
 				log.TestFailed(fmt.Sprintf("%s.glo: Expected and actual outputs didn't match in run mode", name))
 				runsFailed++
+				continue
 			} else {
 				log.TestPassed(fmt.Sprintf("%s.glo: Sucessfully passed the test in run mode", name))
 			}
@@ -82,11 +87,11 @@ func main() {
 			if strings.TrimSpace(actualCompileOutput) != strings.TrimSpace(string(expectedOutput)) {
 				log.TestFailed(fmt.Sprintf("%s.glo: Expected and actual outputs didn't match in compile mode", name))
 				compilesFailed++
+				continue
 			} else {
 				log.TestPassed(fmt.Sprintf("%s.glo: Sucessfully passed the test in compile mode", name))
 			}
 			fmt.Println()
-			totalTests++
 		}
 	}
 
