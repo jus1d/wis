@@ -50,7 +50,7 @@ func main() {
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".glo") {
 			totalTests++
-			
+
 			name := strings.TrimSuffix(filepath.Join(testsDirectory, file.Name()), ".glo")
 
 			outputFilepath := fmt.Sprintf("%s.output.txt", name)
