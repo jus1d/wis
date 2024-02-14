@@ -135,7 +135,7 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 		case "/":
 			program = append(program, operation.Division(loc))
 		case "%":
-			program = append(program, operation.Rem(loc))
+			program = append(program, operation.Mod(loc))
 		case "bor":
 			program = append(program, operation.Bor(loc))
 		case "band":

@@ -109,8 +109,8 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    xor     rdx, rdx")
 			str.Complete(&content, "    div     rbx")
 			str.Complete(&content, "    push    rax")
-		case operation.REM:
-			str.Complete(&content, "    ; -- remainder of division --")
+		case operation.MOD:
+			str.Complete(&content, "    ; -- mod --")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    xor     rdx, rdx")

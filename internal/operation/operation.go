@@ -6,7 +6,7 @@ const (
 	MINUS
 	MUL
 	DIV
-	REM
+	MOD
 	BOR
 	BAND
 	XOR
@@ -79,9 +79,9 @@ func Division(loc string) Operation {
 	}
 }
 
-func Rem(loc string) Operation {
+func Mod(loc string) Operation {
 	return Operation{
-		Code: REM,
+		Code: MOD,
 		Loc:  loc,
 	}
 }
