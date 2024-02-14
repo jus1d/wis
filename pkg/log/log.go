@@ -17,6 +17,14 @@ func CMD(command ...string) {
 	fmt.Printf("[CMD]: %s\n", strings.Join(command, " "))
 }
 
+func TestPassed(message string) {
+	fmt.Printf("PASSED: %s\n", message)
+}
+
+func TestFailed(message string) {
+	fmt.Printf("    FAILURE: %s\n", message)
+}
+
 func Usage(compiler string) {
 	fmt.Printf("Usage: %s <SUBCOMMAND> [ARGS] ./examples/foo.glo\n", compiler)
 	fmt.Println("SUBCOMMANDS:")
