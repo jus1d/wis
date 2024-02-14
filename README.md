@@ -133,3 +133,17 @@ Swaps two integers on top of the stack
 Drops integer from top of the stack
 
 **Stack:** `1 2 3` => `1 2`
+
+---
+
+### System calls
+
+**Gollo** suports syscalls with 1-3 parameters now.
+
+**Example:** 
+
+Call exit syscall with non-zero exit code
+
+```
+1 60 syscall1
+```
