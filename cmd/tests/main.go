@@ -43,6 +43,10 @@ func main() {
 		return
 	}
 
+	runsFailed := 0
+	compilesFailed := 0
+	totalTests := 0
+
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".glo") {
 			name := strings.TrimSuffix(filepath.Join(testsDirectory, file.Name()), ".glo")
@@ -59,38 +63,38 @@ func main() {
 			actualRunOutput, err := run(golloFilepath)
 			if err != nil {
 				log.TestFailed(fmt.Sprintf("%s.glo: Running exitted abnormally: %s", name, err.Error()))
-				os.Exit(1)
+				runsFailed++
 			}
 
 			actualCompileOutput, err := compile(golloFilepath)
 			if err != nil {
 				log.TestFailed(fmt.Sprintf("%s.glo: Compiling exitted abnormally: %s", name, err.Error()))
-				os.Exit(1)
+				compilesFailed++
 			}
 
 			if strings.TrimSpace(actualRunOutput) != strings.TrimSpace(string(expectedOutput)) {
 				log.TestFailed(fmt.Sprintf("%s.glo: Expected and actual outputs didn't match in run mode", name))
-				os.Exit(1)
+				runsFailed++
 			} else {
 				log.TestPassed(fmt.Sprintf("%s.glo: Sucessfully passed the test in run mode", name))
 			}
 
 			if strings.TrimSpace(actualCompileOutput) != strings.TrimSpace(string(expectedOutput)) {
 				log.TestFailed(fmt.Sprintf("%s.glo: Expected and actual outputs didn't match in compile mode", name))
-				os.Exit(1)
+				compilesFailed++
 			} else {
 				log.TestPassed(fmt.Sprintf("%s.glo: Sucessfully passed the test in compile mode", name))
 			}
-
-			log.Info("Removing output files...")
-
-			command.Execute(false, "rm", name)
-			command.Execute(false, "rm", fmt.Sprintf("%s.asm", name))
-
 			fmt.Println()
+			totalTests++
 		}
 	}
 
 	fmt.Println()
-	log.TestPassed(fmt.Sprintf("All tests passed in %s", testsDirectory))
+	if runsFailed != 0 || compilesFailed != 0 {
+		log.TestFailed(fmt.Sprintf("Runs failed: %d/%d, compilations failed: %d/%d", runsFailed, totalTests, compilesFailed, totalTests))
+		os.Exit(1)
+	} else {
+		log.TestPassed(fmt.Sprintf("All tests passed in %s", testsDirectory))
+	}
 }
