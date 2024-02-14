@@ -34,7 +34,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	_ = file
 	var content string
 
-	str.Complete(&content, "dump:")
+	str.Complete(&content, "put:")
 	str.Complete(&content, "    mov     r9, -3689348814741910323")
 	str.Complete(&content, "    sub     rsp, 40")
 	str.Complete(&content, "    mov     BYTE [rsp+31], 10")
@@ -192,10 +192,10 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 		case operation.WHILE:
 			str.Complete(&content, "    ; -- While --")
 			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
-		case operation.DUMP:
-			str.Complete(&content, "    ; -- Dump --")
+		case operation.PUT:
+			str.Complete(&content, "    ; -- Put --")
 			str.Complete(&content, "    pop     rdi")
-			str.Complete(&content, "    call    dump")
+			str.Complete(&content, "    call    put")
 		case operation.COPY:
 			str.Complete(&content, "    ; -- Copy --")
 			str.Complete(&content, "    pop     rax")

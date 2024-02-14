@@ -123,7 +123,7 @@ func Run(program []operation.Operation) {
 			}
 		case operation.WHILE:
 			i++
-		case operation.DUMP:
+		case operation.PUT:
 			fmt.Println(stack.Pop())
 			i++
 		case operation.COPY:

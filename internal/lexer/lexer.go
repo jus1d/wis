@@ -152,7 +152,7 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 		case "while":
 			program = append(program, operation.While())
 		case "put":
-			program = append(program, operation.Dump())
+			program = append(program, operation.Put())
 		case "copy":
 			program = append(program, operation.Copy())
 		case "2copy":

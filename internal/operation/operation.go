@@ -18,7 +18,7 @@ const (
 	END
 	DO
 	WHILE
-	DUMP
+	PUT
 	COPY
 	TWOCOPY
 	SWAP
@@ -136,9 +136,9 @@ func While() Operation {
 	}
 }
 
-func Dump() Operation {
+func Put() Operation {
 	return Operation{
-		Code: DUMP,
+		Code: PUT,
 	}
 }
 
