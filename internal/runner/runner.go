@@ -41,7 +41,7 @@ func Run(program []operation.Operation) {
 			b := stack.Pop()
 			stack.Push(b / a)
 			i++
-		case operation.REM:
+		case operation.MOD:
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(b % a)
