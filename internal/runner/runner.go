@@ -5,10 +5,11 @@ import (
 	"gollo/internal/operation"
 	"gollo/pkg/assert"
 	st "gollo/pkg/stack"
+	"syscall"
 )
 
 func Run(program []operation.Operation) {
-	assert.Assert(operation.Count == 22, "Exhaustive handling in runner.Run()")
+	assert.Assert(operation.Count == 32, "Exhaustive handling in runner.Run()")
 
 	stack := st.New()
 
@@ -39,6 +40,36 @@ func Run(program []operation.Operation) {
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(b / a)
+			i++
+		case operation.REM:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(b % a)
+			i++
+		case operation.BOR:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(a | b)
+			i++
+		case operation.BAND:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(a & b)
+			i++
+		case operation.XOR:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(a ^ b)
+			i++
+		case operation.SHL:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(b << a)
+			i++
+		case operation.SHR:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(b >> a)
 			i++
 		case operation.EQ:
 			a := stack.Pop()
@@ -109,8 +140,6 @@ func Run(program []operation.Operation) {
 			} else {
 				i++
 			}
-		case operation.WHILE:
-			i++
 		case operation.DO:
 			a := stack.Pop()
 			if a == 0 {
@@ -118,7 +147,9 @@ func Run(program []operation.Operation) {
 			} else {
 				i++
 			}
-		case operation.DUMP:
+		case operation.WHILE:
+			i++
+		case operation.PUT:
 			fmt.Println(stack.Pop())
 			i++
 		case operation.COPY:
@@ -147,6 +178,32 @@ func Run(program []operation.Operation) {
 			stack.Push(b)
 			stack.Push(a)
 			stack.Push(b)
+			i++
+		case operation.SYSCALL0:
+			syscallNumber := stack.Pop()
+			r, _, _ := syscall.Syscall(uintptr(syscallNumber), 0, 0, 0)
+			stack.Push(int(r))
+			i++
+		case operation.SYSCALL1:
+			syscallNumber := stack.Pop()
+			arg1 := stack.Pop()
+			r, _, _ := syscall.Syscall(uintptr(syscallNumber), uintptr(arg1), 0, 0)
+			stack.Push(int(r))
+			i++
+		case operation.SYSCALL2:
+			syscallNumber := stack.Pop()
+			arg1 := stack.Pop()
+			arg2 := stack.Pop()
+			r, _, _ := syscall.Syscall(uintptr(syscallNumber), uintptr(arg1), uintptr(arg2), 0)
+			stack.Push(int(r))
+			i++
+		case operation.SYSCALL3:
+			syscallNumber := stack.Pop()
+			arg1 := stack.Pop()
+			arg2 := stack.Pop()
+			arg3 := stack.Pop()
+			r, _, _ := syscall.Syscall(uintptr(syscallNumber), uintptr(arg1), uintptr(arg2), uintptr(arg3))
+			stack.Push(int(r))
 			i++
 		default:
 			assert.Assert(false, "unreachable")

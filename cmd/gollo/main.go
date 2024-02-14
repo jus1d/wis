@@ -77,7 +77,7 @@ func main() {
 		compiler.Compile(name, program)
 
 		if runAfterCompile {
-			command.Execute(true, name)
+			command.ExecuteEchoed(true, name)
 		}
 	default:
 		log.Usage(compilerName)

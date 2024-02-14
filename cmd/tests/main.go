@@ -31,62 +31,66 @@ func compile(file string) (string, error) {
 func main() {
 	err := build()
 	if err != nil {
-		log.Error("can't build a compiler: " + err.Error())
+		log.Error("Can't build a compiler: " + err.Error())
 		os.Exit(1)
 	}
 
-	directoryPath := "./tests/"
+	testsDirectory := "./tests/"
 
-	files, err := os.ReadDir(directoryPath)
+	files, err := os.ReadDir(testsDirectory)
 	if err != nil {
-		fmt.Println("Error reading directory:", err)
+		log.Error("Error reading directory: " + err.Error())
 		return
 	}
 
-	gotErrors := false
-
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".glo") {
-			gloFilePath := filepath.Join(directoryPath, file.Name())
-			outputFilePath := strings.TrimSuffix(gloFilePath, ".glo") + ".output.txt"
+			name := strings.TrimSuffix(filepath.Join(testsDirectory, file.Name()), ".glo")
 
-			expectedOutput, err := os.ReadFile(outputFilePath)
+			outputFilepath := fmt.Sprintf("%s.output.txt", name)
+			golloFilepath := fmt.Sprintf("%s.glo", name)
+
+			expectedOutput, err := os.ReadFile(outputFilepath)
 			if err != nil {
 				log.Error("Error reading expected output file: " + err.Error())
 				continue
 			}
 
-			actualRunOutput, err := run(gloFilePath)
+			actualRunOutput, err := run(golloFilepath)
 			if err != nil {
-				log.Error("Error running gollo: " + err.Error())
-				continue
+				log.TestFailed(fmt.Sprintf("%s.glo: Running exitted abnormally: %s", name, err.Error()))
+				os.Exit(1)
 			}
 
-			actualCompileOutput, err := compile(gloFilePath)
+			actualCompileOutput, err := compile(golloFilepath)
 			if err != nil {
-				log.Error("Error compiling gollo for: " + err.Error())
-				continue
+				log.TestFailed(fmt.Sprintf("%s.glo: Compiling exitted abnormally: %s", name, err.Error()))
+				os.Exit(1)
 			}
 
 			if strings.TrimSpace(actualRunOutput) != strings.TrimSpace(string(expectedOutput)) {
-				log.Error("Running: Test failed for: " + gloFilePath)
-				gotErrors = true
+				log.TestFailed(fmt.Sprintf("%s.glo: Expected and actual outputs didn't match in run mode", name))
+				os.Exit(1)
 			} else {
-				log.Info("Running: Test passed for: " + gloFilePath)
+				log.TestPassed(fmt.Sprintf("%s.glo: Sucessfully passed the test in run mode", name))
 			}
 
 			if strings.TrimSpace(actualCompileOutput) != strings.TrimSpace(string(expectedOutput)) {
-				log.Error("Compilation: Test failed for: " + gloFilePath)
-				gotErrors = true
+				log.TestFailed(fmt.Sprintf("%s.glo: Expected and actual outputs didn't match in compile mode", name))
+				os.Exit(1)
 			} else {
-				log.Info("Compilation: Test passed for: " + gloFilePath)
+				log.TestPassed(fmt.Sprintf("%s.glo: Sucessfully passed the test in compile mode", name))
 			}
+
+			log.Info("Removing output files...")
+
+			command.Execute(false, "rm", name)
+			command.Execute(false, "rm", fmt.Sprintf("%s.asm", name))
+
+			fmt.Println()
 		}
 	}
 
-	if gotErrors {
-		os.Exit(1)
-	} else {
-		fmt.Printf("\nAll tests successfully passed!\n")
-	}
+	fmt.Println()
+	log.TestPassed(fmt.Sprintf("All tests passed in %s", testsDirectory))
 }
