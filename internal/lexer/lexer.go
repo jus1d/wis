@@ -50,6 +50,28 @@ func LexFile(compiler string, filepath string) []operation.Operation {
 	return crossreferehcedProgram
 }
 
+func lexLine(filepath string, number int, line string) []Token {
+	tokens := make([]Token, 0)
+	var cur string
+
+	for i := 0; i < len(line); i++ {
+		if (line[i] == ' ' || line[i] == '\n') && cur != "" {
+			tokens = append(tokens, Token{
+				Filepath: filepath,
+				Line:     number,
+				Col:      i - len(cur) + 1,
+				Word:     cur,
+			})
+			cur = ""
+		}
+		if line[i] != ' ' && line[i] != '\n' {
+			cur += string(line[i])
+		}
+	}
+
+	return tokens
+}
+
 func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	stack := st.New()
 
@@ -88,28 +110,6 @@ func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	}
 
 	return program
-}
-
-func lexLine(filepath string, number int, line string) []Token {
-	tokens := make([]Token, 0)
-	var cur string
-
-	for i := 0; i < len(line); i++ {
-		if (line[i] == ' ' || line[i] == '\n') && cur != "" {
-			tokens = append(tokens, Token{
-				Filepath: filepath,
-				Line:     number,
-				Col:      i - len(cur) + 1,
-				Word:     cur,
-			})
-			cur = ""
-		}
-		if line[i] != ' ' && line[i] != '\n' {
-			cur += string(line[i])
-		}
-	}
-
-	return tokens
 }
 
 func parseTokensAsOperations(tokens []Token) []operation.Operation {

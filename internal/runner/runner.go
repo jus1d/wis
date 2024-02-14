@@ -40,6 +40,11 @@ func Run(program []operation.Operation) {
 			b := stack.Pop()
 			stack.Push(b / a)
 			i++
+		case operation.REM:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(b % a)
+			i++
 		case operation.EQ:
 			a := stack.Pop()
 			b := stack.Pop()
@@ -109,8 +114,6 @@ func Run(program []operation.Operation) {
 			} else {
 				i++
 			}
-		case operation.WHILE:
-			i++
 		case operation.DO:
 			a := stack.Pop()
 			if a == 0 {
@@ -118,6 +121,8 @@ func Run(program []operation.Operation) {
 			} else {
 				i++
 			}
+		case operation.WHILE:
+			i++
 		case operation.DUMP:
 			fmt.Println(stack.Pop())
 			i++
@@ -147,11 +152,6 @@ func Run(program []operation.Operation) {
 			stack.Push(b)
 			stack.Push(a)
 			stack.Push(b)
-			i++
-		case operation.REM:
-			a := stack.Pop()
-			b := stack.Pop()
-			stack.Push(b % a)
 			i++
 		default:
 			assert.Assert(false, "unreachable")

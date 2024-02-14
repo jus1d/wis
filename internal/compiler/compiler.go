@@ -106,6 +106,13 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    xor     rdx, rdx")
 			str.Complete(&content, "    div     rbx")
 			str.Complete(&content, "    push    rax")
+		case operation.REM:
+			str.Complete(&content, "    ; -- Remainder of division --")
+			str.Complete(&content, "    pop     rbx")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    xor     rdx, rdx")
+			str.Complete(&content, "    div     rbx")
+			str.Complete(&content, "    push    rdx")
 		case operation.EQ:
 			str.Complete(&content, "    ; -- Equal --")
 			str.Complete(&content, "    mov     rcx, 0")
@@ -176,15 +183,15 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 				str.Complete(&content, fmt.Sprintf("    jmp     _addr_%d", op.JumpTo))
 			}
 			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
-		case operation.WHILE:
-			str.Complete(&content, "    ; -- While --")
-			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
 		case operation.DO:
 			str.Complete(&content, "    ; -- Do --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    mov     rbx, 0")
 			str.Complete(&content, "    cmp     rax, rbx")
 			str.Complete(&content, "    je      "+fmt.Sprintf("_addr_%d", op.JumpTo-1))
+		case operation.WHILE:
+			str.Complete(&content, "    ; -- While --")
+			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
 		case operation.DUMP:
 			str.Complete(&content, "    ; -- Dump --")
 			str.Complete(&content, "    pop     rdi")
@@ -218,13 +225,6 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    push    rbx")
 			str.Complete(&content, "    push    rax")
 			str.Complete(&content, "    push    rbx")
-		case operation.REM:
-			str.Complete(&content, "    ; -- Remainder of division --")
-			str.Complete(&content, "    pop     rbx")
-			str.Complete(&content, "    pop     rax")
-			str.Complete(&content, "    xor     rdx, rdx")
-			str.Complete(&content, "    div     rbx")
-			str.Complete(&content, "    push    rdx")
 		default:
 			assert.Assert(false, "unreachable")
 		}

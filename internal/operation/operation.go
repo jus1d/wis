@@ -6,6 +6,7 @@ const (
 	MINUS
 	MUL
 	DIV
+	REM
 	EQ
 	NE
 	LT
@@ -23,7 +24,6 @@ const (
 	SWAP
 	DROP
 	OVER
-	REM
 	Count
 )
 
@@ -64,6 +64,12 @@ func Division() Operation {
 	}
 }
 
+func Rem() Operation {
+	return Operation{
+		Code: REM,
+	}
+}
+
 func Equal() Operation {
 	return Operation{
 		Code: EQ,
@@ -100,6 +106,36 @@ func GreaterOrEqual() Operation {
 	}
 }
 
+func If() Operation {
+	return Operation{
+		Code: IF,
+	}
+}
+
+func Else() Operation {
+	return Operation{
+		Code: ELSE,
+	}
+}
+
+func End() Operation {
+	return Operation{
+		Code: END,
+	}
+}
+
+func Do() Operation {
+	return Operation{
+		Code: DO,
+	}
+}
+
+func While() Operation {
+	return Operation{
+		Code: WHILE,
+	}
+}
+
 func Dump() Operation {
 	return Operation{
 		Code: DUMP,
@@ -133,41 +169,5 @@ func Drop() Operation {
 func Over() Operation {
 	return Operation{
 		Code: OVER,
-	}
-}
-
-func If() Operation {
-	return Operation{
-		Code: IF,
-	}
-}
-
-func Else() Operation {
-	return Operation{
-		Code: ELSE,
-	}
-}
-
-func End() Operation {
-	return Operation{
-		Code: END,
-	}
-}
-
-func Do() Operation {
-	return Operation{
-		Code: DO,
-	}
-}
-
-func While() Operation {
-	return Operation{
-		Code: WHILE,
-	}
-}
-
-func Rem() Operation {
-	return Operation{
-		Code: REM,
 	}
 }
