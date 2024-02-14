@@ -8,7 +8,7 @@ import (
 )
 
 func Run(program []operation.Operation) {
-	assert.Assert(operation.Count == 23, "Exhaustive handling in runner.Run()")
+	assert.Assert(operation.Count == 28, "Exhaustive handling in runner.Run()")
 
 	stack := st.New()
 
@@ -44,6 +44,31 @@ func Run(program []operation.Operation) {
 			a := stack.Pop()
 			b := stack.Pop()
 			stack.Push(b % a)
+			i++
+		case operation.BOR:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(a | b)
+			i++
+		case operation.BAND:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(a & b)
+			i++
+		case operation.XOR:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(a ^ b)
+			i++
+		case operation.SHL:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(b << a)
+			i++
+		case operation.SHR:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(b >> a)
 			i++
 		case operation.EQ:
 			a := stack.Pop()

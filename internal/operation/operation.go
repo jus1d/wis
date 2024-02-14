@@ -7,6 +7,11 @@ const (
 	MUL
 	DIV
 	REM
+	BOR
+	BAND
+	XOR
+	SHL
+	SHR
 	EQ
 	NE
 	LT
@@ -67,6 +72,36 @@ func Division() Operation {
 func Rem() Operation {
 	return Operation{
 		Code: REM,
+	}
+}
+
+func Bor() Operation {
+	return Operation{
+		Code: BOR,
+	}
+}
+
+func Band() Operation {
+	return Operation{
+		Code: BAND,
+	}
+}
+
+func Xor() Operation {
+	return Operation{
+		Code: XOR,
+	}
+}
+
+func Shl() Operation {
+	return Operation{
+		Code: SHL,
+	}
+}
+
+func Shr() Operation {
+	return Operation{
+		Code: SHR,
 	}
 }
 

@@ -72,7 +72,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
 
-	assert.Assert(operation.Count == 23, "Exhaustive handling in compiler.compile_x86_64()")
+	assert.Assert(operation.Count == 28, "Exhaustive handling in compiler.compile_x86_64()")
 
 	for i := 0; i < len(program); i++ {
 		op := program[i]
@@ -113,6 +113,36 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    xor     rdx, rdx")
 			str.Complete(&content, "    div     rbx")
 			str.Complete(&content, "    push    rdx")
+		case operation.BOR:
+			str.Complete(&content, "    ; -- Binary OR --")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    pop     rbx")
+			str.Complete(&content, "    or      rax, rbx")
+			str.Complete(&content, "    push    rax")
+		case operation.BAND:
+			str.Complete(&content, "    ; -- Binary AND --")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    pop     rbx")
+			str.Complete(&content, "    and     rax, rbx")
+			str.Complete(&content, "    push    rax")
+		case operation.XOR:
+			str.Complete(&content, "    ; -- XOR --")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    pop     rbx")
+			str.Complete(&content, "    xor     rax, rbx")
+			str.Complete(&content, "    push    rax")
+		case operation.SHL:
+			str.Complete(&content, "    ; -- Shift Left --")
+			str.Complete(&content, "    pop     rcx")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    shl     rax, cl")
+			str.Complete(&content, "    push    rax")
+		case operation.SHR:
+			str.Complete(&content, "    ; -- Shift Right --")
+			str.Complete(&content, "    pop     rcx")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    shr     rax, cl")
+			str.Complete(&content, "    push    rax")
 		case operation.EQ:
 			str.Complete(&content, "    ; -- Equal --")
 			str.Complete(&content, "    mov     rcx, 0")

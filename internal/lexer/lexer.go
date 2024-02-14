@@ -75,7 +75,7 @@ func lexLine(filepath string, number int, line string) []Token {
 func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	stack := st.New()
 
-	assert.Assert(operation.Count == 23, "Exhaustive handling in lexer.crossreferenceBlocks(). Not all operations should be handled in here.")
+	assert.Assert(operation.Count == 28, "Exhaustive handling in lexer.crossreferenceBlocks(). Not all operations should be handled in here.")
 
 	i := 0
 	for i < len(program) {
@@ -115,7 +115,7 @@ func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 func parseTokensAsOperations(tokens []Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.Count == 23, "Exhaustive handling in lexer.parseTokensAsOperations()")
+	assert.Assert(operation.Count == 28, "Exhaustive handling in lexer.parseTokensAsOperations()")
 
 	for _, token := range tokens {
 		switch token.Word {
@@ -129,6 +129,16 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 			program = append(program, operation.Division())
 		case "%":
 			program = append(program, operation.Rem())
+		case "bor":
+			program = append(program, operation.Bor())
+		case "band":
+			program = append(program, operation.Band())
+		case "xor":
+			program = append(program, operation.Xor())
+		case "shl":
+			program = append(program, operation.Shl())
+		case "shr":
+			program = append(program, operation.Shr())
 		case "==":
 			program = append(program, operation.Equal())
 		case "!=":
