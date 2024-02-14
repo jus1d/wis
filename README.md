@@ -133,3 +133,17 @@ Swaps two integers on top of the stack
 Drops integer from top of the stack
 
 **Stack:** `1 2 3` => `1 2`
+
+---
+
+### System calls
+
+You can use `syscall<n>`, where `n` is between 1 and 3. Now supported only syscalls that accepts 1-3 arguments.
+
+**Example:** 
+
+Call exit syscall with non-zero exit code
+
+```
+1 60 syscall1
+```

@@ -1,7 +1,7 @@
 package operation
 
 const (
-	PUSH = iota
+	PUSH_INT = iota
 	PLUS
 	MINUS
 	MUL
@@ -25,7 +25,7 @@ const (
 	WHILE
 	PUT
 	COPY
-	TWOCOPY
+	TWO_COPY
 	SWAP
 	DROP
 	OVER
@@ -43,9 +43,9 @@ type Operation struct {
 	JumpTo int
 }
 
-func Push(value int, loc string) Operation {
+func PushInt(value int, loc string) Operation {
 	return Operation{
-		Code:  PUSH,
+		Code:  PUSH_INT,
 		Value: value,
 		Loc:   loc,
 	}
@@ -214,7 +214,7 @@ func Copy(loc string) Operation {
 
 func TwoCopy(loc string) Operation {
 	return Operation{
-		Code: TWOCOPY,
+		Code: TWO_COPY,
 		Loc:  loc,
 	}
 }

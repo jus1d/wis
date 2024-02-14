@@ -194,7 +194,7 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 				log.Error(fmt.Sprintf("%s: can't parse token: %s", loc, token.Word))
 				os.Exit(1)
 			}
-			program = append(program, operation.Push(val, loc))
+			program = append(program, operation.PushInt(val, loc))
 		}
 	}
 
