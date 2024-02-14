@@ -110,7 +110,7 @@ func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	}
 
 	if !stack.IsEmpty() {
-		log.Error("not all blocks was closed with `end`")
+		log.Error(fmt.Sprintf("%s: block didn't closed with `end`", program[stack.Pop()].Loc))
 		os.Exit(1)
 	}
 
