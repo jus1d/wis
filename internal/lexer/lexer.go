@@ -109,6 +109,11 @@ func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 		i++
 	}
 
+	if !stack.IsEmpty() {
+		log.Error("not all blocks was closed with `end`")
+		os.Exit(1)
+	}
+
 	return program
 }
 
