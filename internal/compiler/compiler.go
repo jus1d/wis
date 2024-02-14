@@ -67,7 +67,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    syscall")
 	str.Complete(&content, "    add     rsp, 40")
 	str.Complete(&content, "    ret")
-	str.Complete(&content, "\n")
+	str.Complete(&content, "")
 	str.Complete(&content, "section .text")
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
