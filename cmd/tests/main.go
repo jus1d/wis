@@ -92,5 +92,5 @@ func main() {
 	}
 
 	fmt.Println()
-	log.TestPassed("All tests successfully passed!")
+	log.TestPassed(fmt.Sprintf("All tests passed in %s", testsDirectory))
 }
