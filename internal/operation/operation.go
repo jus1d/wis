@@ -29,6 +29,10 @@ const (
 	SWAP
 	DROP
 	OVER
+	SYSCALL0
+	SYSCALL1
+	SYSCALL2
+	SYSCALL3
 	Count
 )
 
@@ -232,6 +236,34 @@ func Drop(loc string) Operation {
 func Over(loc string) Operation {
 	return Operation{
 		Code: OVER,
+		Loc:  loc,
+	}
+}
+
+func Syscall0(loc string) Operation {
+	return Operation{
+		Code: SYSCALL0,
+		Loc:  loc,
+	}
+}
+
+func Syscall1(loc string) Operation {
+	return Operation{
+		Code: SYSCALL1,
+		Loc:  loc,
+	}
+}
+
+func Syscall2(loc string) Operation {
+	return Operation{
+		Code: SYSCALL2,
+		Loc:  loc,
+	}
+}
+
+func Syscall3(loc string) Operation {
+	return Operation{
+		Code: SYSCALL3,
 		Loc:  loc,
 	}
 }

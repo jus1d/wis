@@ -73,7 +73,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
 
-	assert.Assert(operation.Count == 28, "Exhaustive handling in compiler.compile_x86_64()")
+	assert.Assert(operation.Count == 32, "Exhaustive handling in compiler.compile_x86_64()")
 
 	for i := 0; i < len(program); i++ {
 		op := program[i]
@@ -258,6 +258,32 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    push    rbx")
 			str.Complete(&content, "    push    rax")
 			str.Complete(&content, "    push    rbx")
+		case operation.SYSCALL0:
+			str.Complete(&content, "    ; -- syscall0 --")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    syscall")
+			str.Complete(&content, "    push    rax")
+		case operation.SYSCALL1:
+			str.Complete(&content, "    ; -- syscall1 --")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    pop     rdi")
+			str.Complete(&content, "    syscall")
+			str.Complete(&content, "    push    rax")
+		case operation.SYSCALL2:
+			str.Complete(&content, "    ; -- syscall2 --")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    pop     rdi")
+			str.Complete(&content, "    pop     rsi")
+			str.Complete(&content, "    syscall")
+			str.Complete(&content, "    push    rax")
+		case operation.SYSCALL3:
+			str.Complete(&content, "    ; -- syscall3 --")
+			str.Complete(&content, "    pop     rax")
+			str.Complete(&content, "    pop     rdi")
+			str.Complete(&content, "    pop     rsi")
+			str.Complete(&content, "    pop     rdx")
+			str.Complete(&content, "    syscall")
+			str.Complete(&content, "    push    rax")
 		default:
 			assert.Assert(false, "unreachable")
 		}

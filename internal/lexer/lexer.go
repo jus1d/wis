@@ -75,7 +75,7 @@ func lexLine(filepath string, number int, line string) []Token {
 func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	stack := st.New()
 
-	assert.Assert(operation.Count == 28, "Exhaustive handling in lexer.crossreferenceBlocks(). Not all operations should be handled in here.")
+	assert.Assert(operation.Count == 32, "Exhaustive handling in lexer.crossreferenceBlocks(). Not all operations should be handled in here.")
 
 	i := 0
 	for i < len(program) {
@@ -120,7 +120,7 @@ func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 func parseTokensAsOperations(tokens []Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.Count == 28, "Exhaustive handling in lexer.parseTokensAsOperations()")
+	assert.Assert(operation.Count == 32, "Exhaustive handling in lexer.parseTokensAsOperations()")
 
 	for _, token := range tokens {
 		loc := fmt.Sprintf("%s:%d:%d", token.Filepath, token.Line, token.Col)
@@ -180,6 +180,14 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 			program = append(program, operation.Drop(loc))
 		case "over":
 			program = append(program, operation.Over(loc))
+		case "syscall0":
+			program = append(program, operation.Syscall0(loc))
+		case "syscall1":
+			program = append(program, operation.Syscall1(loc))
+		case "syscall2":
+			program = append(program, operation.Syscall2(loc))
+		case "syscall3":
+			program = append(program, operation.Syscall3(loc))
 		default:
 			val, err := strconv.Atoi(token.Word)
 			if err != nil {
