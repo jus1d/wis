@@ -22,6 +22,8 @@ $ ./gollo run ./examples/goo.glo
 1
 ```
 
+---
+
 ### Compile
 
 Compile mode compiles `.glo` into an assembly code for your architecture. Be sure that you have `nasm` if you're on x86_64, or `as` if you're on arm64 architecture.
@@ -34,3 +36,100 @@ $ ./gollo compile ./examples/goo.glo
 $ ./examples/goo
 1
 ```
+
+## Language Describe
+
+### Control Flows
+
+---
+
+#### `if-else` - default condition workflow
+
+**Usage:**
+
+```
+34 35 + 69 == if
+  69 put
+else
+  420 put
+end
+```
+
+**Output:** `69`
+
+---
+
+#### `while` - loops with condition
+
+**Usage:**
+
+```
+1
+while copy 10 <= do
+  copy put
+end
+```
+
+**Output:** `1 2 3 4 5 6 7 8 9 10`
+
+---
+
+### Operations
+
+---
+
+#### `<int>`
+
+Pushes integer number on top of the stack
+
+**Stack:** `1` => `1 2`
+
+---
+
+#### `put`
+
+Removes and prints number from top of the stack
+
+**Stack:** `1 2` => `1`
+
+**Output:** `2`
+
+---
+
+#### `copy`
+
+Copies integer on top of the stack
+
+**Stack:** `1 2` => `1 2 2`
+
+---
+
+#### `2copy`
+
+Copies two integers on top of the stack
+
+**Stack:** `1 2 3` => `1 2 3 2 3`
+
+---
+
+#### `over`
+
+Copies previous integer from stack to top
+
+**Stack:** `1 2` => `1 2 1`
+
+---
+
+#### `swap`
+
+Swaps two integers on top of the stack
+
+**Stack:** `1 2` => `2 1`
+
+---
+
+#### `drop`
+
+Drops integer from top of the stack
+
+**Stack:** `1 2 3` => `1 2`
