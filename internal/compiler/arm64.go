@@ -7,6 +7,7 @@ import (
 	"gollo/pkg/log"
 	"gollo/pkg/str"
 	"os"
+	"strconv"
 )
 
 func compile_arm64(filepath string, program []operation.Operation) {
@@ -28,15 +29,25 @@ func compile_arm64(filepath string, program []operation.Operation) {
 	for i := 0; i < len(program); i++ {
 		op := program[i]
 
-		str.Complete(&content, fmt.Sprintf("    ; %s", op.Loc))
+		str.Complete(&content, fmt.Sprintf("    // %s", op.Loc))
 
 		switch op.Code {
 		case operation.PUSH_INT:
-			assert.Assert(false, "not implemented yet")
+			str.Complete(&content, fmt.Sprintf("    // -- push int %d --", op.Value))
+			str.Complete(&content, "    mov     x0, #"+strconv.Itoa(op.Value))
+			str.Complete(&content, "    stp     x0, xzr, [sp, #-16]!")
 		case operation.PLUS:
-			assert.Assert(false, "not implemented yet")
+			str.Complete(&content, "    // -- plus --")
+			str.Complete(&content, "    ldp     x0, xzr, [sp], #16")
+			str.Complete(&content, "    ldp     x1, xzr, [sp], #16")
+			str.Complete(&content, "    add     x0, x0, x1")
+			str.Complete(&content, "    stp     x0, xzr, [sp, #-16]!")
 		case operation.MINUS:
-			assert.Assert(false, "not implemented yet")
+			str.Complete(&content, "    // -- minus --")
+			str.Complete(&content, "    ldp     x1, xzr, [sp], #16")
+			str.Complete(&content, "    ldp     x0, xzr, [sp], #16")
+			str.Complete(&content, "    sub     x0, x0, x1")
+			str.Complete(&content, "    stp     x0, xzr, [sp, #-16]!")
 		case operation.MUL:
 			assert.Assert(false, "not implemented yet")
 		case operation.DIV:
