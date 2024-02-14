@@ -23,6 +23,7 @@ const (
 	SWAP
 	DROP
 	OVER
+	REM
 	Count
 )
 
@@ -162,5 +163,11 @@ func Do() Operation {
 func While() Operation {
 	return Operation{
 		Code: WHILE,
+	}
+}
+
+func Rem() Operation {
+	return Operation{
+		Code: REM,
 	}
 }

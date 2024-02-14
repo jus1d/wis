@@ -40,7 +40,8 @@ func LexFile(compiler string, filepath string) []operation.Operation {
 	tokens := make([]Token, 0)
 
 	for i := 0; i < len(lines); i++ {
-		tokens = append(tokens, lexLine(filepath, i+1, lines[i]+"\n")...)
+		line := strings.Split(lines[i], "//")[0] + "\n"
+		tokens = append(tokens, lexLine(filepath, i+1, line)...)
 	}
 
 	program := parseTokensAsOperations(tokens)
@@ -52,7 +53,7 @@ func LexFile(compiler string, filepath string) []operation.Operation {
 func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	stack := st.New()
 
-	assert.Assert(operation.Count == 22, "Exhaustive handling in lexer.parseTokensAsOperations(). Not all operations should be handled in here.")
+	assert.Assert(operation.Count == 23, "Exhaustive handling in lexer.crossreferenceBlocks(). Not all operations should be handled in here.")
 
 	i := 0
 	for i < len(program) {
@@ -94,9 +95,6 @@ func lexLine(filepath string, number int, line string) []Token {
 	var cur string
 
 	for i := 0; i < len(line); i++ {
-		if cur == "//" {
-			return tokens
-		}
 		if (line[i] == ' ' || line[i] == '\n') && cur != "" {
 			tokens = append(tokens, Token{
 				Filepath: filepath,
@@ -117,7 +115,7 @@ func lexLine(filepath string, number int, line string) []Token {
 func parseTokensAsOperations(tokens []Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.Count == 22, "Exhaustive handling in lexer.parseTokensAsOperations()")
+	assert.Assert(operation.Count == 23, "Exhaustive handling in lexer.parseTokensAsOperations()")
 
 	for _, token := range tokens {
 		switch token.Word {
@@ -129,6 +127,8 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 			program = append(program, operation.Multiply())
 		case "/":
 			program = append(program, operation.Division())
+		case "%":
+			program = append(program, operation.Rem())
 		case "==":
 			program = append(program, operation.Equal())
 		case "!=":

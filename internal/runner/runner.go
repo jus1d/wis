@@ -8,7 +8,7 @@ import (
 )
 
 func Run(program []operation.Operation) {
-	assert.Assert(operation.Count == 22, "Exhaustive handling in runner.Run()")
+	assert.Assert(operation.Count == 23, "Exhaustive handling in runner.Run()")
 
 	stack := st.New()
 
@@ -147,6 +147,11 @@ func Run(program []operation.Operation) {
 			stack.Push(b)
 			stack.Push(a)
 			stack.Push(b)
+			i++
+		case operation.REM:
+			a := stack.Pop()
+			b := stack.Pop()
+			stack.Push(b % a)
 			i++
 		default:
 			assert.Assert(false, "unreachable")
