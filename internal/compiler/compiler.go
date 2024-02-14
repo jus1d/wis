@@ -79,72 +79,72 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 
 		switch op.Code {
 		case operation.PUSH:
-			str.Complete(&content, fmt.Sprintf("    ; -- Push %d --", op.Value))
+			str.Complete(&content, fmt.Sprintf("    ; -- push %d --", op.Value))
 			str.Complete(&content, fmt.Sprintf("    push    %d", op.Value))
 		case operation.PLUS:
-			str.Complete(&content, "    ; -- Plus --")
+			str.Complete(&content, "    ; -- plus --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    add     rax, rbx")
 			str.Complete(&content, "    push    rax")
 		case operation.MINUS:
-			str.Complete(&content, "    ; -- Minus --")
+			str.Complete(&content, "    ; -- minus --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    sub     rbx, rax")
 			str.Complete(&content, "    push    rbx")
 		case operation.MUL:
-			str.Complete(&content, "    ; -- Multiply --")
+			str.Complete(&content, "    ; -- multiply --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    imul    rax, rbx")
 			str.Complete(&content, "    push    rax")
 		case operation.DIV:
-			str.Complete(&content, "    ; -- Division --")
+			str.Complete(&content, "    ; -- division --")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    xor     rdx, rdx")
 			str.Complete(&content, "    div     rbx")
 			str.Complete(&content, "    push    rax")
 		case operation.REM:
-			str.Complete(&content, "    ; -- Remainder of division --")
+			str.Complete(&content, "    ; -- remainder of division --")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    xor     rdx, rdx")
 			str.Complete(&content, "    div     rbx")
 			str.Complete(&content, "    push    rdx")
 		case operation.BOR:
-			str.Complete(&content, "    ; -- Binary OR --")
+			str.Complete(&content, "    ; -- binary or --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    or      rax, rbx")
 			str.Complete(&content, "    push    rax")
 		case operation.BAND:
-			str.Complete(&content, "    ; -- Binary AND --")
+			str.Complete(&content, "    ; -- binary and --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    and     rax, rbx")
 			str.Complete(&content, "    push    rax")
 		case operation.XOR:
-			str.Complete(&content, "    ; -- XOR --")
+			str.Complete(&content, "    ; -- xor --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    xor     rax, rbx")
 			str.Complete(&content, "    push    rax")
 		case operation.SHL:
-			str.Complete(&content, "    ; -- Shift Left --")
+			str.Complete(&content, "    ; -- shift left --")
 			str.Complete(&content, "    pop     rcx")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    shl     rax, cl")
 			str.Complete(&content, "    push    rax")
 		case operation.SHR:
-			str.Complete(&content, "    ; -- Shift Right --")
+			str.Complete(&content, "    ; -- shift right --")
 			str.Complete(&content, "    pop     rcx")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    shr     rax, cl")
 			str.Complete(&content, "    push    rax")
 		case operation.EQ:
-			str.Complete(&content, "    ; -- Equal --")
+			str.Complete(&content, "    ; -- equal --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
 			str.Complete(&content, "    pop     rax")
@@ -153,7 +153,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmove   rcx, rdx")
 			str.Complete(&content, "    push    rcx")
 		case operation.NE:
-			str.Complete(&content, "    ; -- Not Equal --")
+			str.Complete(&content, "    ; -- not equal --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
 			str.Complete(&content, "    pop     rax")
@@ -162,7 +162,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmovne  rcx, rdx")
 			str.Complete(&content, "    push    rcx")
 		case operation.LT:
-			str.Complete(&content, "    ; -- Less --")
+			str.Complete(&content, "    ; -- less --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
 			str.Complete(&content, "    pop     rax")
@@ -171,7 +171,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmovl   rcx, rdx")
 			str.Complete(&content, "    push    rcx")
 		case operation.GT:
-			str.Complete(&content, "    ; -- Greater --")
+			str.Complete(&content, "    ; -- greater --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
 			str.Complete(&content, "    pop     rax")
@@ -180,7 +180,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmovg   rcx, rdx")
 			str.Complete(&content, "    push    rcx")
 		case operation.LE:
-			str.Complete(&content, "    ; -- Less or equal --")
+			str.Complete(&content, "    ; -- less or equal --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
 			str.Complete(&content, "    pop     rax")
@@ -189,7 +189,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmovle  rcx, rdx")
 			str.Complete(&content, "    push    rcx")
 		case operation.GE:
-			str.Complete(&content, "    ; -- Greater or equal --")
+			str.Complete(&content, "    ; -- greater or equal --")
 			str.Complete(&content, "    mov     rcx, 0")
 			str.Complete(&content, "    mov     rdx, 1")
 			str.Complete(&content, "    pop     rax")
@@ -198,41 +198,41 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    cmovge  rcx, rdx")
 			str.Complete(&content, "    push    rcx")
 		case operation.IF:
-			str.Complete(&content, "    ; -- If --")
+			str.Complete(&content, "    ; -- if --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    mov     rbx, 0")
 			str.Complete(&content, "    cmp     rax, rbx")
 			str.Complete(&content, fmt.Sprintf("    je      _addr_%d", op.JumpTo))
 		case operation.ELSE:
-			str.Complete(&content, "    ; -- Else --")
+			str.Complete(&content, "    ; -- else --")
 			str.Complete(&content, fmt.Sprintf("    jmp     _addr_%d", op.JumpTo))
 			str.Complete(&content, fmt.Sprintf("_addr_%d:", i+1))
 		case operation.END:
-			str.Complete(&content, "    ; -- End --")
+			str.Complete(&content, "    ; -- end --")
 			if program[op.JumpTo].Code == operation.WHILE {
 				str.Complete(&content, fmt.Sprintf("    jmp     _addr_%d", op.JumpTo))
 			}
 			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
 		case operation.DO:
-			str.Complete(&content, "    ; -- Do --")
+			str.Complete(&content, "    ; -- do --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    mov     rbx, 0")
 			str.Complete(&content, "    cmp     rax, rbx")
 			str.Complete(&content, "    je      "+fmt.Sprintf("_addr_%d", op.JumpTo-1))
 		case operation.WHILE:
-			str.Complete(&content, "    ; -- While --")
+			str.Complete(&content, "    ; -- while --")
 			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
 		case operation.PUT:
-			str.Complete(&content, "    ; -- Put --")
+			str.Complete(&content, "    ; -- put --")
 			str.Complete(&content, "    pop     rdi")
 			str.Complete(&content, "    call    put")
 		case operation.COPY:
-			str.Complete(&content, "    ; -- Copy --")
+			str.Complete(&content, "    ; -- copy --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    push    rax")
 			str.Complete(&content, "    push    rax")
 		case operation.TWOCOPY:
-			str.Complete(&content, "    ; -- Two Copy --")
+			str.Complete(&content, "    ; -- two copy --")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    push    rax")
@@ -240,16 +240,16 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    push    rax")
 			str.Complete(&content, "    push    rbx")
 		case operation.SWAP:
-			str.Complete(&content, "    ; -- Swap --")
+			str.Complete(&content, "    ; -- swap --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    push    rax")
 			str.Complete(&content, "    push    rbx")
 		case operation.DROP:
-			str.Complete(&content, "    ; -- Drop --")
+			str.Complete(&content, "    ; -- drop --")
 			str.Complete(&content, "    pop     rax")
 		case operation.OVER:
-			str.Complete(&content, "    ; -- Over --")
+			str.Complete(&content, "    ; -- over --")
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    push    rbx")
@@ -260,7 +260,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 		}
 	}
 
-	str.Complete(&content, "    ; -- Exit --")
+	str.Complete(&content, "    ; -- exit --")
 	str.Complete(&content, "    mov     rax, 60")
 	str.Complete(&content, "    mov     rdi, 0")
 	str.Complete(&content, "    syscall")
