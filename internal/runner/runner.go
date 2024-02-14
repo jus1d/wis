@@ -18,7 +18,7 @@ func Run(program []operation.Operation) {
 		op := program[i]
 
 		switch op.Code {
-		case operation.PUSH:
+		case operation.PUSH_INT:
 			stack.Push(op.Value)
 			i++
 		case operation.PLUS:
@@ -155,7 +155,7 @@ func Run(program []operation.Operation) {
 		case operation.COPY:
 			stack.Push(stack.Peek())
 			i++
-		case operation.TWOCOPY:
+		case operation.TWO_COPY:
 			b := stack.Pop()
 			a := stack.Pop()
 			stack.Push(a)

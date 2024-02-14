@@ -81,8 +81,8 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 		str.Complete(&content, fmt.Sprintf("    ; %s", op.Loc))
 
 		switch op.Code {
-		case operation.PUSH:
-			str.Complete(&content, fmt.Sprintf("    ; -- push %d --", op.Value))
+		case operation.PUSH_INT:
+			str.Complete(&content, fmt.Sprintf("    ; -- push int %d --", op.Value))
 			str.Complete(&content, fmt.Sprintf("    push    %d", op.Value))
 		case operation.PLUS:
 			str.Complete(&content, "    ; -- plus --")
@@ -234,7 +234,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    push    rax")
 			str.Complete(&content, "    push    rax")
-		case operation.TWOCOPY:
+		case operation.TWO_COPY:
 			str.Complete(&content, "    ; -- two copy --")
 			str.Complete(&content, "    pop     rbx")
 			str.Complete(&content, "    pop     rax")
