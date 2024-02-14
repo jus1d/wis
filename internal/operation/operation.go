@@ -35,174 +35,203 @@ const (
 type Operation struct {
 	Code   int
 	Value  int
+	Loc    string
 	JumpTo int
 }
 
-func Push(value int) Operation {
+func Push(value int, loc string) Operation {
 	return Operation{
 		Code:  PUSH,
 		Value: value,
+		Loc:   loc,
 	}
 }
 
-func Plus() Operation {
+func Plus(loc string) Operation {
 	return Operation{
 		Code: PLUS,
+		Loc:  loc,
 	}
 }
 
-func Minus() Operation {
+func Minus(loc string) Operation {
 	return Operation{
 		Code: MINUS,
+		Loc:  loc,
 	}
 }
 
-func Multiply() Operation {
+func Multiply(loc string) Operation {
 	return Operation{
 		Code: MUL,
+		Loc:  loc,
 	}
 }
 
-func Division() Operation {
+func Division(loc string) Operation {
 	return Operation{
 		Code: DIV,
+		Loc:  loc,
 	}
 }
 
-func Rem() Operation {
+func Rem(loc string) Operation {
 	return Operation{
 		Code: REM,
+		Loc:  loc,
 	}
 }
 
-func Bor() Operation {
+func Bor(loc string) Operation {
 	return Operation{
 		Code: BOR,
+		Loc:  loc,
 	}
 }
 
-func Band() Operation {
+func Band(loc string) Operation {
 	return Operation{
 		Code: BAND,
+		Loc:  loc,
 	}
 }
 
-func Xor() Operation {
+func Xor(loc string) Operation {
 	return Operation{
 		Code: XOR,
+		Loc:  loc,
 	}
 }
 
-func Shl() Operation {
+func Shl(loc string) Operation {
 	return Operation{
 		Code: SHL,
+		Loc:  loc,
 	}
 }
 
-func Shr() Operation {
+func Shr(loc string) Operation {
 	return Operation{
 		Code: SHR,
+		Loc:  loc,
 	}
 }
 
-func Equal() Operation {
+func Equal(loc string) Operation {
 	return Operation{
 		Code: EQ,
+		Loc:  loc,
 	}
 }
 
-func NotEqual() Operation {
+func NotEqual(loc string) Operation {
 	return Operation{
 		Code: NE,
+		Loc:  loc,
 	}
 }
 
-func Less() Operation {
+func Less(loc string) Operation {
 	return Operation{
 		Code: LT,
+		Loc:  loc,
 	}
 }
 
-func Greater() Operation {
+func Greater(loc string) Operation {
 	return Operation{
 		Code: GT,
+		Loc:  loc,
 	}
 }
 
-func LessOrEqual() Operation {
+func LessOrEqual(loc string) Operation {
 	return Operation{
 		Code: LE,
+		Loc:  loc,
 	}
 }
 
-func GreaterOrEqual() Operation {
+func GreaterOrEqual(loc string) Operation {
 	return Operation{
 		Code: GE,
+		Loc:  loc,
 	}
 }
 
-func If() Operation {
+func If(loc string) Operation {
 	return Operation{
 		Code: IF,
+		Loc:  loc,
 	}
 }
 
-func Else() Operation {
+func Else(loc string) Operation {
 	return Operation{
 		Code: ELSE,
+		Loc:  loc,
 	}
 }
 
-func End() Operation {
+func End(loc string) Operation {
 	return Operation{
 		Code: END,
+		Loc:  loc,
 	}
 }
 
-func Do() Operation {
+func Do(loc string) Operation {
 	return Operation{
 		Code: DO,
+		Loc:  loc,
 	}
 }
 
-func While() Operation {
+func While(loc string) Operation {
 	return Operation{
 		Code: WHILE,
+		Loc:  loc,
 	}
 }
 
-func Put() Operation {
+func Put(loc string) Operation {
 	return Operation{
 		Code: PUT,
+		Loc:  loc,
 	}
 }
 
-func Copy() Operation {
+func Copy(loc string) Operation {
 	return Operation{
 		Code: COPY,
+		Loc:  loc,
 	}
 }
 
-func TwoCopy() Operation {
+func TwoCopy(loc string) Operation {
 	return Operation{
 		Code: TWOCOPY,
+		Loc:  loc,
 	}
 }
 
-func Swap() Operation {
+func Swap(loc string) Operation {
 	return Operation{
 		Code: SWAP,
+		Loc:  loc,
 	}
 }
 
-func Drop() Operation {
+func Drop(loc string) Operation {
 	return Operation{
 		Code: DROP,
+		Loc:  loc,
 	}
 }
 
-func Over() Operation {
+func Over(loc string) Operation {
 	return Operation{
 		Code: OVER,
+		Loc:  loc,
 	}
 }

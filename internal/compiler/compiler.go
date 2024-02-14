@@ -9,6 +9,7 @@ import (
 	"gollo/pkg/str"
 	"os"
 	"runtime"
+	"strconv"
 )
 
 func Compile(name string, program []operation.Operation) {
@@ -76,6 +77,8 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 
 	for i := 0; i < len(program); i++ {
 		op := program[i]
+
+		str.Complete(&content, fmt.Sprintf("    ; %s", op.Loc))
 
 		switch op.Code {
 		case operation.PUSH:
@@ -202,15 +205,15 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    mov     rbx, 0")
 			str.Complete(&content, "    cmp     rax, rbx")
-			str.Complete(&content, fmt.Sprintf("    je      _addr_%d", op.JumpTo))
+			str.Complete(&content, "    je      _addr_"+strconv.Itoa(op.JumpTo))
 		case operation.ELSE:
 			str.Complete(&content, "    ; -- else --")
-			str.Complete(&content, fmt.Sprintf("    jmp     _addr_%d", op.JumpTo))
-			str.Complete(&content, fmt.Sprintf("_addr_%d:", i+1))
+			str.Complete(&content, "    jmp     _addr_"+strconv.Itoa(op.JumpTo))
+			str.Complete(&content, "    _addr_"+strconv.Itoa(i+1)+":")
 		case operation.END:
 			str.Complete(&content, "    ; -- end --")
 			if program[op.JumpTo].Code == operation.WHILE {
-				str.Complete(&content, fmt.Sprintf("    jmp     _addr_%d", op.JumpTo))
+				str.Complete(&content, "    jmp     _addr_"+strconv.Itoa(op.JumpTo))
 			}
 			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
 		case operation.DO:
@@ -218,10 +221,10 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    pop     rax")
 			str.Complete(&content, "    mov     rbx, 0")
 			str.Complete(&content, "    cmp     rax, rbx")
-			str.Complete(&content, "    je      "+fmt.Sprintf("_addr_%d", op.JumpTo-1))
+			str.Complete(&content, "    je      _addr_"+strconv.Itoa(op.JumpTo-1))
 		case operation.WHILE:
 			str.Complete(&content, "    ; -- while --")
-			str.Complete(&content, fmt.Sprintf("_addr_%d:", i))
+			str.Complete(&content, "    _addr_"+strconv.Itoa(i)+":")
 		case operation.PUT:
 			str.Complete(&content, "    ; -- put --")
 			str.Complete(&content, "    pop     rdi")

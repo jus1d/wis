@@ -123,68 +123,70 @@ func parseTokensAsOperations(tokens []Token) []operation.Operation {
 	assert.Assert(operation.Count == 28, "Exhaustive handling in lexer.parseTokensAsOperations()")
 
 	for _, token := range tokens {
+		loc := fmt.Sprintf("%s:%d:%d", token.Filepath, token.Line, token.Col)
+
 		switch token.Word {
 		case "+":
-			program = append(program, operation.Plus())
+			program = append(program, operation.Plus(loc))
 		case "-":
-			program = append(program, operation.Minus())
+			program = append(program, operation.Minus(loc))
 		case "*":
-			program = append(program, operation.Multiply())
+			program = append(program, operation.Multiply(loc))
 		case "/":
-			program = append(program, operation.Division())
+			program = append(program, operation.Division(loc))
 		case "%":
-			program = append(program, operation.Rem())
+			program = append(program, operation.Rem(loc))
 		case "bor":
-			program = append(program, operation.Bor())
+			program = append(program, operation.Bor(loc))
 		case "band":
-			program = append(program, operation.Band())
+			program = append(program, operation.Band(loc))
 		case "xor":
-			program = append(program, operation.Xor())
+			program = append(program, operation.Xor(loc))
 		case "shl":
-			program = append(program, operation.Shl())
+			program = append(program, operation.Shl(loc))
 		case "shr":
-			program = append(program, operation.Shr())
+			program = append(program, operation.Shr(loc))
 		case "==":
-			program = append(program, operation.Equal())
+			program = append(program, operation.Equal(loc))
 		case "!=":
-			program = append(program, operation.NotEqual())
+			program = append(program, operation.NotEqual(loc))
 		case "<":
-			program = append(program, operation.Less())
+			program = append(program, operation.Less(loc))
 		case ">":
-			program = append(program, operation.Greater())
+			program = append(program, operation.Greater(loc))
 		case "<=":
-			program = append(program, operation.LessOrEqual())
+			program = append(program, operation.LessOrEqual(loc))
 		case ">=":
-			program = append(program, operation.GreaterOrEqual())
+			program = append(program, operation.GreaterOrEqual(loc))
 		case "if":
-			program = append(program, operation.If())
+			program = append(program, operation.If(loc))
 		case "else":
-			program = append(program, operation.Else())
+			program = append(program, operation.Else(loc))
 		case "end":
-			program = append(program, operation.End())
+			program = append(program, operation.End(loc))
 		case "do":
-			program = append(program, operation.Do())
+			program = append(program, operation.Do(loc))
 		case "while":
-			program = append(program, operation.While())
+			program = append(program, operation.While(loc))
 		case "put":
-			program = append(program, operation.Put())
+			program = append(program, operation.Put(loc))
 		case "copy":
-			program = append(program, operation.Copy())
+			program = append(program, operation.Copy(loc))
 		case "2copy":
-			program = append(program, operation.TwoCopy())
+			program = append(program, operation.TwoCopy(loc))
 		case "swap":
-			program = append(program, operation.Swap())
+			program = append(program, operation.Swap(loc))
 		case "drop":
-			program = append(program, operation.Drop())
+			program = append(program, operation.Drop(loc))
 		case "over":
-			program = append(program, operation.Over())
+			program = append(program, operation.Over(loc))
 		default:
 			val, err := strconv.Atoi(token.Word)
 			if err != nil {
-				log.Error(fmt.Sprintf("%s:%d:%d: can't parse token: %s", token.Filepath, token.Line, token.Col, token.Word))
+				log.Error(fmt.Sprintf("%s: can't parse token: %s", loc, token.Word))
 				os.Exit(1)
 			}
-			program = append(program, operation.Push(val))
+			program = append(program, operation.Push(val, loc))
 		}
 	}
 
