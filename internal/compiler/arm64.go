@@ -71,7 +71,11 @@ func compile_arm64(filepath string, program []operation.Operation) {
 			str.Complete(&content, "    and     x0, x1, x2")
 			str.Complete(&content, "    stp     x0, xzr, [sp, #-16]!")
 		case operation.XOR:
-			assert.Assert(false, "not implemented yet")
+			str.Complete(&content, "    // -- xor --")
+			str.Complete(&content, "    ldp     x1, xzr, [sp], #16")
+			str.Complete(&content, "    ldp     x2, xzr, [sp], #16")
+			str.Complete(&content, "    eor     x0, x1, x2")
+			str.Complete(&content, "    stp     x0, xzr, [sp, #-16]!")
 		case operation.SHL:
 			assert.Assert(false, "not implemented yet")
 		case operation.SHR:
@@ -124,7 +128,7 @@ func compile_arm64(filepath string, program []operation.Operation) {
 	}
 
 	str.Complete(&content, "    // -- exit --")
-	str.Complete(&content, "    mov    x0, #0")
+	//str.Complete(&content, "    mov    x0, #0")
 	str.Complete(&content, "    mov    x16, #1")
 	str.Complete(&content, "    svc    #0")
 
