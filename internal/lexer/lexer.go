@@ -39,9 +39,9 @@ func LexFile(compiler string, filepath string) []operation.Operation {
 	}
 
 	program := parseTokensAsOperations(tokens)
-	crossreferehcedProgram := crossreferenceBlocks(program)
+	crossreferencedProgram := crossreferenceBlocks(program)
 
-	return crossreferehcedProgram
+	return crossreferencedProgram
 }
 
 func lexLine(filepath string, number int, line string) []token.Token {
@@ -51,14 +51,15 @@ func lexLine(filepath string, number int, line string) []token.Token {
 	assert.Assert(token.Count == 3, "Exhaustive tokens handling in lexer.parseTokensAsOperations()")
 
 	for i := 0; i < len(line); i++ {
-		parts := strings.Split(line, "\"")
+		parts := strings.Split(line, "'")
 		for ip, part := range parts {
 			if ip%2 != 0 {
 				tokens = append(tokens, token.Token{
 					Code:        token.STRING,
 					StringValue: part,
-					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, i-len(cur)+1),
+					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, i),
 				})
+				// i += len(part) + 2
 			} else {
 				if (line[i] == ' ' || line[i] == '\n') && cur != "" {
 					var tok token.Token
@@ -102,7 +103,7 @@ func lexLine(filepath string, number int, line string) []token.Token {
 func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	stack := st.New()
 
-	assert.Assert(operation.Count == 32, "Exhaustive operations handling in lexer.crossreferenceBlocks(). Not all operations should be handled in here.")
+	assert.Assert(operation.Count == 33, "Exhaustive operations handling in lexer.crossreferenceBlocks(). Not all operations should be handled in here.")
 
 	i := 0
 	for i < len(program) {
@@ -147,7 +148,7 @@ func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 func parseTokensAsOperations(tokens []token.Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.Count == 32, "Exhaustive operations handling in lexer.parseTokensAsOperations()")
+	assert.Assert(operation.Count == 33, "Exhaustive operations handling in lexer.parseTokensAsOperations()")
 	assert.Assert(token.Count == 3, "Exhaustive tokens handling in lexer.parseTokensAsOperations()")
 
 	for _, tok := range tokens {
@@ -155,7 +156,7 @@ func parseTokensAsOperations(tokens []token.Token) []operation.Operation {
 		case token.INT:
 			program = append(program, operation.PushInt(tok.IntegerValue, tok.Loc))
 		case token.STRING:
-			assert.Assert(false, "pushing strings not implemented yet")
+			program = append(program, operation.PushString(tok.StringValue, tok.Loc))
 		case token.WORD:
 			switch tok.StringValue {
 			case "+":

@@ -9,7 +9,7 @@ import (
 )
 
 func Run(program []operation.Operation) {
-	assert.Assert(operation.Count == 32, "Exhaustive operations handling in runner.Run()")
+	assert.Assert(operation.Count == 33, "Exhaustive operations handling in runner.Run()")
 
 	stack := st.New()
 
@@ -19,8 +19,10 @@ func Run(program []operation.Operation) {
 
 		switch op.Code {
 		case operation.PUSH_INT:
-			stack.Push(op.Value)
+			stack.Push(op.IntegerValue)
 			i++
+		case operation.PUSH_STRING:
+			assert.Assert(false, "not implemented yet")
 		case operation.PLUS:
 			a := stack.Pop()
 			b := stack.Pop()

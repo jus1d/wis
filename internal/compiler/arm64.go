@@ -33,8 +33,8 @@ func compile_arm64(filepath string, program []operation.Operation) {
 
 		switch op.Code {
 		case operation.PUSH_INT:
-			str.Complete(&content, fmt.Sprintf("    // -- push int %d --", op.Value))
-			str.Complete(&content, "    mov     x0, #"+strconv.Itoa(op.Value))
+			str.Complete(&content, fmt.Sprintf("    // -- push int %d --", op.IntegerValue))
+			str.Complete(&content, "    mov     x0, #"+strconv.Itoa(op.IntegerValue))
 			str.Complete(&content, "    stp     x0, xzr, [sp, #-16]!")
 		case operation.PLUS:
 			str.Complete(&content, "    // -- plus --")

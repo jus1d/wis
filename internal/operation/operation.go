@@ -2,6 +2,7 @@ package operation
 
 const (
 	PUSH_INT = iota
+	PUSH_STRING
 	PLUS
 	MINUS
 	MUL
@@ -71,17 +72,26 @@ var BuiltIn = map[string]int{
 }
 
 type Operation struct {
-	Code   int
-	Value  int
-	Loc    string
-	JumpTo int
+	Code         int
+	IntegerValue int
+	StringValue  string
+	Loc          string
+	JumpTo       int
 }
 
 func PushInt(value int, loc string) Operation {
 	return Operation{
-		Code:  PUSH_INT,
-		Value: value,
-		Loc:   loc,
+		Code:         PUSH_INT,
+		IntegerValue: value,
+		Loc:          loc,
+	}
+}
+
+func PushString(value string, loc string) Operation {
+	return Operation{
+		Code:        PUSH_STRING,
+		StringValue: value,
+		Loc:         loc,
 	}
 }
 
