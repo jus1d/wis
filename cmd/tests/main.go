@@ -43,8 +43,16 @@ func main() {
 		return
 	}
 
+	runsFailed := 0
+	compilesFailed := 0
+	totalTests := 0
+
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".glo") {
+			runFailed := false
+			compilationFailed := false
+			totalTests++
+
 			name := strings.TrimSuffix(filepath.Join(testsDirectory, file.Name()), ".glo")
 
 			outputFilepath := fmt.Sprintf("%s.output.txt", name)
@@ -59,38 +67,45 @@ func main() {
 			actualRunOutput, err := run(golloFilepath)
 			if err != nil {
 				log.TestFailed(fmt.Sprintf("%s.glo: Running exitted abnormally: %s", name, err.Error()))
-				os.Exit(1)
+				runFailed = true
 			}
 
 			actualCompileOutput, err := compile(golloFilepath)
 			if err != nil {
 				log.TestFailed(fmt.Sprintf("%s.glo: Compiling exitted abnormally: %s", name, err.Error()))
-				os.Exit(1)
+				compilationFailed = true
 			}
 
 			if strings.TrimSpace(actualRunOutput) != strings.TrimSpace(string(expectedOutput)) {
 				log.TestFailed(fmt.Sprintf("%s.glo: Expected and actual outputs didn't match in run mode", name))
-				os.Exit(1)
+				runFailed = true
 			} else {
 				log.TestPassed(fmt.Sprintf("%s.glo: Sucessfully passed the test in run mode", name))
 			}
 
 			if strings.TrimSpace(actualCompileOutput) != strings.TrimSpace(string(expectedOutput)) {
 				log.TestFailed(fmt.Sprintf("%s.glo: Expected and actual outputs didn't match in compile mode", name))
-				os.Exit(1)
+				compilationFailed = true
 			} else {
 				log.TestPassed(fmt.Sprintf("%s.glo: Sucessfully passed the test in compile mode", name))
 			}
 
-			log.Info("Removing output files...")
-
-			command.Execute(false, "rm", name)
-			command.Execute(false, "rm", fmt.Sprintf("%s.asm", name))
+			if runFailed {
+				runsFailed++
+			}
+			if compilationFailed {
+				compilesFailed++
+			}
 
 			fmt.Println()
 		}
 	}
 
 	fmt.Println()
-	log.TestPassed(fmt.Sprintf("All tests passed in %s", testsDirectory))
+	if runsFailed != 0 || compilesFailed != 0 {
+		log.TestFailed(fmt.Sprintf("Runs failed: %d/%d, compilations failed: %d/%d", runsFailed, totalTests, compilesFailed, totalTests))
+		os.Exit(1)
+	} else {
+		log.TestPassed(fmt.Sprintf("All tests passed in %s", testsDirectory))
+	}
 }

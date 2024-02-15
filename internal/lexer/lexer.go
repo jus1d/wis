@@ -3,20 +3,15 @@ package lexer
 import (
 	"fmt"
 	"gollo/internal/operation"
+	"gollo/internal/token"
 	"gollo/pkg/assert"
 	"gollo/pkg/log"
 	st "gollo/pkg/stack"
 	"os"
 	"strconv"
 	"strings"
+	"unicode"
 )
-
-type Token struct {
-	Filepath string
-	Line     int
-	Col      int
-	Word     string
-}
 
 func LexFile(compiler string, filepath string) []operation.Operation {
 	_, err := os.Stat(filepath)
@@ -37,45 +32,75 @@ func LexFile(compiler string, filepath string) []operation.Operation {
 
 	lines := strings.Split(source, "\n")
 
-	tokens := make([]Token, 0)
+	tokens := make([]token.Token, 0)
 
 	for i := 0; i < len(lines); i++ {
 		line := strings.Split(lines[i], "//")[0] + "\n"
-		tokens = append(tokens, lexLine(filepath, i+1, line)...)
+		tokens = append(tokens, LexLine(filepath, i+1, line)...)
 	}
 
 	program := parseTokensAsOperations(tokens)
-	crossreferehcedProgram := crossreferenceBlocks(program)
+	crossreferencedProgram := crossreferenceBlocks(program)
 
-	return crossreferehcedProgram
+	return crossreferencedProgram
 }
 
-func lexLine(filepath string, number int, line string) []Token {
-	tokens := make([]Token, 0)
-	var cur string
+func LexLine(filepath string, number int, line string) []token.Token {
+	tokens := make([]token.Token, 0)
+	col := findCol(line, 0, func(x rune) bool { return !unicode.IsSpace(x) })
 
-	for i := 0; i < len(line); i++ {
-		if (line[i] == ' ' || line[i] == '\n') && cur != "" {
-			tokens = append(tokens, Token{
-				Filepath: filepath,
-				Line:     number,
-				Col:      i - len(cur) + 1,
-				Word:     cur,
-			})
-			cur = ""
-		}
-		if line[i] != ' ' && line[i] != '\n' {
-			cur += string(line[i])
+	for col < len(line) {
+		var colEnd int
+		if line[col] == '"' {
+			colEnd = findCol(line, col+1, func(x rune) bool { return x == '"' })
+
+			// TODO: report unclosed string literals as proper compiler errors instead of assertions
+			if line[colEnd] == '"' {
+				textOfToken := line[col+1 : colEnd]
+				tokens = append(tokens, token.Token{
+					Code:        token.STRING,
+					StringValue: textOfToken,
+					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, col+1),
+				})
+				col = findCol(line, colEnd+1, func(x rune) bool { return !unicode.IsSpace(x) })
+			}
+		} else {
+			colEnd = findCol(line, col, unicode.IsSpace)
+			textOfToken := line[col:colEnd]
+			if intValue, err := strconv.Atoi(textOfToken); err == nil {
+				tokens = append(tokens, token.Token{
+					Code:         token.INT,
+					IntegerValue: intValue,
+					Loc:          fmt.Sprintf("%s:%d:%d", filepath, number, col+1),
+				})
+			} else {
+				tokens = append(tokens, token.Token{
+					Code:        token.WORD,
+					StringValue: textOfToken,
+					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, col+1),
+				})
+			}
+			col = findCol(line, colEnd, func(x rune) bool { return !unicode.IsSpace(x) })
 		}
 	}
 
 	return tokens
 }
 
+// findCol finds the column index of the next character satisfying the predicate.
+func findCol(line string, start int, predicate func(rune) bool) int {
+	for i, char := range line[start:] {
+		if predicate(char) {
+			return start + i
+		}
+	}
+	return len(line)
+}
+
 func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	stack := st.New()
 
-	assert.Assert(operation.Count == 32, "Exhaustive handling in lexer.crossreferenceBlocks(). Not all operations should be handled in here.")
+	assert.Assert(operation.Count == 33, "Exhaustive operations handling in lexer.crossreferenceBlocks(). Not all operations should be handled in here.")
 
 	i := 0
 	for i < len(program) {
@@ -117,84 +142,86 @@ func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	return program
 }
 
-func parseTokensAsOperations(tokens []Token) []operation.Operation {
+func parseTokensAsOperations(tokens []token.Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.Count == 32, "Exhaustive handling in lexer.parseTokensAsOperations()")
+	assert.Assert(operation.Count == 33, "Exhaustive operations handling in lexer.parseTokensAsOperations()")
+	assert.Assert(token.Count == 3, "Exhaustive tokens handling in lexer.parseTokensAsOperations()")
 
-	for _, token := range tokens {
-		loc := fmt.Sprintf("%s:%d:%d", token.Filepath, token.Line, token.Col)
-
-		switch token.Word {
-		case "+":
-			program = append(program, operation.Plus(loc))
-		case "-":
-			program = append(program, operation.Minus(loc))
-		case "*":
-			program = append(program, operation.Multiply(loc))
-		case "/":
-			program = append(program, operation.Division(loc))
-		case "%":
-			program = append(program, operation.Rem(loc))
-		case "bor":
-			program = append(program, operation.Bor(loc))
-		case "band":
-			program = append(program, operation.Band(loc))
-		case "xor":
-			program = append(program, operation.Xor(loc))
-		case "shl":
-			program = append(program, operation.Shl(loc))
-		case "shr":
-			program = append(program, operation.Shr(loc))
-		case "==":
-			program = append(program, operation.Equal(loc))
-		case "!=":
-			program = append(program, operation.NotEqual(loc))
-		case "<":
-			program = append(program, operation.Less(loc))
-		case ">":
-			program = append(program, operation.Greater(loc))
-		case "<=":
-			program = append(program, operation.LessOrEqual(loc))
-		case ">=":
-			program = append(program, operation.GreaterOrEqual(loc))
-		case "if":
-			program = append(program, operation.If(loc))
-		case "else":
-			program = append(program, operation.Else(loc))
-		case "end":
-			program = append(program, operation.End(loc))
-		case "do":
-			program = append(program, operation.Do(loc))
-		case "while":
-			program = append(program, operation.While(loc))
-		case "put":
-			program = append(program, operation.Put(loc))
-		case "copy":
-			program = append(program, operation.Copy(loc))
-		case "2copy":
-			program = append(program, operation.TwoCopy(loc))
-		case "swap":
-			program = append(program, operation.Swap(loc))
-		case "drop":
-			program = append(program, operation.Drop(loc))
-		case "over":
-			program = append(program, operation.Over(loc))
-		case "syscall0":
-			program = append(program, operation.Syscall0(loc))
-		case "syscall1":
-			program = append(program, operation.Syscall1(loc))
-		case "syscall2":
-			program = append(program, operation.Syscall2(loc))
-		case "syscall3":
-			program = append(program, operation.Syscall3(loc))
-		default:
-			val, err := strconv.Atoi(token.Word)
-			if err != nil {
-				log.Error(fmt.Sprintf("%s: can't parse token: %s", loc, token.Word))
+	for _, tok := range tokens {
+		switch tok.Code {
+		case token.INT:
+			program = append(program, operation.PushInt(tok.IntegerValue, tok.Loc))
+		case token.STRING:
+			program = append(program, operation.PushString(tok.StringValue, tok.Loc))
+		case token.WORD:
+			switch tok.StringValue {
+			case "+":
+				program = append(program, operation.Plus(tok.Loc))
+			case "-":
+				program = append(program, operation.Minus(tok.Loc))
+			case "*":
+				program = append(program, operation.Multiply(tok.Loc))
+			case "/":
+				program = append(program, operation.Division(tok.Loc))
+			case "%":
+				program = append(program, operation.Mod(tok.Loc))
+			case "bor":
+				program = append(program, operation.Bor(tok.Loc))
+			case "band":
+				program = append(program, operation.Band(tok.Loc))
+			case "xor":
+				program = append(program, operation.Xor(tok.Loc))
+			case "shl":
+				program = append(program, operation.Shl(tok.Loc))
+			case "shr":
+				program = append(program, operation.Shr(tok.Loc))
+			case "==":
+				program = append(program, operation.Equal(tok.Loc))
+			case "!=":
+				program = append(program, operation.NotEqual(tok.Loc))
+			case "<":
+				program = append(program, operation.Less(tok.Loc))
+			case ">":
+				program = append(program, operation.Greater(tok.Loc))
+			case "<=":
+				program = append(program, operation.LessOrEqual(tok.Loc))
+			case ">=":
+				program = append(program, operation.GreaterOrEqual(tok.Loc))
+			case "if":
+				program = append(program, operation.If(tok.Loc))
+			case "else":
+				program = append(program, operation.Else(tok.Loc))
+			case "end":
+				program = append(program, operation.End(tok.Loc))
+			case "do":
+				program = append(program, operation.Do(tok.Loc))
+			case "while":
+				program = append(program, operation.While(tok.Loc))
+			case "put":
+				program = append(program, operation.Put(tok.Loc))
+			case "copy":
+				program = append(program, operation.Copy(tok.Loc))
+			case "2copy":
+				program = append(program, operation.TwoCopy(tok.Loc))
+			case "swap":
+				program = append(program, operation.Swap(tok.Loc))
+			case "drop":
+				program = append(program, operation.Drop(tok.Loc))
+			case "over":
+				program = append(program, operation.Over(tok.Loc))
+			case "syscall0":
+				program = append(program, operation.Syscall0(tok.Loc))
+			case "syscall1":
+				program = append(program, operation.Syscall1(tok.Loc))
+			case "syscall2":
+				program = append(program, operation.Syscall2(tok.Loc))
+			case "syscall3":
+				program = append(program, operation.Syscall3(tok.Loc))
+			default:
+				log.Error(fmt.Sprintf("%s: can't parse token: %s", tok.Loc, tok.StringValue))
 				os.Exit(1)
 			}
-			program = append(program, operation.Push(val, loc))
 		}
 	}
 
