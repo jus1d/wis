@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 func LexFile(compiler string, filepath string) []operation.Operation {
@@ -35,7 +36,7 @@ func LexFile(compiler string, filepath string) []operation.Operation {
 
 	for i := 0; i < len(lines); i++ {
 		line := strings.Split(lines[i], "//")[0] + "\n"
-		tokens = append(tokens, lexLine(filepath, i+1, line)...)
+		tokens = append(tokens, LexLine(filepath, i+1, line)...)
 	}
 
 	program := parseTokensAsOperations(tokens)
@@ -44,60 +45,55 @@ func LexFile(compiler string, filepath string) []operation.Operation {
 	return crossreferencedProgram
 }
 
-func lexLine(filepath string, number int, line string) []token.Token {
+func LexLine(filepath string, number int, line string) []token.Token {
 	tokens := make([]token.Token, 0)
-	var cur string
+	col := findCol(line, 0, func(x rune) bool { return !unicode.IsSpace(x) })
 
-	assert.Assert(token.Count == 3, "Exhaustive tokens handling in lexer.parseTokensAsOperations()")
+	for col < len(line) {
+		var colEnd int
+		if line[col] == '"' {
+			colEnd = findCol(line, col+1, func(x rune) bool { return x == '"' })
 
-	for i := 0; i < len(line); i++ {
-		parts := strings.Split(line, "'")
-		for ip, part := range parts {
-			if ip%2 != 0 {
+			// TODO: report unclosed string literals as proper compiler errors instead of assertions
+			if line[colEnd] == '"' {
+				textOfToken := line[col+1 : colEnd]
 				tokens = append(tokens, token.Token{
 					Code:        token.STRING,
-					StringValue: part,
-					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, i),
+					StringValue: textOfToken,
+					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, col),
 				})
-				// i += len(part) + 2
-			} else {
-				if (line[i] == ' ' || line[i] == '\n') && cur != "" {
-					var tok token.Token
-
-					val, err := strconv.Atoi(cur)
-					if err != nil {
-						_, exists := operation.BuiltIn[cur]
-						var code int
-						if exists {
-							code = token.WORD
-						} else {
-							code = token.STRING
-						}
-						tok = token.Token{
-							Code:        code,
-							StringValue: cur,
-							Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, i-len(cur)+1),
-						}
-					} else {
-						tok = token.Token{
-							Code:         token.INT,
-							IntegerValue: val,
-							Loc:          fmt.Sprintf("%s:%d:%d", filepath, number, i-len(cur)+1),
-						}
-					}
-
-					tokens = append(tokens, tok)
-					cur = ""
-				}
-
-				if line[i] != ' ' && line[i] != '\n' {
-					cur += string(line[i])
-				}
+				col = findCol(line, colEnd+1, func(x rune) bool { return !unicode.IsSpace(x) })
 			}
+		} else {
+			colEnd = findCol(line, col, unicode.IsSpace)
+			textOfToken := line[col:colEnd]
+			if intValue, err := strconv.Atoi(textOfToken); err == nil {
+				tokens = append(tokens, token.Token{
+					Code:         token.INT,
+					IntegerValue: intValue,
+					Loc:          fmt.Sprintf("%s:%d:%d", filepath, number, col),
+				})
+			} else {
+				tokens = append(tokens, token.Token{
+					Code:        token.WORD,
+					StringValue: textOfToken,
+					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, col),
+				})
+			}
+			col = findCol(line, colEnd, func(x rune) bool { return !unicode.IsSpace(x) })
 		}
 	}
-
 	return tokens
+}
+
+// findCol finds the column index of the next character satisfying the predicate.
+func findCol(line string, start int, predicate func(rune) bool) int {
+	for i, char := range line[start:] {
+		if predicate(char) {
+			return start + i
+		}
+	}
+	return len(line)
 }
 
 func crossreferenceBlocks(program []operation.Operation) []operation.Operation {

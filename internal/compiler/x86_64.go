@@ -70,13 +70,12 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 
 		switch op.Code {
 		case operation.PUSH_INT:
-			str.Complete(&content, fmt.Sprintf("    ; -- push int %d --", op.IntegerValue))
+			str.Complete(&content, fmt.Sprintf("    ; -- push int: %d --", op.IntegerValue))
 			str.Complete(&content, fmt.Sprintf("    push    %d", op.IntegerValue))
 		case operation.PUSH_STRING:
-			str.Complete(&content, fmt.Sprintf("    ; -- push str %s --", op.StringValue))
-			str.Complete(&content, fmt.Sprintf("    mov     rax, %d", len(op.StringValue)))
-			str.Complete(&content, "    push    rax")
-			str.Complete(&content, fmt.Sprintf("    push    _str_%d", len(strs)))
+			str.Complete(&content, fmt.Sprintf("    ; -- push str: '%s' --", op.StringValue))
+			str.Complete(&content, fmt.Sprintf("    push    %d", len(op.StringValue)+1))
+			str.Complete(&content, fmt.Sprintf("    push    str_%d", len(strs)))
 			strs = append(strs, op.StringValue)
 		case operation.PLUS:
 			str.Complete(&content, "    ; -- plus --")
@@ -288,9 +287,10 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    mov     rdi, 0")
 	str.Complete(&content, "    syscall")
 
+	str.Complete(&content, "")
 	str.Complete(&content, "section .data")
 	for i, s := range strs {
-		str.Complete(&content, fmt.Sprintf("    _str_%d: db \"%s\", 10", i, s))
+		str.Complete(&content, fmt.Sprintf("    str_%d db '%s', 10", i, s))
 	}
 
 	_, err = file.WriteString(content)

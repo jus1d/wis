@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gollo/internal/compiler"
 	"gollo/internal/lexer"
 	"gollo/internal/runner"
@@ -59,6 +60,7 @@ func main() {
 		path = exploreProvidedFilepath(path)
 
 		program := lexer.LexFile(compilerName, path)
+		fmt.Println(program)
 		runner.Run(program)
 	case "compile":
 		runAfterCompile := false
