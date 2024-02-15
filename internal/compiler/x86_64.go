@@ -11,6 +11,8 @@ import (
 )
 
 func compile_x86_64(filepath string, program []operation.Operation) {
+	fmt.Println(program)
+
 	file, err := os.Create(filepath)
 	if err != nil {
 		log.Error("can't create an assembly file")
@@ -18,6 +20,8 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	}
 	_ = file
 	var content string
+
+	strs := make([]string, 0)
 
 	str.Complete(&content, "put:")
 	str.Complete(&content, "    mov     r9, -3689348814741910323")
@@ -57,7 +61,7 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    global _start")
 	str.Complete(&content, "_start:")
 
-	assert.Assert(operation.Count == 32, "Exhaustive handling in compiler.compile_x86_64()")
+	assert.Assert(operation.Count == 33, "Exhaustive operations handling in compiler.compile_x86_64()")
 
 	for i := 0; i < len(program); i++ {
 		op := program[i]
@@ -66,8 +70,13 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 
 		switch op.Code {
 		case operation.PUSH_INT:
-			str.Complete(&content, fmt.Sprintf("    ; -- push int %d --", op.Value))
-			str.Complete(&content, fmt.Sprintf("    push    %d", op.Value))
+			str.Complete(&content, fmt.Sprintf("    ; -- push int: %d --", op.IntegerValue))
+			str.Complete(&content, fmt.Sprintf("    push    %d", op.IntegerValue))
+		case operation.PUSH_STRING:
+			str.Complete(&content, fmt.Sprintf("    ; -- push str: '%s' --", op.StringValue))
+			str.Complete(&content, fmt.Sprintf("    push    %d", len(op.StringValue)+1))
+			str.Complete(&content, fmt.Sprintf("    push    str_%d", len(strs)))
+			strs = append(strs, op.StringValue)
 		case operation.PLUS:
 			str.Complete(&content, "    ; -- plus --")
 			str.Complete(&content, "    pop     rax")
@@ -277,6 +286,12 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 	str.Complete(&content, "    mov     rax, 60")
 	str.Complete(&content, "    mov     rdi, 0")
 	str.Complete(&content, "    syscall")
+
+	str.Complete(&content, "")
+	str.Complete(&content, "section .data")
+	for i, s := range strs {
+		str.Complete(&content, fmt.Sprintf("    str_%d db '%s', 10", i, s))
+	}
 
 	_, err = file.WriteString(content)
 	if err != nil {

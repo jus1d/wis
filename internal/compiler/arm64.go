@@ -24,7 +24,7 @@ func compile_arm64(filepath string, program []operation.Operation) {
 	str.Complete(&content, ".text")
 	str.Complete(&content, "_main:")
 
-	assert.Assert(operation.Count == 32, "Exhaustive handling in compiler.compile_arm64()")
+	assert.Assert(operation.Count == 32, "Exhaustive operations handling in compiler.compile_arm64()")
 
 	for i := 0; i < len(program); i++ {
 		op := program[i]
@@ -33,8 +33,8 @@ func compile_arm64(filepath string, program []operation.Operation) {
 
 		switch op.Code {
 		case operation.PUSH_INT:
-			str.Complete(&content, fmt.Sprintf("    // -- push int %d --", op.Value))
-			str.Complete(&content, "    mov     x0, #"+strconv.Itoa(op.Value))
+			str.Complete(&content, fmt.Sprintf("    // -- push int %d --", op.IntegerValue))
+			str.Complete(&content, "    mov     x0, #"+strconv.Itoa(op.IntegerValue))
 			str.Complete(&content, "    stp     x0, xzr, [sp, #-16]!")
 		case operation.PLUS:
 			str.Complete(&content, "    // -- plus --")
@@ -128,7 +128,7 @@ func compile_arm64(filepath string, program []operation.Operation) {
 	}
 
 	str.Complete(&content, "    // -- exit --")
-	//str.Complete(&content, "    mov    x0, #0")
+	str.Complete(&content, "    mov    x0, #0")
 	str.Complete(&content, "    mov    x16, #1")
 	str.Complete(&content, "    svc    #0")
 

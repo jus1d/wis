@@ -45,6 +45,8 @@ $ ./examples/goo
 
 #### `if-else` - default condition workflow
 
+`if` pops the value on top of the stack. If popped value is zero, program jumps to `else` or `end` of current block. Otherwise, program will go into the `if` branch
+
 **Usage:**
 
 ```
@@ -60,6 +62,8 @@ end
 ---
 
 #### `while` - loops with condition
+
+`do` pops the value from top of the stack. If popped value is zero, program jumps to `end` of current block. Otherwise, program jump into the `while` block
 
 **Usage:**
 
