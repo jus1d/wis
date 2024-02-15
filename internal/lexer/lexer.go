@@ -148,10 +148,9 @@ func parseTokensAsOperations(tokens []token.Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
 	assert.Assert(operation.Count == 32, "Exhaustive operations handling in lexer.parseTokensAsOperations()")
+	assert.Assert(token.Count == 3, "Exhaustive tokens handling in lexer.parseTokensAsOperations()")
 
 	for _, tok := range tokens {
-		assert.Assert(token.Count == 3, "Exhaustive tokens handling in lexer.parseTokensAsOperations()")
-
 		switch tok.Code {
 		case token.INT:
 			program = append(program, operation.PushInt(tok.IntegerValue, tok.Loc))
