@@ -60,7 +60,7 @@ func LexLine(filepath string, number int, line string) []token.Token {
 				tokens = append(tokens, token.Token{
 					Code:        token.STRING,
 					StringValue: textOfToken,
-					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, col),
+					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, col+1),
 				})
 				col = findCol(line, colEnd+1, func(x rune) bool { return !unicode.IsSpace(x) })
 			}
@@ -71,13 +71,13 @@ func LexLine(filepath string, number int, line string) []token.Token {
 				tokens = append(tokens, token.Token{
 					Code:         token.INT,
 					IntegerValue: intValue,
-					Loc:          fmt.Sprintf("%s:%d:%d", filepath, number, col),
+					Loc:          fmt.Sprintf("%s:%d:%d", filepath, number, col+1),
 				})
 			} else {
 				tokens = append(tokens, token.Token{
 					Code:        token.WORD,
 					StringValue: textOfToken,
-					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, col),
+					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, col+1),
 				})
 			}
 			col = findCol(line, colEnd, func(x rune) bool { return !unicode.IsSpace(x) })
