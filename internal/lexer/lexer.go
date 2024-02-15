@@ -83,6 +83,7 @@ func LexLine(filepath string, number int, line string) []token.Token {
 			col = findCol(line, colEnd, func(x rune) bool { return !unicode.IsSpace(x) })
 		}
 	}
+
 	return tokens
 }
 
