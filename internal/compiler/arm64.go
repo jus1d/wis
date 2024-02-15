@@ -128,7 +128,7 @@ func compile_arm64(filepath string, program []operation.Operation) {
 	}
 
 	str.Complete(&content, "    // -- exit --")
-	//str.Complete(&content, "    mov    x0, #0")
+	str.Complete(&content, "    mov    x0, #0")
 	str.Complete(&content, "    mov    x16, #1")
 	str.Complete(&content, "    svc    #0")
 
