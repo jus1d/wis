@@ -297,8 +297,8 @@ func compile_x86_64(filepath string, program []operation.Operation) {
 
 	str.Complete(&content, "")
 	str.Complete(&content, "section .data")
-	for k, v := range strs {
-		str.Complete(&content, fmt.Sprintf("    str_%d db '%s', 10", v, k))
+	for s, addr := range strs {
+		str.Complete(&content, fmt.Sprintf("    str_%d db '%s', 10", addr, s))
 	}
 
 	_, err = file.WriteString(content)
