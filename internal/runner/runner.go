@@ -9,7 +9,7 @@ import (
 )
 
 func Run(program []operation.Operation) {
-	assert.Assert(operation.Count == 32, "Exhaustive handling in runner.Run()")
+	assert.Assert(operation.Count == 32, "Exhaustive operations handling in runner.Run()")
 
 	stack := st.New()
 

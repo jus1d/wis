@@ -24,7 +24,7 @@ func compile_arm64(filepath string, program []operation.Operation) {
 	str.Complete(&content, ".text")
 	str.Complete(&content, "_main:")
 
-	assert.Assert(operation.Count == 32, "Exhaustive handling in compiler.compile_arm64()")
+	assert.Assert(operation.Count == 32, "Exhaustive operations handling in compiler.compile_arm64()")
 
 	for i := 0; i < len(program); i++ {
 		op := program[i]
