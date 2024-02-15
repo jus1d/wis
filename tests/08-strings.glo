@@ -1,1 +1,8 @@
 "Hello world" 1 1 syscall3
+"Other staff" 1 1 syscall3
+
+"Hello world" "Other staff"
+
+1 1 syscall3
+drop
+1 1 syscall3

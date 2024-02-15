@@ -11,8 +11,6 @@ import (
 )
 
 func compile_x86_64(filepath string, program []operation.Operation) {
-	fmt.Println(program)
-
 	file, err := os.Create(filepath)
 	if err != nil {
 		log.Error("can't create an assembly file")
