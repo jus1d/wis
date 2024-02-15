@@ -100,6 +100,20 @@ Removes and prints number from top of the stack
 
 ---
 
+#### `puts`
+
+`puts` (put string) is a built-in shortcut for: `1 1 syscall3 drop`
+
+`puts` pushes `1` to the stack, and call `write` syscall
+
+**Example:**
+
+```
+"Hello, world!" puts
+```
+
+---
+
 #### `copy`
 
 Copies integer on top of the stack
