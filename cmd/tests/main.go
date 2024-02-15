@@ -106,6 +106,6 @@ func main() {
 		log.TestFailed(fmt.Sprintf("Runs failed: %d/%d, compilations failed: %d/%d", runsFailed, totalTests, compilesFailed, totalTests))
 		os.Exit(1)
 	} else {
-		log.TestPassed(fmt.Sprintf("All tests passed in %s", testsDirectory))
+		log.TestPassed(fmt.Sprintf("Passed %d tests from %s", totalTests, testsDirectory))
 	}
 }

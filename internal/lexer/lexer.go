@@ -100,7 +100,7 @@ func findCol(line string, start int, predicate func(rune) bool) int {
 func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 	stack := st.New()
 
-	assert.Assert(operation.Count == 33, "Exhaustive operations handling in lexer.crossreferenceBlocks(). Not all operations should be handled in here.")
+	assert.Assert(operation.Count == 34, "Exhaustive operations handling in lexer.crossreferenceBlocks(). Not all operations should be handled in here.")
 
 	i := 0
 	for i < len(program) {
@@ -145,7 +145,7 @@ func crossreferenceBlocks(program []operation.Operation) []operation.Operation {
 func parseTokensAsOperations(tokens []token.Token) []operation.Operation {
 	program := make([]operation.Operation, 0)
 
-	assert.Assert(operation.Count == 33, "Exhaustive operations handling in lexer.parseTokensAsOperations()")
+	assert.Assert(operation.Count == 34, "Exhaustive operations handling in lexer.parseTokensAsOperations()")
 	assert.Assert(token.Count == 3, "Exhaustive tokens handling in lexer.parseTokensAsOperations()")
 
 	for _, tok := range tokens {
@@ -200,6 +200,8 @@ func parseTokensAsOperations(tokens []token.Token) []operation.Operation {
 				program = append(program, operation.While(tok.Loc))
 			case "put":
 				program = append(program, operation.Put(tok.Loc))
+			case "puts":
+				program = append(program, operation.Puts(tok.Loc))
 			case "copy":
 				program = append(program, operation.Copy(tok.Loc))
 			case "2copy":

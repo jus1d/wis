@@ -11,7 +11,7 @@ import (
 )
 
 func Run(program []operation.Operation) {
-	assert.Assert(operation.Count == 33, "Exhaustive operations handling in runner.Run()")
+	assert.Assert(operation.Count == 34, "Exhaustive operations handling in runner.Run()")
 
 	memory := make([]byte, 0, 640000)
 	strintsSize := 0
@@ -165,6 +165,12 @@ func Run(program []operation.Operation) {
 			i++
 		case operation.PUT:
 			fmt.Println(stack.Pop())
+			i++
+		case operation.PUTS:
+			buf := stack.Pop()
+			n := stack.Pop()
+			s := string(memory[buf : buf+n])
+			fmt.Printf("%s\n", s)
 			i++
 		case operation.COPY:
 			stack.Push(stack.Peek())
