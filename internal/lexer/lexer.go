@@ -49,36 +49,28 @@ func LexLine(filepath string, number int, line string) []token.Token {
 	tokens := make([]token.Token, 0)
 	col := findCol(line, 0, func(x rune) bool { return !unicode.IsSpace(x) })
 
+	if strings.Count(line, "\"") > 0 && strings.Count(line, "\"")%2 != 0 {
+		log.Error(fmt.Sprintf("%s:%d:%d: found unclosed string literals", filepath, number, strings.LastIndex(line, "\"")+1))
+		os.Exit(1)
+	}
+
 	for col < len(line) {
 		var colEnd int
 		if line[col] == '"' {
 			colEnd = findCol(line, col+1, func(x rune) bool { return x == '"' })
 
-			// TODO: report unclosed string literals as proper compiler errors instead of assertions
 			if line[colEnd] == '"' {
 				textOfToken := line[col+1 : colEnd]
-				tokens = append(tokens, token.Token{
-					Code:        token.STRING,
-					StringValue: textOfToken,
-					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, col+1),
-				})
+				tokens = append(tokens, token.String(textOfToken, fmt.Sprintf("%s:%d:%d", filepath, number, col+1)))
 				col = findCol(line, colEnd+1, func(x rune) bool { return !unicode.IsSpace(x) })
 			}
 		} else {
 			colEnd = findCol(line, col, unicode.IsSpace)
 			textOfToken := line[col:colEnd]
 			if intValue, err := strconv.Atoi(textOfToken); err == nil {
-				tokens = append(tokens, token.Token{
-					Code:         token.INT,
-					IntegerValue: intValue,
-					Loc:          fmt.Sprintf("%s:%d:%d", filepath, number, col+1),
-				})
+				tokens = append(tokens, token.Int(intValue, fmt.Sprintf("%s:%d:%d", filepath, number, col+1)))
 			} else {
-				tokens = append(tokens, token.Token{
-					Code:        token.WORD,
-					StringValue: textOfToken,
-					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, col+1),
-				})
+				tokens = append(tokens, token.Word(textOfToken, fmt.Sprintf("%s:%d:%d", filepath, number, col+1)))
 			}
 			col = findCol(line, colEnd, func(x rune) bool { return !unicode.IsSpace(x) })
 		}
