@@ -4,12 +4,17 @@ import (
 	"fmt"
 	"gollo/internal/operation"
 	"gollo/pkg/assert"
+	"gollo/pkg/log"
 	st "gollo/pkg/stack"
+	"os"
 	"syscall"
 )
 
 func Run(program []operation.Operation) {
 	assert.Assert(operation.Count == 33, "Exhaustive operations handling in runner.Run()")
+
+	memory := make([]byte, 0, 640000)
+	strintsSize := 0
 
 	stack := st.New()
 
@@ -22,7 +27,14 @@ func Run(program []operation.Operation) {
 			stack.Push(op.IntegerValue)
 			i++
 		case operation.PUSH_STRING:
-			assert.Assert(false, "not implemented yet")
+			bs := []byte(op.StringValue)
+			n := len(bs)
+			stack.Push(n)
+			op.Address = strintsSize
+			memory = append(memory, bs...)
+			strintsSize += n
+			stack.Push(op.Address)
+			i++
 		case operation.PLUS:
 			a := stack.Pop()
 			b := stack.Pop()
@@ -204,8 +216,24 @@ func Run(program []operation.Operation) {
 			arg1 := stack.Pop()
 			arg2 := stack.Pop()
 			arg3 := stack.Pop()
-			r, _, _ := syscall.Syscall(uintptr(syscallNumber), uintptr(arg1), uintptr(arg2), uintptr(arg3))
-			stack.Push(int(r))
+			if syscallNumber == 1 {
+				fd := arg1
+				buf := arg2
+				n := arg3
+				s := string(memory[buf : buf+n])
+				if fd == 1 {
+					fmt.Fprintf(os.Stdout, "%s\n", s)
+				} else if fd == 2 {
+					fmt.Fprintf(os.Stderr, "%s\n", s)
+				} else {
+					log.Error("unknown file descriptor")
+					os.Exit(1)
+				}
+				stack.Push(arg3)
+			} else {
+				r, _, _ := syscall.Syscall(uintptr(syscallNumber), uintptr(arg1), uintptr(arg2), uintptr(arg3))
+				stack.Push(int(r))
+			}
 			i++
 		default:
 			assert.Assert(false, "unreachable")

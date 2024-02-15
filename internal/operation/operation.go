@@ -77,6 +77,7 @@ type Operation struct {
 	StringValue  string
 	Loc          string
 	JumpTo       int
+	Address      int
 }
 
 func PushInt(value int, loc string) Operation {
