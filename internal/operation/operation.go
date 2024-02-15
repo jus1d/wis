@@ -36,6 +36,40 @@ const (
 	Count
 )
 
+var BuiltIn = map[string]int{
+	"+":        PLUS,
+	"-":        MINUS,
+	"*":        MUL,
+	"/":        DIV,
+	"%":        MOD,
+	"bor":      BOR,
+	"band":     BAND,
+	"xor":      XOR,
+	"shl":      SHL,
+	"shr":      SHR,
+	"==":       EQ,
+	"!=":       NE,
+	"<":        LT,
+	">":        GT,
+	"<=":       LE,
+	">=":       GE,
+	"if":       IF,
+	"else":     ELSE,
+	"end":      END,
+	"do":       DO,
+	"while":    WHILE,
+	"put":      PUT,
+	"copy":     COPY,
+	"2copy":    TWO_COPY,
+	"swap":     SWAP,
+	"drop":     DROP,
+	"over":     OVER,
+	"syscall0": SYSCALL0,
+	"syscall1": SYSCALL1,
+	"syscall2": SYSCALL2,
+	"syscall3": SYSCALL3,
+}
+
 type Operation struct {
 	Code   int
 	Value  int

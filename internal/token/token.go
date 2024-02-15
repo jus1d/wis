@@ -3,6 +3,7 @@ package token
 const (
 	WORD = iota
 	INT
+	STRING
 	Count
 )
 

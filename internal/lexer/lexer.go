@@ -48,31 +48,51 @@ func lexLine(filepath string, number int, line string) []token.Token {
 	tokens := make([]token.Token, 0)
 	var cur string
 
-	for i := 0; i < len(line); i++ {
-		if (line[i] == ' ' || line[i] == '\n') && cur != "" {
-			var tok token.Token
+	assert.Assert(token.Count == 3, "Exhaustive tokens handling in lexer.parseTokensAsOperations()")
 
-			val, err := strconv.Atoi(cur)
-			if err != nil {
-				tok = token.Token{
-					Code:        token.WORD,
-					StringValue: cur,
+	for i := 0; i < len(line); i++ {
+		parts := strings.Split(line, "\"")
+		for ip, part := range parts {
+			if ip%2 != 0 {
+				tokens = append(tokens, token.Token{
+					Code:        token.STRING,
+					StringValue: part,
 					Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, i-len(cur)+1),
-				}
+				})
 			} else {
-				tok = token.Token{
-					Code:         token.INT,
-					IntegerValue: val,
-					Loc:          fmt.Sprintf("%s:%d:%d", filepath, number, i-len(cur)+1),
+				if (line[i] == ' ' || line[i] == '\n') && cur != "" {
+					var tok token.Token
+
+					val, err := strconv.Atoi(cur)
+					if err != nil {
+						_, exists := operation.BuiltIn[cur]
+						var code int
+						if exists {
+							code = token.WORD
+						} else {
+							code = token.STRING
+						}
+						tok = token.Token{
+							Code:        code,
+							StringValue: cur,
+							Loc:         fmt.Sprintf("%s:%d:%d", filepath, number, i-len(cur)+1),
+						}
+					} else {
+						tok = token.Token{
+							Code:         token.INT,
+							IntegerValue: val,
+							Loc:          fmt.Sprintf("%s:%d:%d", filepath, number, i-len(cur)+1),
+						}
+					}
+
+					tokens = append(tokens, tok)
+					cur = ""
+				}
+
+				if line[i] != ' ' && line[i] != '\n' {
+					cur += string(line[i])
 				}
 			}
-
-			tokens = append(tokens, tok)
-			cur = ""
-		}
-
-		if line[i] != ' ' && line[i] != '\n' {
-			cur += string(line[i])
 		}
 	}
 
@@ -130,11 +150,13 @@ func parseTokensAsOperations(tokens []token.Token) []operation.Operation {
 	assert.Assert(operation.Count == 32, "Exhaustive operations handling in lexer.parseTokensAsOperations()")
 
 	for _, tok := range tokens {
-		assert.Assert(token.Count == 2, "Exhaustive tokens handling in lexer.parseTokensAsOperations()")
+		assert.Assert(token.Count == 3, "Exhaustive tokens handling in lexer.parseTokensAsOperations()")
 
 		switch tok.Code {
 		case token.INT:
 			program = append(program, operation.PushInt(tok.IntegerValue, tok.Loc))
+		case token.STRING:
+			assert.Assert(false, "pushing strings not implemented yet")
 		case token.WORD:
 			switch tok.StringValue {
 			case "+":
