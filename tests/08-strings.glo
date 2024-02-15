@@ -1,1 +1,7 @@
-"Hello world" 1 1 syscall3
+"Hello world" puts
+"Other staff" puts
+
+"Hello world" "Other staff"
+
+puts
+puts
