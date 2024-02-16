@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-func compile_x86_64(filepath string, program []operation.Operation) {
+func generate_nasm_linux_x86_64(filepath string, program []operation.Operation) {
 	file, err := os.Create(filepath)
 	if err != nil {
 		log.Error("can't create an assembly file")
