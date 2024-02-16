@@ -1,0 +1,49 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Gollo",
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#control-statements"
+		}
+	],
+	"repository": {
+		"comments":{
+			"patterns": [{
+				"name":"comment",
+				"match":"(//)(.*)"
+		}]},
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.gollo",
+				"match": "\\b(put|puts|copy|2copy|swap|drop|over|syscall0|syscall1|syscall2|syscall3)\\b"
+			}]
+		},
+		"control-statements": {
+			"patterns": [{
+				"name": "control-statements.control.gollo",
+				"match": "\\b(if|else|end|while|do)\\b"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.double.gollo",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.gollo",
+					"match": "\\\\."
+				}
+			]
+		}
+	},
+	"scopeName": "source.glo"
+}
