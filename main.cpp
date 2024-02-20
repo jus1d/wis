@@ -81,7 +81,7 @@ string shift_vector(vector<string>& vec)
 
         return result;
     } else {
-        cerr << "ERROR: Vector is empty" << endl;
+        cerr << "ERROR: Can't shift empty vector" << endl;
         return "";
     }
 }
@@ -169,7 +169,9 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 }
                 else
                 {
+                    // TODO: Change this error message to something like: `unexpected token`
                     cerr << token.Loc << ": ERROR: Can't parse token `" << token.StringValue << "` as operation" << endl;
+                    exit(1);
                 }
                 break;
             default:
@@ -301,7 +303,7 @@ int main(int argc, char* argv[])
     }
     else if (subcommand == "compile")
     {
-        assert(false, "Compilation not implemented yet");
+        assert(false, "Compilation mode not implemented yet");
     }
     else
     {
