@@ -1,9 +1,0 @@
-0 1
-while copy 1000 < do
-  copy 3 % 0 == over 5 % 0 == bor if 
-    swap over + swap
-  end
-  1 +
-end
-
-drop put

@@ -1,7 +1,0 @@
-"Hello world" puts
-"Other staff" puts
-
-"Hello world" "Other staff"
-
-puts
-puts

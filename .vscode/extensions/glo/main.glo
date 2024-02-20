@@ -1,5 +1,0 @@
-1
-while copy 10 < do
-  copy put
-  1 +
-end
