@@ -169,8 +169,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 }
                 else
                 {
-                    // TODO: Change this error message to something like: `unexpected token`
-                    cerr << token.Loc << ": ERROR: Can't parse token `" << token.StringValue << "` as operation" << endl;
+                    cerr << token.Loc << ": ERROR: Unexpected token: `" << token.StringValue << "`" << endl;
                     exit(1);
                 }
                 break;
