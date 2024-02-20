@@ -1,5 +1,7 @@
 # Gollo
 
+## HERE IS THE MEGRATION VERSION OF THIS LANGUAGE. IN NEAREST FUTURE LANGUAGE WILL BE REWRITTEN IN C++
+
 **Gollo** - is a  concatenative, stack-oriented programming language inspired by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)). I never wrote anything in Forth, though. So **gollo** is just a concatenative, stack-based programming language. 
 
 ## Features
