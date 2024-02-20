@@ -5,9 +5,12 @@
 gollo*
 *.o
 *.out
+*.exe
 examples/*
 tests/*
 euler/*
+
+# Ignore example files
 foo*
 goo*
 
