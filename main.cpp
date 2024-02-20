@@ -11,8 +11,26 @@ enum class OpType : int {
     PUSH_INT,
     PUSH_STRING,
     PLUS,
+    MINUS,
     PUT,
     COUNT,
+};
+
+class Operation {
+public:
+    OpType Type;
+    int IntegerValue;
+    string StringValue;
+    string Loc;
+
+    Operation(OpType type, string loc)
+            : Type(type), IntegerValue(0), Loc(std::move(loc)) {}
+
+    Operation(OpType type, int integer_value, string loc)
+            : Type(type), IntegerValue(integer_value), Loc(std::move(loc)) {}
+
+    Operation(OpType type, string string_value, string loc)
+            : Type(type), IntegerValue(0), StringValue(std::move(string_value)), Loc(std::move(loc)) {}
 };
 
 enum class TokenType : int {
@@ -36,21 +54,20 @@ public:
             : Type(type), StringValue(std::move(string_value)), IntegerValue(0), Loc(std::move(loc)) {}
 };
 
-class Operation {
+enum class DataType : int {
+    INT,
+    STRING,
+    BOOL,
+    COUNT,
+};
+
+class Type {
 public:
-    OpType Type;
-    int IntegerValue;
-    string StringValue;
+    DataType Code;
     string Loc;
 
-    Operation(OpType type, string loc)
-            : Type(type), IntegerValue(0), Loc(std::move(loc)) {}
-
-    Operation(OpType type, int integer_value, string loc)
-        : Type(type), IntegerValue(integer_value), Loc(std::move(loc)) {}
-
-    Operation(OpType type, string string_value, string loc)
-            : Type(type), IntegerValue(0), StringValue(std::move(string_value)), Loc(std::move(loc)) {}
+    Type(DataType code, string loc)
+        : Code(code), Loc(loc) {}
 };
 
 void assert(bool condition, string const& message)
@@ -80,10 +97,9 @@ string shift_vector(vector<string>& vec)
         vec.erase(vec.begin());
 
         return result;
-    } else {
-        cerr << "ERROR: Can't shift empty vector" << endl;
-        return "";
     }
+    cerr << "ERROR: Can't shift empty vector" << endl;
+    exit(1);
 }
 
 string location_view(const string& filepath, int row, int col)
@@ -157,11 +173,15 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 program.emplace_back(OpType::PUSH_STRING, token.StringValue, token.Loc);
                 break;
             case TokenType::WORD:
-                assert(int(OpType::COUNT) == 4, "Exhaustive operations handling in parse_tokens_as_operations()");
+                assert(int(OpType::COUNT) == 5, "Exhaustive operations handling in parse_tokens_as_operations()");
 
                 if (token.StringValue == "+")
                 {
                     program.emplace_back(OpType::PLUS, token.Loc);
+                }
+                else if (token.StringValue == "-")
+                {
+                    program.emplace_back(OpType::MINUS, token.Loc);
                 }
                 else if (token.StringValue == "put")
                 {
@@ -183,8 +203,8 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 
 void crossreference_blocks(vector<Operation>& program)
 {
-    assert(int(OpType::COUNT) == 4, "Exhaustive operations handling in crossreference_blocks(). "
-                                    "Not all operations should be handled in here.");
+    assert(int(OpType::COUNT) == 5, "Exhaustive operations handling in crossreference_blocks(). "
+                                    "Not all operations should be handled in here");
 }
 
 vector<Operation> lex_file(string const& path)
@@ -220,9 +240,102 @@ vector<Operation> lex_file(string const& path)
     return program;
 }
 
+void type_check_program(vector<Operation> program)
+{
+    assert(int(DataType::COUNT) == 3, "Exhaustive data types handling in type_check_program()");
+
+    stack<Type> type_checking_stack;
+
+    for (int i = 0; i < program.size(); ++i) {
+        Operation op = program[i];
+
+        assert(int(OpType::COUNT) == 5, "Exhaustive operations handling in type_check_program()");
+
+        switch (op.Type)
+        {
+            case OpType::PUSH_INT:
+            {
+                type_checking_stack.emplace(DataType::INT, op.Loc);
+                break;
+            }
+            case OpType::PUSH_STRING:
+            {
+                type_checking_stack.emplace(DataType::STRING, op.Loc);
+                break;
+            }
+            case OpType::PLUS:
+            {
+                if (type_checking_stack.size() < 2)
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for PLUS operation. "
+                                      "Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+                if (a.Code == DataType::INT && b.Code == DataType::INT)
+                {
+                    type_checking_stack.emplace(DataType::INT, op.Loc);
+                }
+                else
+                {
+                    // TODO: Add expected and actual types
+                    cerr << a.Loc << ": ERROR: Invalid arguments types for PLUS operation" << endl;
+                    exit(1);
+                }
+                break;
+            }
+            case OpType::MINUS:
+            {
+                if (type_checking_stack.size() < 2) {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for MINUS operation. "
+                                      "Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+                if (a.Code == DataType::INT && b.Code == DataType::INT) {
+                    type_checking_stack.emplace(DataType::INT, op.Loc);
+                } else {
+                    // TODO: Add expected and actual types
+                    cerr << a.Loc << ": ERROR: Invalid arguments types for MINUS operation" << endl;
+                    exit(1);
+                }
+                break;
+            }
+            case OpType::PUT:
+            {
+                if (type_checking_stack.empty())
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for PUT operation. "
+                                      "Expected 1 argument, got 0" << endl;
+                    exit(1);
+                }
+                type_checking_stack.pop();
+                break;
+            }
+            default:
+                assert(false, "unreachable");
+        }
+    }
+
+    if (type_checking_stack.size() != 0)
+    {
+        Type top = type_checking_stack.top();
+        cerr << top.Loc << ": ERROR: Unhandled data in the stack" << endl;
+        exit(1);
+    }
+}
+
 void run_program(vector<Operation> program)
 {
-    assert(int(OpType::COUNT) == 4, "Exhaustive operations handling in run_program()");
+    assert(int(OpType::COUNT) == 5, "Exhaustive operations handling in run_program()");
 
     stack<int> runtime_stack;
 
@@ -238,7 +351,7 @@ void run_program(vector<Operation> program)
             }
             case OpType::PUSH_STRING:
             {
-                assert(false, "Pushing strings not implemented yet");
+                assert(false, "Pushing strings not implemented yet for running mode");
                 break;
             }
             case OpType::PLUS:
@@ -250,6 +363,17 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(a + b);
+                break;
+            }
+            case OpType::MINUS:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(b - a);
                 break;
             }
             case OpType::PUT: {
@@ -298,6 +422,7 @@ int main(int argc, char* argv[])
 
         vector<Operation> program = lex_file(file_path.string());
 
+        type_check_program(program);
         run_program(program);
     }
     else if (subcommand == "compile")
