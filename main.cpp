@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <stack>
+#include <map>
 
 using namespace std;
 
@@ -13,6 +14,7 @@ enum class OpType : int {
     PLUS,
     MINUS,
     PUT,
+    PUTS,
     COUNT,
 };
 
@@ -22,6 +24,7 @@ public:
     int IntegerValue;
     string StringValue;
     string Loc;
+    int Address;
 
     Operation(OpType type, string loc)
             : Type(type), IntegerValue(0), Loc(std::move(loc)) {}
@@ -68,6 +71,12 @@ public:
 
     Type(DataType code, string loc)
         : Code(code), Loc(loc) {}
+};
+
+const map<DataType, string> HumanizedDataTypes = {
+    {DataType::INT, "int"},
+    {DataType::STRING, "string"},
+    {DataType::BOOL, "bool"}
 };
 
 void assert(bool condition, string const& message)
@@ -173,7 +182,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 program.emplace_back(OpType::PUSH_STRING, token.StringValue, token.Loc);
                 break;
             case TokenType::WORD:
-                assert(int(OpType::COUNT) == 5, "Exhaustive operations handling in parse_tokens_as_operations()");
+                assert(int(OpType::COUNT) == 6, "Exhaustive operations handling in parse_tokens_as_operations()");
 
                 if (token.StringValue == "+")
                 {
@@ -186,6 +195,10 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 else if (token.StringValue == "put")
                 {
                     program.emplace_back(OpType::PUT, token.Loc);
+                }
+                else if (token.StringValue == "puts")
+                {
+                    program.emplace_back(OpType::PUTS, token.Loc);
                 }
                 else
                 {
@@ -203,7 +216,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 
 void crossreference_blocks(vector<Operation>& program)
 {
-    assert(int(OpType::COUNT) == 5, "Exhaustive operations handling in crossreference_blocks(). "
+    assert(int(OpType::COUNT) == 6, "Exhaustive operations handling in crossreference_blocks(). "
                                     "Not all operations should be handled in here");
 }
 
@@ -249,7 +262,7 @@ void type_check_program(vector<Operation> program)
     for (int i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(int(OpType::COUNT) == 5, "Exhaustive operations handling in type_check_program()");
+        assert(int(OpType::COUNT) == 6, "Exhaustive operations handling in type_check_program()");
 
         switch (op.Type)
         {
@@ -317,6 +330,31 @@ void type_check_program(vector<Operation> program)
                                       "Expected 1 argument, got 0" << endl;
                     exit(1);
                 }
+                Type top = type_checking_stack.top();
+                if (top.Code != DataType::INT)
+                {
+                    cerr << op.Loc << ": ERROR: Unexpected argument type for PUT operation. "
+                                      "Expected `int`, but got `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    exit(1);
+                }
+                type_checking_stack.pop();
+                break;
+            }
+            case OpType::PUTS:
+            {
+                if (type_checking_stack.empty())
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for PUTS operation. "
+                                      "Expected 1 argument, got 0" << endl;
+                    exit(1);
+                }
+                Type top = type_checking_stack.top();
+                if (top.Code != DataType::STRING)
+                {
+                    cerr << op.Loc << ": ERROR: Unexpected argument type for PUTS operation. "
+                                      "Expected `string`, but got `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    exit(1);
+                }
                 type_checking_stack.pop();
                 break;
             }
@@ -335,9 +373,11 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(int(OpType::COUNT) == 5, "Exhaustive operations handling in run_program()");
+    assert(int(OpType::COUNT) == 6, "Exhaustive operations handling in run_program()");
 
     stack<int> runtime_stack;
+    vector<byte> memory;
+    size_t strings_size = 0;
 
     for (int i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -351,7 +391,19 @@ void run_program(vector<Operation> program)
             }
             case OpType::PUSH_STRING:
             {
-                assert(false, "Pushing strings not implemented yet for running mode");
+                const std::byte* bs = reinterpret_cast<const std::byte*>(op.StringValue.c_str());
+                int n = op.StringValue.length();
+
+                runtime_stack.push(n);
+
+                op.Address = strings_size;
+                runtime_stack.push(op.Address);
+
+                for (int j = 0; j < n; ++j) {
+                    memory.push_back(bs[j]);
+                }
+
+                strings_size += n;
                 break;
             }
             case OpType::PLUS:
@@ -376,10 +428,34 @@ void run_program(vector<Operation> program)
                 runtime_stack.push(b - a);
                 break;
             }
-            case OpType::PUT: {
+            case OpType::PUT:
+            {
                 int val = runtime_stack.top();
                 runtime_stack.pop();
                 cout << to_string(val) << endl;
+                break;
+            }
+            case OpType::PUTS:
+            {
+                int buf = runtime_stack.top();
+                runtime_stack.pop();
+                int n = runtime_stack.top();
+                runtime_stack.pop();
+
+                std::string s;
+                if (buf >= 0 && n >= 0 && buf + n <= static_cast<int>(memory.size())) {
+                    s.reserve(n);
+
+                    for (int j = buf; j < buf + n; ++j) {
+                        s.push_back(static_cast<char>(memory[j]));
+                    }
+                } else {
+                    cerr << op.Loc << ": ERROR: Invalid length buffer or length values" << endl;
+                    exit(1);
+                }
+
+                cout << s << endl;
+
                 break;
             }
             default:
