@@ -16,6 +16,7 @@ enum class OpType : int {
     MUL,
     DIV,
     MOD,
+    EQ,
     PUT,
     PUTS,
     COUNT,
@@ -29,6 +30,7 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::MUL, "MULTIPLY"},
         {OpType::DIV, "DIVISION"},
         {OpType::MOD, "MOD"},
+        {OpType::EQ, "EQUAL"},
         {OpType::PUT, "PUT"},
         {OpType::PUTS, "PUTS"},
 };
@@ -197,7 +199,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 program.emplace_back(OpType::PUSH_STRING, token.StringValue, token.Loc);
                 break;
             case TokenType::WORD:
-                assert(int(OpType::COUNT) == 9, "Exhaustive operations handling in parse_tokens_as_operations()");
+                assert(int(OpType::COUNT) == 10, "Exhaustive operations handling in parse_tokens_as_operations()");
 
                 if (token.StringValue == "+")
                 {
@@ -218,6 +220,10 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 else if (token.StringValue == "%")
                 {
                     program.emplace_back(OpType::MOD, token.Loc);
+                }
+                else if (token.StringValue == "==")
+                {
+                    program.emplace_back(OpType::EQ, token.Loc);
                 }
                 else if (token.StringValue == "put")
                 {
@@ -243,7 +249,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 
 void crossreference_blocks(vector<Operation>& program)
 {
-    assert(int(OpType::COUNT) == 9, "Exhaustive operations handling in crossreference_blocks(). Not all operations should be handled in here");
+    assert(int(OpType::COUNT) == 10, "Exhaustive operations handling in crossreference_blocks(). Not all operations should be handled in here");
 }
 
 vector<Operation> lex_file(string const& path)
@@ -288,7 +294,7 @@ void type_check_program(vector<Operation> program)
     for (int i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(int(OpType::COUNT) == 9, "Exhaustive operations handling in type_check_program()");
+        assert(int(OpType::COUNT) == 10, "Exhaustive operations handling in type_check_program()");
 
         switch (op.Type)
         {
@@ -326,6 +332,26 @@ void type_check_program(vector<Operation> program)
                 }
                 break;
             }
+            case OpType::EQ:
+            {
+                if (type_checking_stack.size() < 2) {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+                if (a.Code == DataType::INT && b.Code == DataType::INT) {
+                    type_checking_stack.emplace(DataType::BOOL, op.Loc);
+                } else {
+                    // TODO: Maybe print location of incorrect argument
+                    cerr << op.Loc << ": ERROR: Only integer values can be compared. Expected 2 `int`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    exit(1);
+                }
+                break;
+            }
             case OpType::PUT:
             {
                 if (type_checking_stack.empty())
@@ -334,9 +360,9 @@ void type_check_program(vector<Operation> program)
                     exit(1);
                 }
                 Type top = type_checking_stack.top();
-                if (top.Code != DataType::INT)
+                if (top.Code != DataType::INT && top.Code != DataType::BOOL)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(OpType::PUT) << " operation. Expected `int`, but got `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(OpType::PUT) << " operation. Expected `int` or `bool`, but got `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
                     exit(1);
                 }
                 type_checking_stack.pop();
@@ -373,7 +399,7 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(int(OpType::COUNT) == 9, "Exhaustive operations handling in run_program()");
+    assert(int(OpType::COUNT) == 10, "Exhaustive operations handling in run_program()");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -448,6 +474,17 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b / a);
+                break;
+            }
+            case OpType::EQ:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(a == b);
                 break;
             }
             case OpType::MOD:
