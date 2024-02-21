@@ -21,8 +21,8 @@
 
 ## Features
 - [x] Stack-based
-- [x] Compile for x86_64 architecture
-- [ ] Compile for ARM64 architecture
+- [x] Compile for `x86_64` architecture
+- [ ] Compile for `arm64` architecture
 - [ ] Turing-complete
 
 ## Quick Start
