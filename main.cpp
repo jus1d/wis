@@ -456,7 +456,7 @@ void type_check_program(vector<Operation> program)
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 } else if (a.Code == DataType::BOOL && b.Code == DataType::BOOL) {
-                    cerr << op.Loc << ": ERROR: Use `band` and `bor` operations to compare booleans. Expected 2 `int`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Use `band`, `bor` and `xor` operations to compare booleans. Expected 2 `int`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
                     exit(1);
                 } else {
                     // TODO: Maybe print location of incorrect argument
