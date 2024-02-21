@@ -17,6 +17,11 @@ enum class OpType : int {
     MUL,
     DIV,
     MOD,
+    BOR,
+    BAND,
+    XOR,
+    SHL,
+    SHR,
     EQ,
     NE,
     PUT,
@@ -32,6 +37,11 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::MUL, "MULTIPLY"},
         {OpType::DIV, "DIVISION"},
         {OpType::MOD, "MOD"},
+        {OpType::BOR, "BINARY OR"},
+        {OpType::BAND, "BINARY AND"},
+        {OpType::XOR, "XOR"},
+        {OpType::SHL, "LEFT SHIFT"},
+        {OpType::SHR, "RIGHT SHIFT"},
         {OpType::EQ, "EQUAL"},
         {OpType::PUT, "PUT"},
         {OpType::PUTS, "PUTS"},
@@ -192,7 +202,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 program.emplace_back(OpType::PUSH_STRING, token.StringValue, token.Loc);
                 break;
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 11, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 16, "Exhaustive operations handling");
 
                 if (token.StringValue == "+")
                 {
@@ -213,6 +223,26 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 else if (token.StringValue == "%")
                 {
                     program.emplace_back(OpType::MOD, token.Loc);
+                }
+                else if (token.StringValue == "bor")
+                {
+                    program.emplace_back(OpType::BOR, token.Loc);
+                }
+                else if (token.StringValue == "band")
+                {
+                    program.emplace_back(OpType::BAND, token.Loc);
+                }
+                else if (token.StringValue == "xor")
+                {
+                    program.emplace_back(OpType::XOR, token.Loc);
+                }
+                else if (token.StringValue == "shl")
+                {
+                    program.emplace_back(OpType::SHL, token.Loc);
+                }
+                else if (token.StringValue == "shr")
+                {
+                    program.emplace_back(OpType::SHR, token.Loc);
                 }
                 else if (token.StringValue == "==")
                 {
@@ -246,7 +276,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 
 void crossreference_blocks(vector<Operation>& program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 11, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 16, "Exhaustive operations handling. Not all operations should be handled in here");
 }
 
 vector<Operation> lex_file(string const& path)
@@ -291,7 +321,7 @@ void type_check_program(vector<Operation> program)
     for (int i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(static_cast<int>(OpType::COUNT) == 11, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 16, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -311,6 +341,8 @@ void type_check_program(vector<Operation> program)
             case OpType::DIV:
             case OpType::MOD:
             {
+                assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
+
                 if (type_checking_stack.size() < 2) {
                     cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
                     exit(1);
@@ -320,6 +352,57 @@ void type_check_program(vector<Operation> program)
                 type_checking_stack.pop();
                 Type b = type_checking_stack.top();
                 type_checking_stack.pop();
+                if (a.Code == DataType::INT && b.Code == DataType::INT) {
+                    type_checking_stack.emplace(DataType::INT, op.Loc);
+                } else {
+                    // TODO: Maybe print location of incorrect argument
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `int`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    exit(1);
+                }
+                break;
+            }
+            case OpType::BOR:
+            case OpType::BAND:
+            case OpType::XOR:
+            {
+                assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
+
+                if (type_checking_stack.size() < 2) {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                if (a.Code == DataType::INT && b.Code == DataType::INT) {
+                    type_checking_stack.emplace(DataType::INT, op.Loc);
+                } else if (a.Code == DataType::BOOL && b.Code == DataType::BOOL) {
+                    type_checking_stack.emplace(DataType::BOOL, op.Loc);
+                } else {
+                    // TODO: Maybe print location of incorrect argument
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `int` or 2 `bool`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    exit(1);
+                }
+                break;
+            }
+            case OpType::SHL:
+            case OpType::SHR:
+            {
+                assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
+
+                if (type_checking_stack.size() < 2) {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::INT, op.Loc);
                 } else {
@@ -397,7 +480,7 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 11, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 16, "Exhaustive operations handling");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -472,6 +555,61 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b / a);
+                break;
+            }
+            case OpType::BOR:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(a | b);
+                break;
+            }
+            case OpType::BAND:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(a & b);
+                break;
+            }
+            case OpType::XOR:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(a ^ b);
+                break;
+            }
+            case OpType::SHL:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(b << a);
+                break;
+            }
+            case OpType::SHR:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(b >> a);
                 break;
             }
             case OpType::EQ:
