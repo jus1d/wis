@@ -18,6 +18,7 @@ enum class OpType : int {
     DIV,
     MOD,
     EQ,
+    NE,
     PUT,
     PUTS,
     COUNT,
@@ -180,7 +181,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 {
     vector<Operation> program;
 
-    assert(static_cast<int>(TokenType::COUNT) == 3, "Exhaustive token types handling in parse_tokens_as_operations()");
+    assert(static_cast<int>(TokenType::COUNT) == 3, "Exhaustive token types handling");
 
     for (const auto& token: tokens) {
         switch (token.Type) {
@@ -191,7 +192,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 program.emplace_back(OpType::PUSH_STRING, token.StringValue, token.Loc);
                 break;
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 10, "Exhaustive operations handling in parse_tokens_as_operations()");
+                assert(static_cast<int>(OpType::COUNT) == 11, "Exhaustive operations handling");
 
                 if (token.StringValue == "+")
                 {
@@ -217,6 +218,10 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 {
                     program.emplace_back(OpType::EQ, token.Loc);
                 }
+                else if (token.StringValue == "!=")
+                {
+                    program.emplace_back(OpType::NE, token.Loc);
+                }
                 else if (token.StringValue == "put")
                 {
                     program.emplace_back(OpType::PUT, token.Loc);
@@ -241,7 +246,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 
 void crossreference_blocks(vector<Operation>& program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 10, "Exhaustive operations handling in crossreference_blocks(). Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 11, "Exhaustive operations handling. Not all operations should be handled in here");
 }
 
 vector<Operation> lex_file(string const& path)
@@ -279,14 +284,14 @@ vector<Operation> lex_file(string const& path)
 
 void type_check_program(vector<Operation> program)
 {
-    assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling in type_check_program()");
+    assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
     stack<Type> type_checking_stack;
 
     for (int i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(static_cast<int>(OpType::COUNT) == 10, "Exhaustive operations handling in type_check_program()");
+        assert(static_cast<int>(OpType::COUNT) == 11, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -325,6 +330,7 @@ void type_check_program(vector<Operation> program)
                 break;
             }
             case OpType::EQ:
+            case OpType::NE:
             {
                 if (type_checking_stack.size() < 2) {
                     cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
@@ -391,7 +397,7 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 10, "Exhaustive operations handling in run_program()");
+    assert(static_cast<int>(OpType::COUNT) == 11, "Exhaustive operations handling");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -477,6 +483,17 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(a == b);
+                break;
+            }
+            case OpType::NE:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(a != b);
                 break;
             }
             case OpType::MOD:
