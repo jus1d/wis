@@ -24,6 +24,10 @@ enum class OpType : int {
     SHR,
     EQ,
     NE,
+    LT,
+    GT,
+    LE,
+    GE,
     PUT,
     PUTS,
     COUNT,
@@ -43,6 +47,11 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::SHL, "LEFT SHIFT"},
         {OpType::SHR, "RIGHT SHIFT"},
         {OpType::EQ, "EQUAL"},
+        {OpType::NE, "NOT EQUAL"},
+        {OpType::LT, "LESS"},
+        {OpType::GT, "GREATER"},
+        {OpType::LE, "LESS OR EQUAL"},
+        {OpType::GE, "GREATER OR EQUAL"},
         {OpType::PUT, "PUT"},
         {OpType::PUTS, "PUTS"},
 };
@@ -202,7 +211,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 program.emplace_back(OpType::PUSH_STRING, token.StringValue, token.Loc);
                 break;
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 16, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 20, "Exhaustive operations handling");
 
                 if (token.StringValue == "+")
                 {
@@ -252,6 +261,22 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 {
                     program.emplace_back(OpType::NE, token.Loc);
                 }
+                else if (token.StringValue == "<")
+                {
+                    program.emplace_back(OpType::LT, token.Loc);
+                }
+                else if (token.StringValue == ">")
+                {
+                    program.emplace_back(OpType::GT, token.Loc);
+                }
+                else if (token.StringValue == "<=")
+                {
+                    program.emplace_back(OpType::LE, token.Loc);
+                }
+                else if (token.StringValue == ">=")
+                {
+                    program.emplace_back(OpType::GE, token.Loc);
+                }
                 else if (token.StringValue == "put")
                 {
                     program.emplace_back(OpType::PUT, token.Loc);
@@ -276,7 +301,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 
 void crossreference_blocks(vector<Operation>& program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 16, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 20, "Exhaustive operations handling. Not all operations should be handled in here");
 }
 
 vector<Operation> lex_file(string const& path)
@@ -321,7 +346,7 @@ void type_check_program(vector<Operation> program)
     for (int i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(static_cast<int>(OpType::COUNT) == 16, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 20, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -414,6 +439,10 @@ void type_check_program(vector<Operation> program)
             }
             case OpType::EQ:
             case OpType::NE:
+            case OpType::LT:
+            case OpType::GT:
+            case OpType::LE:
+            case OpType::GE:
             {
                 if (type_checking_stack.size() < 2) {
                     cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
@@ -426,6 +455,9 @@ void type_check_program(vector<Operation> program)
                 type_checking_stack.pop();
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::BOOL, op.Loc);
+                } else if (a.Code == DataType::BOOL && b.Code == DataType::BOOL) {
+                    cerr << op.Loc << ": ERROR: Use `band` and `bor` operations to compare booleans. Expected 2 `int`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    exit(1);
                 } else {
                     // TODO: Maybe print location of incorrect argument
                     cerr << op.Loc << ": ERROR: Only integer values can be compared. Expected 2 `int`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
@@ -480,7 +512,7 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 16, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 20, "Exhaustive operations handling");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -632,6 +664,50 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(a != b);
+                break;
+            }
+            case OpType::LT:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(b < a);
+                break;
+            }
+            case OpType::GT:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(b > a);
+                break;
+            }
+            case OpType::LE:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(b <= a);
+                break;
+            }
+            case OpType::GE:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(b >= a);
                 break;
             }
             case OpType::MOD:
