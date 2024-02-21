@@ -2,6 +2,21 @@
 
 ## HERE IS THE MIGRATION VERSION OF THIS LANGUAGE. IN NEAREST FUTURE THE WHOLE LANGUAGE WILL BE REWRITTEN IN C++
 
+### MIGRATION TRACKING:
+- [x] Run mode
+- [ ] Compilation mode
+---
+- [x] Pushing ints
+- [x] Pushing strings
+- [x] Arithmetic
+- [x] Binary arithmetic
+- [x] Compare operations
+- [x] Printing operations (`put` and `puts`)
+- [ ] Control flow operations (`if-else` and `while`)
+- [ ] Stack control operations (`copy`, `swap`, `drop` etc.)
+- [ ] System calls
+---
+
 **Gollo** - is a  concatenative, stack-oriented programming language inspired by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)). I never wrote anything in Forth, though. So **gollo** is just a concatenative, stack-based programming language. 
 
 ## Features
