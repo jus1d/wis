@@ -5,6 +5,7 @@
 #include <fstream>
 #include <stack>
 #include <map>
+#include "assert.h"
 
 using namespace std;
 
@@ -96,15 +97,6 @@ public:
         : Code(code), Loc(loc) {}
 };
 
-void assert(bool condition, string const& message)
-{
-    if (!condition)
-    {
-        cerr << "ASSERTION ERROR: " << message << endl;
-        exit(1);
-    }
-}
-
 void usage(string const& compiler_path)
 {
     cerr << "Usage: " << compiler_path << " <SUBCOMMAND> ./examples/goo.glo" << endl;
@@ -188,7 +180,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 {
     vector<Operation> program;
 
-    assert(int(TokenType::COUNT) == 3, "Exhaustive token types handling in parse_tokens_as_operations()");
+    assert(static_cast<int>(TokenType::COUNT) == 3, "Exhaustive token types handling in parse_tokens_as_operations()");
 
     for (const auto& token: tokens) {
         switch (token.Type) {
@@ -199,7 +191,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 program.emplace_back(OpType::PUSH_STRING, token.StringValue, token.Loc);
                 break;
             case TokenType::WORD:
-                assert(int(OpType::COUNT) == 10, "Exhaustive operations handling in parse_tokens_as_operations()");
+                assert(static_cast<int>(OpType::COUNT) == 10, "Exhaustive operations handling in parse_tokens_as_operations()");
 
                 if (token.StringValue == "+")
                 {
@@ -240,7 +232,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 }
                 break;
             default:
-                assert(false, "unreachable");
+                assert(false, "Unreachable");
         }
     }
 
@@ -249,7 +241,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 
 void crossreference_blocks(vector<Operation>& program)
 {
-    assert(int(OpType::COUNT) == 10, "Exhaustive operations handling in crossreference_blocks(). Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 10, "Exhaustive operations handling in crossreference_blocks(). Not all operations should be handled in here");
 }
 
 vector<Operation> lex_file(string const& path)
@@ -287,14 +279,14 @@ vector<Operation> lex_file(string const& path)
 
 void type_check_program(vector<Operation> program)
 {
-    assert(int(DataType::COUNT) == 3, "Exhaustive data types handling in type_check_program()");
+    assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling in type_check_program()");
 
     stack<Type> type_checking_stack;
 
     for (int i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(int(OpType::COUNT) == 10, "Exhaustive operations handling in type_check_program()");
+        assert(static_cast<int>(OpType::COUNT) == 10, "Exhaustive operations handling in type_check_program()");
 
         switch (op.Type)
         {
@@ -385,7 +377,7 @@ void type_check_program(vector<Operation> program)
                 break;
             }
             default:
-                assert(false, "unreachable");
+                assert(false, "Unreachable");
         }
     }
 
@@ -399,7 +391,7 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(int(OpType::COUNT) == 10, "Exhaustive operations handling in run_program()");
+    assert(static_cast<int>(OpType::COUNT) == 10, "Exhaustive operations handling in run_program()");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -529,7 +521,7 @@ void run_program(vector<Operation> program)
                 break;
             }
             default:
-                assert(false, "unreachable");
+                assert(false, "Unreachable");
         }
     }
 }
