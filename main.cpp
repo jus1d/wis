@@ -33,8 +33,12 @@ enum class OpType : int {
     IF,
     ELSE,
     END,
+    DO,
+    WHILE,
     PUT,
     PUTS,
+    COPY,
+    DROP,
     COUNT,
 };
 
@@ -60,6 +64,8 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::IF, "IF"},
         {OpType::ELSE, "ELSE"},
         {OpType::END, "END"},
+        {OpType::DO, "DO"},
+        {OpType::DO, "WHILE"},
         {OpType::PUT, "PUT"},
         {OpType::PUTS, "PUTS"},
 };
@@ -224,7 +230,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 program.emplace_back(OpType::PUSH_STRING, token.StringValue, token.Loc);
                 break;
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 23, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 27, "Exhaustive operations handling");
 
                 if (token.StringValue == "+")
                 {
@@ -302,6 +308,14 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 {
                     program.emplace_back(OpType::END, token.Loc);
                 }
+                else if (token.StringValue == "do")
+                {
+                    program.emplace_back(OpType::DO, token.Loc);
+                }
+                else if (token.StringValue == "while")
+                {
+                    program.emplace_back(OpType::WHILE, token.Loc);
+                }
                 else if (token.StringValue == "put")
                 {
                     program.emplace_back(OpType::PUT, token.Loc);
@@ -309,6 +323,14 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 else if (token.StringValue == "puts")
                 {
                     program.emplace_back(OpType::PUTS, token.Loc);
+                }
+                else if (token.StringValue == "copy")
+                {
+                    program.emplace_back(OpType::COPY, token.Loc);
+                }
+                else if (token.StringValue == "drop")
+                {
+                    program.emplace_back(OpType::DROP, token.Loc);
                 }
                 else
                 {
@@ -328,13 +350,14 @@ void crossreference_blocks(vector<Operation>& program)
 {
     stack<int> crossreference_stack;
 
-    assert(static_cast<int>(OpType::COUNT) == 23, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 27, "Exhaustive operations handling. Not all operations should be handled in here");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
         switch (op.Type) {
             case OpType::IF:
+            case OpType::WHILE:
             {
                 crossreference_stack.push(i);
                 break;
@@ -344,6 +367,13 @@ void crossreference_blocks(vector<Operation>& program)
                 int pos = crossreference_stack.top();
                 crossreference_stack.pop();
                 program[pos].JumpTo = i + 1;
+                crossreference_stack.push(i);
+                break;
+            }
+            case OpType::DO:
+            {
+                program[i].JumpTo = crossreference_stack.top();
+                crossreference_stack.pop();
                 crossreference_stack.push(i);
                 break;
             }
@@ -359,9 +389,15 @@ void crossreference_blocks(vector<Operation>& program)
                         program[pos].JumpTo = i;
                         break;
                     }
+                    case OpType::DO:
+                    {
+                        program[i].JumpTo = program[pos].JumpTo;
+                        program[pos].JumpTo = i + 1;
+                        break;
+                    }
                     default:
                     {
-                        assert(false, "Only `if` blocks can be closed with `end`");
+                        assert(false, "Only `if` and `while` blocks can be closed with `end`");
                     }
                 }
             }
@@ -422,7 +458,7 @@ void type_check_program(vector<Operation> program)
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(static_cast<int>(OpType::COUNT) == 23, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 27, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -457,7 +493,7 @@ void type_check_program(vector<Operation> program)
                     type_checking_stack.emplace(DataType::INT, op.Loc);
                 } else {
                     // TODO: Maybe print location of incorrect argument
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `int`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `" << HumanizedDataTypes.at(DataType::INT) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
                     exit(1);
                 }
                 break;
@@ -484,7 +520,7 @@ void type_check_program(vector<Operation> program)
                     type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 } else {
                     // TODO: Maybe print location of incorrect argument
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `int` or 2 `bool`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `" << HumanizedDataTypes.at(DataType::INT) << "` or 2 `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
                     exit(1);
                 }
                 break;
@@ -508,7 +544,7 @@ void type_check_program(vector<Operation> program)
                     type_checking_stack.emplace(DataType::INT, op.Loc);
                 } else {
                     // TODO: Maybe print location of incorrect argument
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `int`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `" << HumanizedDataTypes.at(DataType::INT) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
                     exit(1);
                 }
                 break;
@@ -532,20 +568,21 @@ void type_check_program(vector<Operation> program)
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 } else if (a.Code == DataType::BOOL && b.Code == DataType::BOOL) {
-                    cerr << op.Loc << ": ERROR: Use `band`, `bor` and `xor` operations to compare booleans. Expected 2 `int`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Use `" << HumanizedOpTypes.at(OpType::BAND) << "`, `" << HumanizedOpTypes.at(OpType::BOR) << "` and `" << HumanizedOpTypes.at(OpType::XOR) << "` operations to compare booleans. Expected 2 `" << HumanizedDataTypes.at(DataType::INT) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
                     exit(1);
                 } else {
                     // TODO: Maybe print location of incorrect argument
-                    cerr << op.Loc << ": ERROR: Only integer values can be compared. Expected 2 `int`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Only integer values can be compared. Expected 2 `" << HumanizedDataTypes.at(DataType::INT) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
                     exit(1);
                 }
                 break;
             }
             case OpType::IF:
+            case OpType::DO:
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(OpType::PUT) << " operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `" << HumanizedOpTypes.at(OpType::PUT) << "` operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
 
@@ -554,12 +591,13 @@ void type_check_program(vector<Operation> program)
 
                 if (top.Code != DataType::BOOL)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument's type for `if` operation. Expected type `bool`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument's type for `" << HumanizedOpTypes.at(OpType::PUT) << "` operation. Expected type `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
                     exit(1);
                 }
                 break;
             }
             case OpType::ELSE:
+            case OpType::WHILE:
             case OpType::END:
             {
                 // No type checking needed for these operations.
@@ -575,7 +613,7 @@ void type_check_program(vector<Operation> program)
                 Type top = type_checking_stack.top();
                 if (top.Code != DataType::INT && top.Code != DataType::BOOL)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(OpType::PUT) << " operation. Expected `int` or `bool`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(OpType::PUT) << " operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
                     exit(1);
                 }
                 type_checking_stack.pop();
@@ -588,13 +626,45 @@ void type_check_program(vector<Operation> program)
                     cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(OpType::PUTS) << " operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
+
                 Type top = type_checking_stack.top();
                 if (top.Code != DataType::STRING)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(OpType::PUTS) << " operation. Expected `string`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(OpType::PUTS) << " operation. Expected `" << HumanizedDataTypes.at(DataType::STRING) << "`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
                     exit(1);
                 }
                 type_checking_stack.pop();
+
+                break;
+            }
+            case OpType::COPY:
+            {
+                if (type_checking_stack.empty())
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(OpType::COPY) << " operation. Expected 1 argument, but found 0" << endl;
+                    exit(1);
+                }
+
+                Type top = type_checking_stack.top();
+                if (top.Code == DataType::STRING)
+                {
+                    cerr << op.Loc << ": ERROR: Unexpected argument's type for " << HumanizedOpTypes.at(OpType::COPY) << " operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    exit(1);
+                }
+                type_checking_stack.push(top);
+
+                break;
+            }
+            case OpType::DROP:
+            {
+                if (type_checking_stack.empty())
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(OpType::COPY) << " operation. Expected 1 argument, but found 0" << endl;
+                    exit(1);
+                }
+
+                type_checking_stack.pop();
+
                 break;
             }
             default:
@@ -612,7 +682,7 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 23, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 27, "Exhaustive operations handling");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -692,6 +762,18 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b / a);
+                ++i;
+                break;
+            }
+            case OpType::MOD:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(b % a);
                 ++i;
                 break;
             }
@@ -828,6 +910,7 @@ void run_program(vector<Operation> program)
                 break;
             }
             case OpType::IF:
+            case OpType::DO:
             {
                 int a = runtime_stack.top();
                 runtime_stack.pop();
@@ -849,18 +932,18 @@ void run_program(vector<Operation> program)
             }
             case OpType::END:
             {
-                ++i;
+                if (program[op.JumpTo].Type == OpType::WHILE)
+                {
+                    i = op.JumpTo;
+                }
+                else
+                {
+                    ++i;
+                }
                 break;
             }
-            case OpType::MOD:
+            case OpType::WHILE:
             {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b % a);
                 ++i;
                 break;
             }
@@ -892,6 +975,18 @@ void run_program(vector<Operation> program)
                 }
 
                 cout << s << endl;
+                ++i;
+                break;
+            }
+            case OpType::COPY:
+            {
+                runtime_stack.push(runtime_stack.top());
+                ++i;
+                break;
+            }
+            case OpType::DROP:
+            {
+                runtime_stack.pop();
                 ++i;
                 break;
             }
