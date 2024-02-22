@@ -13,7 +13,7 @@
 - [x] Compare operations
 - [x] Printing operations (`put` and `puts`)
 - [x] Control flow operations (`if-else` and `while`)
-- [ ] Stack control operations (`copy`, `swap`, `drop` etc.)
+- [x] Stack control operations (`copy`, `swap`, `drop` etc.)
 - [ ] System calls
 ---
 
