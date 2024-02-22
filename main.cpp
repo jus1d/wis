@@ -5,6 +5,8 @@
 #include <fstream>
 #include <stack>
 #include <map>
+#include <cstring>
+
 #include "./assert.h"
 
 using namespace std;
