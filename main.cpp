@@ -155,6 +155,22 @@ string shift_vector(vector<string>& vec)
     exit(1);
 }
 
+vector<string> split_string(const string& input, const string& delimiter) {
+    vector<string> result;
+    size_t start = 0;
+    size_t end = input.find(delimiter);
+
+    while (end != string::npos) {
+        result.push_back(input.substr(start, end - start));
+        start = end + delimiter.length();
+        end = input.find(delimiter, start);
+    }
+
+    result.push_back(input.substr(start));
+
+    return result;
+}
+
 string location_view(const string& filepath, int row, int col)
 {
     return filepath + ":" + to_string(row) + ":" + to_string(col);
@@ -166,53 +182,6 @@ size_t find_col(string const& line, size_t start, bool (*predicate)(char))
         start++;
     }
     return start;
-}
-
-vector<Token> lex_line(string const& filepath, int line_number, string const& line)
-{
-    vector<Token> tokens;
-
-    size_t col = find_col(line, 0, [](char x) { return !isspace(x); });
-    while (col < line.size())
-    {
-        int col_end;
-        if (line[col] == '"')
-        {
-            col_end = find_col(line, col+1, [](char x) { return x == '"'; });
-            if (line[col_end] != '"')
-            {
-                cerr << location_view(filepath, line_number, col + 1) << ": ERROR: Missed closing string literal" << endl;
-                exit(1);
-            }
-
-            string text_of_token = line.substr(col + 1, col_end - col - 1);
-            string loc = location_view(filepath, line_number, col + 1);
-            Token token(TokenType::STRING, text_of_token, loc);
-            tokens.push_back(token);
-            col = find_col(line, col_end + 1, [](char x) { return !isspace(x); });
-        }
-        else
-        {
-            col_end = find_col(line, col, [](char x) { return !!isspace(x); });
-            string text_of_token = line.substr(col, col_end - col);
-
-            try {
-                int int_value = stoi(text_of_token);
-
-                string loc = location_view(filepath, line_number, col + 1);
-                Token token(TokenType::INT, int_value, loc);
-                tokens.push_back(token);
-            }
-            catch (const invalid_argument&) {
-                string loc = location_view(filepath, line_number, col + 1);
-                Token token(TokenType::WORD, text_of_token, loc);
-                tokens.push_back(token);
-            }
-            col = find_col(line, col_end, [](char x) { return !isspace(x); });
-        }
-    }
-
-    return tokens;
 }
 
 vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
@@ -414,6 +383,53 @@ void crossreference_blocks(vector<Operation>& program)
     }
 }
 
+vector<Token> lex_line(string const& filepath, int line_number, string const& line)
+{
+    vector<Token> tokens;
+
+    size_t col = find_col(line, 0, [](char x) { return !isspace(x); });
+    while (col < line.size())
+    {
+        int col_end;
+        if (line[col] == '"')
+        {
+            col_end = find_col(line, col+1, [](char x) { return x == '"'; });
+            if (line[col_end] != '"')
+            {
+                cerr << location_view(filepath, line_number, col + 1) << ": ERROR: Missed closing string literal" << endl;
+                exit(1);
+            }
+
+            string text_of_token = line.substr(col + 1, col_end - col - 1);
+            string loc = location_view(filepath, line_number, col + 1);
+            Token token(TokenType::STRING, text_of_token, loc);
+            tokens.push_back(token);
+            col = find_col(line, col_end + 1, [](char x) { return !isspace(x); });
+        }
+        else
+        {
+            col_end = find_col(line, col, [](char x) { return !!isspace(x); });
+            string text_of_token = line.substr(col, col_end - col);
+
+            try {
+                int int_value = stoi(text_of_token);
+
+                string loc = location_view(filepath, line_number, col + 1);
+                Token token(TokenType::INT, int_value, loc);
+                tokens.push_back(token);
+            }
+            catch (const invalid_argument&) {
+                string loc = location_view(filepath, line_number, col + 1);
+                Token token(TokenType::WORD, text_of_token, loc);
+                tokens.push_back(token);
+            }
+            col = find_col(line, col_end, [](char x) { return !isspace(x); });
+        }
+    }
+
+    return tokens;
+}
+
 vector<Operation> lex_file(string const& path)
 {
     fstream file(path);
@@ -430,9 +446,8 @@ vector<Operation> lex_file(string const& path)
     int line_number = 1;
     while (getline(file, line))
     {
-        char *cline = const_cast<char *>(line.c_str());
-        string line_without_comment = strtok(cline, "//");
-        vector<Token> line_tokens = lex_line(path, line_number, line_without_comment);
+        line = split_string(line, "//")[0];
+        vector<Token> line_tokens = lex_line(path, line_number, line);
 
         for (const auto & line_token : line_tokens) {
             tokens.push_back(line_token);
