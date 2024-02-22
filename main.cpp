@@ -696,10 +696,12 @@ void type_check_program(vector<Operation> program)
                 if (a.Code == DataType::STRING)
                 {
                     cerr << op.Loc << ": ERROR: Incorrect argument's type for `" << HumanizedOpTypes.at(OpType::OVER) << "` operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    exit(1);
                 }
                 else if (b.Code == DataType::STRING)
                 {
                     cerr << op.Loc << ": ERROR: Incorrect argument's type for `" << HumanizedOpTypes.at(OpType::OVER) << "` operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "`" << endl;
+                    exit(1);
                 }
 
                 type_checking_stack.push(b);
@@ -725,10 +727,12 @@ void type_check_program(vector<Operation> program)
                 if (a.Code == DataType::STRING)
                 {
                     cerr << op.Loc << ": ERROR: Incorrect argument's type for `" << HumanizedOpTypes.at(OpType::SWAP) << "` operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    exit(1);
                 }
                 else if (b.Code == DataType::STRING)
                 {
                     cerr << op.Loc << ": ERROR: Incorrect argument's type for `" << HumanizedOpTypes.at(OpType::SWAP) << "` operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "`" << endl;
+                    exit(1);
                 }
 
                 type_checking_stack.push(a);
@@ -996,14 +1000,8 @@ void run_program(vector<Operation> program)
                 int a = runtime_stack.top();
                 runtime_stack.pop();
 
-                if (a == 0)
-                {
-                    i = op.JumpTo;
-                }
-                else
-                {
-                    ++i;
-                }
+                if (a == 0) i = op.JumpTo;
+                else ++i;
                 break;
             }
             case OpType::ELSE:
@@ -1013,14 +1011,8 @@ void run_program(vector<Operation> program)
             }
             case OpType::END:
             {
-                if (program[op.JumpTo].Type == OpType::WHILE)
-                {
-                    i = op.JumpTo;
-                }
-                else
-                {
-                    ++i;
-                }
+                if (program[op.JumpTo].Type == OpType::WHILE) i = op.JumpTo;
+                else ++i;
                 break;
             }
             case OpType::WHILE:
