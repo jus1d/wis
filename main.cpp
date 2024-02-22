@@ -1096,6 +1096,67 @@ void run_program(vector<Operation> program)
     }
 }
 
+void run_mode(string compiler_path, vector<string> args)
+{
+    if (args.empty())
+    {
+        usage(compiler_path);
+        cerr << "ERROR: No path to file provided" << endl;
+        exit(1);
+    }
+
+    filesystem::path file_path(shift_vector(args));
+
+    if (!filesystem::exists(file_path))
+    {
+        usage(compiler_path);
+        cerr << "ERROR: File `" << file_path.string() << "` doesn't exists" << endl;
+        exit(1);
+    }
+
+    vector<Operation> program = lex_file(file_path.string());
+
+    type_check_program(program);
+    run_program(program);
+}
+
+void compile_mode(string compiler_path, vector<string> args)
+{
+    if (args.empty())
+    {
+        usage(compiler_path);
+        cerr << "ERROR: No path to file provided" << endl;
+        exit(1);
+    }
+
+    string path = shift_vector(args);
+
+    bool run_after_compilation = path == "-r";
+
+    if (run_after_compilation)
+    {
+        if (args.empty())
+        {
+            usage(compiler_path);
+            cerr << "ERROR: No path to file provided" << endl;
+            exit(1);
+        }
+
+        path = shift_vector(args);
+    }
+
+    filesystem::path file_path(path);
+
+    if (!filesystem::exists(file_path))
+    {
+        usage(compiler_path);
+        cerr << "ERROR: File `" << file_path.string() << "` doesn't exists" << endl;
+        exit(1);
+    }
+
+    assert(false, "Compilation mode is not implemented yet");
+}
+
 int main(int argc, char* argv[])
 {
     vector<string> args(argv, argv + argc);
@@ -1112,30 +1173,11 @@ int main(int argc, char* argv[])
 
     if (subcommand == "run")
     {
-        if (args.empty())
-        {
-            usage(compiler_path);
-            cerr << "ERROR: No path to file provided" << endl;
-            exit(1);
-        }
-
-        filesystem::path file_path(shift_vector(args));
-
-        if (!filesystem::exists(file_path))
-        {
-            usage(compiler_path);
-            cerr << "ERROR: File " << file_path.string() << " doesn't exists" << endl;
-            exit(1);
-        }
-
-        vector<Operation> program = lex_file(file_path.string());
-
-        type_check_program(program);
-        run_program(program);
+        run_mode(compiler_path, args);
     }
     else if (subcommand == "compile")
     {
-        assert(false, "Compilation mode not implemented yet");
+        compile_mode(compiler_path, args);
     }
     else
     {
