@@ -6,6 +6,9 @@ cmake-build-debug/
 
 # Ignore output files
 *.o
+*.exe
+main*
+gollo*
 
 # Ignore ssembly files
 *.asm
