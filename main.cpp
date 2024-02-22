@@ -5,7 +5,7 @@
 #include <fstream>
 #include <stack>
 #include <map>
-#include "assert.h"
+#include "./assert.h"
 
 using namespace std;
 
@@ -59,19 +59,19 @@ const map<OpType, string> HumanizedOpTypes = {
 class Operation {
 public:
     OpType Type;
-    int IntegerValue;
+    int IntegerValue{};
     string StringValue;
     string Loc;
-    int Address;
+    int Address{};
 
     Operation(OpType type, string loc)
-            : Type(type), IntegerValue(0), Loc(std::move(loc)) {}
+            : Type(type), Loc(std::move(loc)) {}
 
     Operation(OpType type, int integer_value, string loc)
             : Type(type), IntegerValue(integer_value), Loc(std::move(loc)) {}
 
     Operation(OpType type, string string_value, string loc)
-            : Type(type), IntegerValue(0), StringValue(std::move(string_value)), Loc(std::move(loc)) {}
+            : Type(type), StringValue(std::move(string_value)), Loc(std::move(loc)) {}
 };
 
 enum class TokenType : int {
@@ -85,14 +85,14 @@ class Token {
 public:
     TokenType Type;
     string StringValue;
-    int IntegerValue;
+    int IntegerValue{};
     string Loc;
 
     Token(TokenType type, int integer_value, string  loc)
             : Type(type), IntegerValue(integer_value), Loc(std::move(loc)) {}
 
     Token(TokenType type, string  string_value, string  loc)
-            : Type(type), StringValue(std::move(string_value)), IntegerValue(0), Loc(std::move(loc)) {}
+            : Type(type), StringValue(std::move(string_value)), Loc(std::move(loc)) {}
 };
 
 enum class DataType : int {
@@ -114,7 +114,7 @@ public:
     string Loc;
 
     Type(DataType code, string loc)
-        : Code(code), Loc(loc) {}
+            : Code(code), Loc(std::move(loc)) {}
 };
 
 void usage(string const& compiler_path)
