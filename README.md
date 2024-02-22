@@ -17,7 +17,7 @@
 - [ ] System calls
 ---
 
-**Gollo** - is a  concatenative, stack-oriented programming language inspired by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)). I never wrote anything in Forth, though. So **gollo** is just a concatenative, stack-based programming language. 
+**Gollo** - is a  concatenative, stack-oriented programming language inspired by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)). I never wrote anything in Forth, though. So **gollo** is just a concatenative, stack-based programming language.
 
 ## Features
 - [x] Stack-based
@@ -175,7 +175,7 @@ Drops integer from top of the stack
 
 You can use `syscall<n>`, where `n` is between 1 and 3. Now supported only syscalls that accepts 1-3 arguments.
 
-**Example:** 
+**Example:**
 
 Call exit syscall with non-zero exit code
 
