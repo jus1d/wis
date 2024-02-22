@@ -28,6 +28,9 @@ enum class OpType : int {
     GT,
     LE,
     GE,
+    IF,
+    ELSE,
+    END,
     PUT,
     PUTS,
     COUNT,
@@ -52,6 +55,9 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::GT, "GREATER"},
         {OpType::LE, "LESS OR EQUAL"},
         {OpType::GE, "GREATER OR EQUAL"},
+        {OpType::IF, "IF"},
+        {OpType::ELSE, "ELSE"},
+        {OpType::END, "END"},
         {OpType::PUT, "PUT"},
         {OpType::PUTS, "PUTS"},
 };
@@ -63,6 +69,7 @@ public:
     string StringValue;
     string Loc;
     int Address{};
+    int JumpTo{};
 
     Operation(OpType type, string loc)
             : Type(type), Loc(std::move(loc)) {}
@@ -145,7 +152,7 @@ string location_view(const string& filepath, int row, int col)
     return filepath + ":" + to_string(row) + ":" + to_string(col);
 }
 
-int find_col(string const& line, int start, bool (*predicate)(char))
+size_t find_col(string const& line, size_t start, bool (*predicate)(char))
 {
     while (start < line.size() && !predicate(line[start])) {
         start++;
@@ -157,14 +164,18 @@ vector<Token> lex_line(string const& filepath, int line_number, string const& li
 {
     vector<Token> tokens;
 
-    int col = find_col(line, 0, [](char x) { return !isspace(x); });
+    size_t col = find_col(line, 0, [](char x) { return !isspace(x); });
     while (col < line.size())
     {
         int col_end;
         if (line[col] == '"')
         {
             col_end = find_col(line, col+1, [](char x) { return x == '"'; });
-            assert(line[col_end] == '"', "Closing string quote symbol expected");
+            if (line[col_end] != '"')
+            {
+                cerr << location_view(filepath, line_number, col + 1) << ": ERROR: Missed closing string literal" << endl;
+                exit(1);
+            }
 
             string text_of_token = line.substr(col + 1, col_end - col - 1);
             string loc = location_view(filepath, line_number, col + 1);
@@ -211,7 +222,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 program.emplace_back(OpType::PUSH_STRING, token.StringValue, token.Loc);
                 break;
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 20, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 23, "Exhaustive operations handling");
 
                 if (token.StringValue == "+")
                 {
@@ -277,6 +288,18 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 {
                     program.emplace_back(OpType::GE, token.Loc);
                 }
+                else if (token.StringValue == "if")
+                {
+                    program.emplace_back(OpType::IF, token.Loc);
+                }
+                else if (token.StringValue == "else")
+                {
+                    program.emplace_back(OpType::ELSE, token.Loc);
+                }
+                else if (token.StringValue == "end")
+                {
+                    program.emplace_back(OpType::END, token.Loc);
+                }
                 else if (token.StringValue == "put")
                 {
                     program.emplace_back(OpType::PUT, token.Loc);
@@ -301,7 +324,56 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 
 void crossreference_blocks(vector<Operation>& program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 20, "Exhaustive operations handling. Not all operations should be handled in here");
+    stack<int> crossreference_stack;
+
+    assert(static_cast<int>(OpType::COUNT) == 23, "Exhaustive operations handling. Not all operations should be handled in here");
+
+    for (size_t i = 0; i < program.size(); ++i) {
+        Operation op = program[i];
+
+        switch (op.Type) {
+            case OpType::IF:
+            {
+                crossreference_stack.push(i);
+                break;
+            }
+            case OpType::ELSE:
+            {
+                int pos = crossreference_stack.top();
+                crossreference_stack.pop();
+                program[pos].JumpTo = i + 1;
+                crossreference_stack.push(i);
+                break;
+            }
+            case OpType::END:
+            {
+                int pos = crossreference_stack.top();
+                crossreference_stack.pop();
+
+                switch (program[pos].Type) {
+                    case OpType::IF:
+                    case OpType::ELSE:
+                    {
+                        program[pos].JumpTo = i;
+                        break;
+                    }
+                    default:
+                    {
+                        assert(false, "Only `if` blocks can be closed with `end`");
+                    }
+                }
+            }
+        }
+    }
+
+    if (!crossreference_stack.empty())
+    {
+        int latest_pos = crossreference_stack.top();
+        crossreference_stack.pop();
+
+        cerr << program[latest_pos].Loc << ": ERROR: Not all blocks was closed with `end`" << endl;
+        exit(1);
+    }
 }
 
 vector<Operation> lex_file(string const& path)
@@ -320,7 +392,9 @@ vector<Operation> lex_file(string const& path)
     int line_number = 1;
     while (getline(file, line))
     {
-        vector<Token> line_tokens = lex_line(path, line_number, line);
+        char *cline = const_cast<char *>(line.c_str());
+        string line_without_comment = strtok(cline, "//");
+        vector<Token> line_tokens = lex_line(path, line_number, line_without_comment);
 
         for (const auto & line_token : line_tokens) {
             tokens.push_back(line_token);
@@ -343,10 +417,10 @@ void type_check_program(vector<Operation> program)
 
     stack<Type> type_checking_stack;
 
-    for (int i = 0; i < program.size(); ++i) {
+    for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(static_cast<int>(OpType::COUNT) == 20, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 23, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -369,7 +443,7 @@ void type_check_program(vector<Operation> program)
                 assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
                     exit(1);
                 }
 
@@ -393,7 +467,7 @@ void type_check_program(vector<Operation> program)
                 assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
                     exit(1);
                 }
 
@@ -419,7 +493,7 @@ void type_check_program(vector<Operation> program)
                 assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
                     exit(1);
                 }
 
@@ -445,7 +519,7 @@ void type_check_program(vector<Operation> program)
             case OpType::GE:
             {
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, got " << to_string(type_checking_stack.size()) << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
                     exit(1);
                 }
 
@@ -465,17 +539,41 @@ void type_check_program(vector<Operation> program)
                 }
                 break;
             }
+            case OpType::IF:
+            {
+                if (type_checking_stack.empty())
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(OpType::PUT) << " operation. Expected 1 argument, but found 0" << endl;
+                    exit(1);
+                }
+
+                Type top = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                if (top.Code != DataType::BOOL)
+                {
+                    cerr << op.Loc << ": ERROR: Unexpected argument's type for `if` operation. Expected type `bool`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    exit(1);
+                }
+                break;
+            }
+            case OpType::ELSE:
+            case OpType::END:
+            {
+                // No type checking needed for these operations.
+                break;
+            }
             case OpType::PUT:
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(OpType::PUT) << " operation. Expected 1 argument, got 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(OpType::PUT) << " operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
                 Type top = type_checking_stack.top();
                 if (top.Code != DataType::INT && top.Code != DataType::BOOL)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(OpType::PUT) << " operation. Expected `int` or `bool`, but got `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(OpType::PUT) << " operation. Expected `int` or `bool`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
                     exit(1);
                 }
                 type_checking_stack.pop();
@@ -485,13 +583,13 @@ void type_check_program(vector<Operation> program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(OpType::PUTS) << " operation. Expected 1 argument, got 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(OpType::PUTS) << " operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
                 Type top = type_checking_stack.top();
                 if (top.Code != DataType::STRING)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(OpType::PUTS) << " operation. Expected `string`, but got `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(OpType::PUTS) << " operation. Expected `string`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
                     exit(1);
                 }
                 type_checking_stack.pop();
@@ -512,13 +610,13 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 20, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 23, "Exhaustive operations handling");
 
     stack<int> runtime_stack;
     vector<byte> memory;
     size_t strings_size = 0;
 
-    for (int i = 0; i < program.size(); ++i) {
+    for (size_t i = 0; i < program.size();) {
         Operation op = program[i];
 
         switch (op.Type)
@@ -526,6 +624,7 @@ void run_program(vector<Operation> program)
             case OpType::PUSH_INT:
             {
                 runtime_stack.push(op.IntegerValue);
+                ++i;
                 break;
             }
             case OpType::PUSH_STRING:
@@ -543,6 +642,7 @@ void run_program(vector<Operation> program)
                 }
 
                 strings_size += n;
+                ++i;
                 break;
             }
             case OpType::PLUS:
@@ -554,6 +654,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(a + b);
+                ++i;
                 break;
             }
             case OpType::MINUS:
@@ -565,6 +666,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b - a);
+                ++i;
                 break;
             }
             case OpType::MUL:
@@ -576,6 +678,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(a * b);
+                ++i;
                 break;
             }
             case OpType::DIV:
@@ -587,6 +690,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b / a);
+                ++i;
                 break;
             }
             case OpType::BOR:
@@ -598,6 +702,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(a | b);
+                ++i;
                 break;
             }
             case OpType::BAND:
@@ -609,6 +714,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(a & b);
+                ++i;
                 break;
             }
             case OpType::XOR:
@@ -620,6 +726,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(a ^ b);
+                ++i;
                 break;
             }
             case OpType::SHL:
@@ -631,6 +738,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b << a);
+                ++i;
                 break;
             }
             case OpType::SHR:
@@ -642,6 +750,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b >> a);
+                ++i;
                 break;
             }
             case OpType::EQ:
@@ -653,6 +762,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(a == b);
+                ++i;
                 break;
             }
             case OpType::NE:
@@ -664,6 +774,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(a != b);
+                ++i;
                 break;
             }
             case OpType::LT:
@@ -675,6 +786,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b < a);
+                ++i;
                 break;
             }
             case OpType::GT:
@@ -686,6 +798,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b > a);
+                ++i;
                 break;
             }
             case OpType::LE:
@@ -697,6 +810,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b <= a);
+                ++i;
                 break;
             }
             case OpType::GE:
@@ -708,6 +822,32 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b >= a);
+                ++i;
+                break;
+            }
+            case OpType::IF:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                if (a == 0)
+                {
+                    i = op.JumpTo;
+                }
+                else
+                {
+                    ++i;
+                }
+                break;
+            }
+            case OpType::ELSE:
+            {
+                i = op.JumpTo;
+                break;
+            }
+            case OpType::END:
+            {
+                ++i;
                 break;
             }
             case OpType::MOD:
@@ -719,6 +859,7 @@ void run_program(vector<Operation> program)
                 runtime_stack.pop();
 
                 runtime_stack.push(b % a);
+                ++i;
                 break;
             }
             case OpType::PUT:
@@ -726,6 +867,7 @@ void run_program(vector<Operation> program)
                 int val = runtime_stack.top();
                 runtime_stack.pop();
                 cout << to_string(val) << endl;
+                ++i;
                 break;
             }
             case OpType::PUTS:
@@ -748,7 +890,7 @@ void run_program(vector<Operation> program)
                 }
 
                 cout << s << endl;
-
+                ++i;
                 break;
             }
             default:
