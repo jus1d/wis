@@ -1,13 +1,28 @@
 # Gollo
 
-## HERE IS THE MEGRATION VERSION OF THIS LANGUAGE. IN NEAREST FUTURE LANGUAGE WILL BE REWRITTEN IN C++
+## HERE IS THE MIGRATION VERSION OF THIS LANGUAGE. IN NEAREST FUTURE THE WHOLE LANGUAGE WILL BE REWRITTEN IN C++
 
-**Gollo** - is a  concatenative, stack-oriented programming language inspired by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)). I never wrote anything in Forth, though. So **gollo** is just a concatenative, stack-based programming language. 
+### MIGRATION TRACKING:
+- [x] Run mode
+- [ ] Compilation mode
+---
+- [x] Pushing ints
+- [x] Pushing strings
+- [x] Arithmetic
+- [x] Binary arithmetic
+- [x] Compare operations
+- [x] Printing operations (`put` and `puts`)
+- [ ] Control flow operations (`if-else` and `while`)
+- [ ] Stack control operations (`copy`, `swap`, `drop` etc.)
+- [ ] System calls
+---
+
+**Gollo** - is a  concatenative, stack-oriented programming language inspired by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)). I never wrote anything in Forth, though. So **gollo** is just a concatenative, stack-based programming language.
 
 ## Features
 - [x] Stack-based
-- [x] Compile for x86_64 architecture
-- [ ] Compile for ARM64 architecture
+- [x] Compile for `x86_64` architecture
+- [ ] Compile for `arm64` architecture
 - [ ] Turing-complete
 
 ## Quick Start
@@ -160,7 +175,7 @@ Drops integer from top of the stack
 
 You can use `syscall<n>`, where `n` is between 1 and 3. Now supported only syscalls that accepts 1-3 arguments.
 
-**Example:** 
+**Example:**
 
 Call exit syscall with non-zero exit code
 
