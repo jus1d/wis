@@ -1560,6 +1560,8 @@ void compile_mode(string compiler_path, vector<string> args)
     execute_command_echoed("ld -o " + filename + " " + filename + ".o");
     cout << "[INFO] Compiled to " << filename << endl;
 
+    if (run_after_compilation) execute_command_echoed(filename);
+    
     return;
 #endif
 
