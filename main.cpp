@@ -5,10 +5,13 @@
 #include <fstream>
 #include <stack>
 #include <map>
+#include <cstdlib>
 
 #include "./assert.h"
 
 using namespace std;
+
+const string FILE_EXTENSION = ".glo";
 
 enum class OpType : int {
     PUSH_INT,
@@ -170,6 +173,14 @@ vector<string> split_string(const string& input, const string& delimiter) {
     result.push_back(input.substr(start));
 
     return result;
+}
+
+string trim_string(string s, const string& substring) {
+    size_t pos = s.find(substring);
+    if (pos != string::npos) {
+        s.erase(pos, substring.length());
+    }
+    return s;
 }
 
 void complete_string(string& s, const string& additional)
@@ -1512,6 +1523,8 @@ void compile_mode(string compiler_path, vector<string> args)
         path = shift_vector(args);
     }
 
+    string filename = trim_string(path, FILE_EXTENSION);
+
     filesystem::path file_path(path);
 
     if (!filesystem::exists(file_path))
@@ -1525,9 +1538,20 @@ void compile_mode(string compiler_path, vector<string> args)
 
     type_check_program(program);
 
-    generate_nasm_linux_x86_64("../output.asm", program);
+#ifdef __x86_64__
+    generate_nasm_linux_x86_64(filename + ".asm", program);
+    system(("nasm -felf64 -o " + filename + ".o " + filename + ".asm").c_str());
+    system(("ld -o " + filename + " " + filename + ".o").c_str());
+    return;
+#endif
 
-    assert(false, "Compilation mode is not implemented yet");
+#ifdef __aarch64__
+    cerr << "ERROR: Suport for `arm64` architecture, will delivered in nearest future" << endl;
+    return;
+#endif
+
+    cerr << "ERROR: Your processor's architecture is not supported yet" << endl;
+    exit(1);
 }
 
 int main(int argc, char* argv[])
