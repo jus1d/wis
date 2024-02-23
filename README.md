@@ -12,8 +12,8 @@
 - [x] Binary arithmetic
 - [x] Compare operations
 - [x] Printing operations (`put` and `puts`)
-- [ ] Control flow operations (`if-else` and `while`)
-- [ ] Stack control operations (`copy`, `swap`, `drop` etc.)
+- [x] Control flow operations (`if-else` and `while`)
+- [x] Stack control operations (`copy`, `swap`, `drop` etc.)
 - [ ] System calls
 ---
 
