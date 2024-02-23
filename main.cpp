@@ -390,7 +390,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 }
                 else
                 {
-                    cerr << token.Loc << ": ERROR: Unexpected token: `" << token.StringValue << "`" << endl;
+                    cerr << token.Loc << ": ERROR: Unexpected token: '" << token.StringValue << "'" << endl;
                     exit(1);
                 }
                 break;
@@ -594,8 +594,7 @@ void type_check_program(vector<Operation> program)
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::INT, op.Loc);
                 } else {
-                    // TODO: Maybe print location of incorrect argument
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `" << HumanizedDataTypes.at(DataType::INT) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
                     exit(1);
                 }
                 break;
@@ -621,8 +620,7 @@ void type_check_program(vector<Operation> program)
                 } else if (a.Code == DataType::BOOL && b.Code == DataType::BOOL) {
                     type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 } else {
-                    // TODO: Maybe print location of incorrect argument
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `" << HumanizedDataTypes.at(DataType::INT) << "` or 2 `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << " or 2 " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
                     exit(1);
                 }
                 break;
@@ -645,8 +643,7 @@ void type_check_program(vector<Operation> program)
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::INT, op.Loc);
                 } else {
-                    // TODO: Maybe print location of incorrect argument
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `" << HumanizedDataTypes.at(DataType::INT) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
                     exit(1);
                 }
                 break;
@@ -670,11 +667,10 @@ void type_check_program(vector<Operation> program)
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 } else if (a.Code == DataType::BOOL && b.Code == DataType::BOOL) {
-                    cerr << op.Loc << ": ERROR: Use `" << HumanizedOpTypes.at(OpType::BAND) << "`, `" << HumanizedOpTypes.at(OpType::BOR) << "` and `" << HumanizedOpTypes.at(OpType::XOR) << "` operations to compare booleans. Expected 2 `" << HumanizedDataTypes.at(DataType::INT) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Use " << HumanizedOpTypes.at(OpType::BAND) << ", " << HumanizedOpTypes.at(OpType::BOR) << " and " << HumanizedOpTypes.at(OpType::XOR) << " operations to compare booleans. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
                     exit(1);
                 } else {
-                    // TODO: Maybe print location of incorrect argument
-                    cerr << op.Loc << ": ERROR: Only integer values can be compared. Expected 2 `" << HumanizedDataTypes.at(DataType::INT) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "` and `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Only integer values can be compared. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
                     exit(1);
                 }
                 break;
@@ -684,7 +680,7 @@ void type_check_program(vector<Operation> program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
 
@@ -693,7 +689,7 @@ void type_check_program(vector<Operation> program)
 
                 if (top.Code != DataType::BOOL)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument's type for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected type `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected type " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(top.Code) << "" << endl;
                     exit(1);
                 }
                 break;
@@ -709,13 +705,13 @@ void type_check_program(vector<Operation> program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
                 Type top = type_checking_stack.top();
                 if (top.Code != DataType::INT && top.Code != DataType::BOOL)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument type for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(top.Code) << "" << endl;
                     exit(1);
                 }
                 type_checking_stack.pop();
@@ -725,14 +721,14 @@ void type_check_program(vector<Operation> program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
 
                 Type top = type_checking_stack.top();
                 if (top.Code != DataType::STRING)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument type for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected `" << HumanizedDataTypes.at(DataType::STRING) << "`, but found `" << HumanizedDataTypes.at(top.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::STRING) << ", but found " << HumanizedDataTypes.at(top.Code) << "" << endl;
                     exit(1);
                 }
                 type_checking_stack.pop();
@@ -743,14 +739,14 @@ void type_check_program(vector<Operation> program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
 
                 Type top = type_checking_stack.top();
                 if (top.Code == DataType::STRING)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument's type for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(top.Code) << "`. For copying strings, use `2copy` instead" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(top.Code) << ". For copying strings, use 2copy instead" << endl;
                     exit(1);
                 }
                 type_checking_stack.push(top);
@@ -761,7 +757,7 @@ void type_check_program(vector<Operation> program)
             {
                 if (type_checking_stack.size() < 2)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected 2 argument, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 argument, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -773,12 +769,12 @@ void type_check_program(vector<Operation> program)
 
                 if (a.Code == DataType::STRING)
                 {
-                    cerr << op.Loc << ": ERROR: Incorrect argument's type for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Incorrect argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(a.Code) << "" << endl;
                     exit(1);
                 }
                 else if (b.Code == DataType::STRING)
                 {
-                    cerr << op.Loc << ": ERROR: Incorrect argument's type for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Incorrect argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(b.Code) << "" << endl;
                     exit(1);
                 }
 
@@ -792,7 +788,7 @@ void type_check_program(vector<Operation> program)
             {
                 if (type_checking_stack.size() < 2)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected 2 argument, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 argument, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -804,12 +800,12 @@ void type_check_program(vector<Operation> program)
 
                 if (a.Code == DataType::STRING)
                 {
-                    cerr << op.Loc << ": ERROR: Incorrect argument's type for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(a.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Incorrect argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(a.Code) << "" << endl;
                     exit(1);
                 }
                 else if (b.Code == DataType::STRING)
                 {
-                    cerr << op.Loc << ": ERROR: Incorrect argument's type for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected `" << HumanizedDataTypes.at(DataType::INT) << "` or `" << HumanizedDataTypes.at(DataType::BOOL) << "`, but found `" << HumanizedDataTypes.at(b.Code) << "`" << endl;
+                    cerr << op.Loc << ": ERROR: Incorrect argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(b.Code) << "" << endl;
                     exit(1);
                 }
 
@@ -822,7 +818,7 @@ void type_check_program(vector<Operation> program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for `" << HumanizedOpTypes.at(op.Type) << "` operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
 
@@ -1561,7 +1557,7 @@ void run_mode(string compiler_path, vector<string> args)
     if (!filesystem::exists(file_path))
     {
         usage(compiler_path);
-        cerr << "ERROR: File `" << file_path.string() << "` doesn't exists" << endl;
+        cerr << "ERROR: File '" << file_path.string() << "' doesn't exists" << endl;
         exit(1);
     }
 
@@ -1603,7 +1599,7 @@ void compile_mode(string compiler_path, vector<string> args)
     if (!filesystem::exists(file_path))
     {
         usage(compiler_path);
-        cerr << "ERROR: File `" << file_path.string() << "` doesn't exists" << endl;
+        cerr << "ERROR: File '" << file_path.string() << "' doesn't exists" << endl;
         exit(1);
     }
 
