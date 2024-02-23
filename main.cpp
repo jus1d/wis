@@ -201,6 +201,17 @@ size_t find_col(string const& line, size_t start, bool (*predicate)(char))
     return start;
 }
 
+void execute_command_echoed(const string& command)
+{
+    cout << "[CMD] " << command << endl;
+    int exit_code = system(command.c_str());
+    if (exit_code != 0)
+    {
+        cerr << "ERROR: Executing command crashed with " << to_string(exit_code) << " exit code" << endl;
+        exit(exit_code);
+    }
+}
+
 vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 {
     vector<Operation> program;
@@ -1539,9 +1550,16 @@ void compile_mode(string compiler_path, vector<string> args)
     type_check_program(program);
 
 #ifdef __x86_64__
+    cout << "[INFO] Generating assembly -> " << filename << ".asm" << endl;
     generate_nasm_linux_x86_64(filename + ".asm", program);
-    system(("nasm -felf64 -o " + filename + ".o " + filename + ".asm").c_str());
-    system(("ld -o " + filename + " " + filename + ".o").c_str());
+
+    cout << "[INFO] Compiling assembly with NASM" << endl;
+    execute_command_echoed("nasm -felf64 -o " + filename + ".o " + filename + ".asm");
+    cout << "[INFO] Object file generated: " << filename << ".asm -> " << filename << ".o" << endl;
+
+    execute_command_echoed("ld -o " + filename + " " + filename + ".o");
+    cout << "[INFO] Compiled to " << filename << endl;
+    
     return;
 #endif
 
