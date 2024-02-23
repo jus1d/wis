@@ -186,6 +186,15 @@ string trim_string(string s, const string& substring) {
     return s;
 }
 
+void replace_string(string& str, const string& from, const string& to) {
+    size_t pos = str.find(from);
+
+    while (pos != string::npos) {
+        str.replace(pos, from.length(), to);
+        pos = str.find(from, pos + 1);
+    }
+}
+
 void complete_string(string& s, const string& additional)
 {
     s += additional + "\n";
@@ -227,8 +236,13 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 program.emplace_back(OpType::PUSH_INT, token.IntegerValue, token.Loc);
                 break;
             case TokenType::STRING:
-                program.emplace_back(OpType::PUSH_STRING, token.StringValue, token.Loc);
+            {
+                string value = token.StringValue;
+                replace_string(value, "\\n", "\n");
+                replace_string(value, "\\t", "\t");
+                program.emplace_back(OpType::PUSH_STRING, value, token.Loc);
                 break;
+            }
             case TokenType::WORD:
                 assert(static_cast<int>(OpType::COUNT) == 29, "Exhaustive operations handling");
 
@@ -1204,7 +1218,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::PUSH_STRING:
             {
-                complete_string(output_content, "    ; -- push str: '" + op.StringValue + "' --");
+                complete_string(output_content, "    ; -- push str --");
                 complete_string(output_content, "    push    " + to_string(op.StringValue.size() + 1));
                 auto it = strings.find(op.StringValue);
                 if (it == strings.end())
@@ -1481,11 +1495,22 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
 
     if (!strings.empty()) complete_string(output_content, "\nsection .data");
 
-    for (const auto& pair : strings) {
-        complete_string(output_content, "    str_" + to_string(pair.second) + " db '" + pair.first + "', 10");
-    }
-
     out << output_content;
+
+    for (const auto& pair : strings) {
+        out << "    str_" << pair.second << ": db ";
+
+        const string& s = pair.first;
+        for (size_t i = 0; i < s.size(); ++i) {
+            out << "0x" << setw(2) << setfill('0') << hex << static_cast<int>(s[i]);
+
+            if (i < s.size() - 1) {
+                out << ",";
+            }
+        }
+
+        out << endl;
+    }
 }
 
 void run_mode(string compiler_path, vector<string> args)
