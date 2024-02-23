@@ -1470,6 +1470,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    call    put");
                 break;
             }
+            // TODO: Make it like a binding in standard library
             case OpType::PUTS:
             {
                 complete_string(output_content, "    ; -- puts --");
