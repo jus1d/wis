@@ -5,6 +5,8 @@
 #include <fstream>
 #include <stack>
 #include <map>
+#include <string>
+#include <codecvt>
 
 #include "./assert.h"
 
@@ -186,6 +188,50 @@ string trim_string(string s, const string& substring) {
     return s;
 }
 
+string unescape_string(const string& s) {
+    stringstream ss;
+    for (size_t i = 0; i < s.length(); ++i) {
+        if (s[i] == '\\' && i + 1 < s.length()) {
+            switch (s[i + 1]) {
+                case 'a': ss << '\a'; break;
+                case 'b': ss << '\b'; break;
+                case 'f': ss << '\f'; break;
+                case 'n': ss << '\n'; break;
+                case 'r': ss << '\r'; break;
+                case 't': ss << '\t'; break;
+                case 'v': ss << '\v'; break;
+                case '\\': ss << '\\'; break;
+                case '\'': ss << '\''; break;
+                case '\"': ss << '\"'; break;
+                case '\?': ss << '\?'; break;
+                case '0': ss << '\0'; break;
+                default:
+                    if (isdigit(s[i + 1])) {
+                        int value = 0;
+                        ss << oct << s[i + 1];
+                        ss >> value;
+                        ss.clear();
+                        ss << static_cast<char>(value);
+                    } else if (s[i + 1] == 'x' || s[i + 1] == 'X') {
+                        int value = 0;
+                        ss << hex << s.substr(i + 2, 2);
+                        ss >> value;
+                        ss.clear();
+                        ss << static_cast<char>(value);
+                        i += 2;
+                    } else {
+                        ss << s[i] << s[i + 1];
+                    }
+                    break;
+            }
+            ++i;
+        } else {
+            ss << s[i];
+        }
+    }
+    return ss.str();
+}
+
 void complete_string(string& s, const string& additional)
 {
     s += additional + "\n";
@@ -228,7 +274,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 break;
             case TokenType::STRING:
             {
-                program.emplace_back(OpType::PUSH_STRING, token.StringValue, token.Loc);
+                program.emplace_back(OpType::PUSH_STRING, unescape_string(token.StringValue), token.Loc);
                 break;
             }
             case TokenType::WORD:
@@ -1079,7 +1125,7 @@ void run_program(vector<Operation> program)
                     exit(1);
                 }
 
-                cout << s << endl;
+                cout << s;
                 ++i;
                 break;
             }
@@ -1207,7 +1253,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             case OpType::PUSH_STRING:
             {
                 complete_string(output_content, "    ; -- push str --");
-                complete_string(output_content, "    push    " + to_string(op.StringValue.size() + 1));
+                complete_string(output_content, "    push    " + to_string(op.StringValue.size()));
                 auto it = strings.find(op.StringValue);
                 if (it == strings.end())
                 {
@@ -1483,11 +1529,22 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
 
     if (!strings.empty()) complete_string(output_content, "\nsection .data");
 
-    for (const auto& pair : strings) {
-        complete_string(output_content, "    str_" + to_string(pair.second) + " db '" + pair.first + "', 10");
-    }
-
     out << output_content;
+
+    for (const auto& pair : strings) {
+        out << "    str_" << pair.second << ": db ";
+
+        const string& s = pair.first;
+        for (size_t i = 0; i < s.size(); ++i) {
+            out << "0x" << setw(2) << setfill('0') << hex << static_cast<int>(s[i]);
+
+            if (i < s.size() - 1) {
+                out << ",";
+            }
+        }
+
+        out << endl;
+    }
 }
 
 void run_mode(string compiler_path, vector<string> args)
