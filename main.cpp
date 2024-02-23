@@ -172,6 +172,11 @@ vector<string> split_string(const string& input, const string& delimiter) {
     return result;
 }
 
+void complete_string(string& s, const string& additional)
+{
+    s += additional + "\n";
+}
+
 string location_view(const string& filepath, int row, int col)
 {
     return filepath + ":" + to_string(row) + ":" + to_string(col);
@@ -1096,6 +1101,368 @@ void run_program(vector<Operation> program)
     }
 }
 
+void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation> program)
+{
+    std::ofstream out(output_file_path);
+
+    if (!out.is_open()) {
+        cerr << "ERROR: Can't open file: " << output_file_path << endl;
+        exit(1);
+    }
+
+    map<string, int> strings;
+
+    string output_content;
+
+    bool is_put_needed;
+    for (const auto& op : program)
+    {
+        if (op.Type == OpType::PUT)
+        {
+            is_put_needed = true;
+            break;
+        }
+    }
+    if (is_put_needed)
+    {
+        complete_string(output_content, "put:");
+        complete_string(output_content, "    mov     r9, -3689348814741910323");
+        complete_string(output_content, "    sub     rsp, 40");
+        complete_string(output_content, "    mov     BYTE [rsp+31], 10");
+        complete_string(output_content, "    lea     rcx, [rsp+30]");
+        complete_string(output_content, ".L2:");
+        complete_string(output_content, "    mov     rax, rdi");
+        complete_string(output_content, "    lea     r8, [rsp+32]");
+        complete_string(output_content, "    mul     r9");
+        complete_string(output_content, "    mov     rax, rdi");
+        complete_string(output_content, "    sub     r8, rcx");
+        complete_string(output_content, "    shr     rdx, 3");
+        complete_string(output_content, "    lea     rsi, [rdx+rdx*4]");
+        complete_string(output_content, "    add     rsi, rsi");
+        complete_string(output_content, "    sub     rax, rsi");
+        complete_string(output_content, "    add     eax, 48");
+        complete_string(output_content, "    mov     BYTE [rcx], al");
+        complete_string(output_content, "    mov     rax, rdi");
+        complete_string(output_content, "    mov     rdi, rdx");
+        complete_string(output_content, "    mov     rdx, rcx");
+        complete_string(output_content, "    sub     rcx, 1");
+        complete_string(output_content, "    cmp     rax, 9");
+        complete_string(output_content, "    ja      .L2");
+        complete_string(output_content, "    lea     rax, [rsp+32]");
+        complete_string(output_content, "    mov     edi, 1");
+        complete_string(output_content, "    sub     rdx, rax");
+        complete_string(output_content, "    xor     eax, eax");
+        complete_string(output_content, "    lea     rsi, [rsp+32+rdx]");
+        complete_string(output_content, "    mov     rdx, r8");
+        complete_string(output_content, "    mov     rax, 1");
+        complete_string(output_content, "    syscall");
+        complete_string(output_content, "    add     rsp, 40");
+        complete_string(output_content, "    ret\n");
+    }
+
+    complete_string(output_content, "section .text");
+    complete_string(output_content, "    global _start\n");
+    complete_string(output_content, "_start:");
+
+    assert(static_cast<int>(OpType::COUNT) == 29, "Exhaustive operations handling");
+
+    for (size_t i = 0; i < program.size(); ++i) {
+        Operation op = program[i];
+
+        switch (op.Type)
+        {
+            case OpType::PUSH_INT:
+            {
+                complete_string(output_content, "    ; -- push int: " + to_string(op.IntegerValue) + " --");
+                complete_string(output_content, "    push    " + to_string(op.IntegerValue));
+                break;
+            }
+            case OpType::PUSH_STRING:
+            {
+                complete_string(output_content, "    ; -- push str: '" + op.StringValue + "' --");
+                complete_string(output_content, "    push    " + to_string(op.StringValue.size() + 1));
+                auto it = strings.find(op.StringValue);
+                if (it == strings.end())
+                {
+                    strings[op.StringValue] = strings.size();
+                }
+                complete_string(output_content, "    push    str_" + to_string(strings.at(op.StringValue)));
+                break;
+            }
+            case OpType::PLUS:
+            {
+                complete_string(output_content, "    ; -- plus --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    add     rax, rbx");
+                complete_string(output_content, "    push    rax");
+                break;
+            }
+            case OpType::MINUS:
+            {
+                complete_string(output_content, "    ; -- minus --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    sub     rbx, rax");
+                complete_string(output_content, "    push    rbx");
+                break;
+            }
+            case OpType::MUL:
+            {
+                complete_string(output_content, "    ; -- multiply --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    imul    rax, rbx");
+                complete_string(output_content, "    push    rax");
+                break;
+            }
+            case OpType::DIV:
+            {
+                complete_string(output_content, "    ; -- division --");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    xor     rdx, rdx");
+                complete_string(output_content, "    div     rbx");
+                complete_string(output_content, "    push    rax");
+                break;
+            }
+            case OpType::MOD:
+            {
+                complete_string(output_content, "    ; -- mod --");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    xor     rdx, rdx");
+                complete_string(output_content, "    div     rbx");
+                complete_string(output_content, "    push    rdx");
+                break;
+            }
+            case OpType::BOR:
+            {
+                complete_string(output_content, "    ; -- binary or --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    or      rax, rbx");
+                complete_string(output_content, "    push    rax");
+                break;
+            }
+            case OpType::BAND:
+            {
+                complete_string(output_content, "    ; -- binary and --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    and     rax, rbx");
+                complete_string(output_content, "    push    rax");
+                break;
+            }
+            case OpType::XOR:
+            {
+                complete_string(output_content, "    ; -- xor --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    xor     rax, rbx");
+                complete_string(output_content, "    push    rax");
+                break;
+            }
+            case OpType::SHL:
+            {
+                complete_string(output_content, "    ; -- shift left --");
+                complete_string(output_content, "    pop     rcx");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    shl     rax, cl");
+                complete_string(output_content, "    push    rax");
+                break;
+            }
+            case OpType::SHR:
+            {
+                complete_string(output_content, "    ; -- shift right --");
+                complete_string(output_content, "    pop     rcx");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    shr     rax, cl");
+                complete_string(output_content, "    push    rax");
+                break;
+            }
+            case OpType::EQ:
+            {
+                complete_string(output_content, "    ; -- equal --");
+                complete_string(output_content, "    mov     rcx, 0");
+                complete_string(output_content, "    mov     rdx, 1");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    cmp     rax, rbx");
+                complete_string(output_content, "    cmove   rcx, rdx");
+                complete_string(output_content, "    push    rcx");
+                break;
+            }
+            case OpType::NE:
+            {
+                complete_string(output_content, "    ; -- not equal --");
+                complete_string(output_content, "    mov     rcx, 0");
+                complete_string(output_content, "    mov     rdx, 1");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    cmp     rax, rbx");
+                complete_string(output_content, "    cmovne  rcx, rdx");
+                complete_string(output_content, "    push    rcx");
+                break;
+            }
+            case OpType::LT:
+            {
+                complete_string(output_content, "    ; -- less --");
+                complete_string(output_content, "    mov     rcx, 0");
+                complete_string(output_content, "    mov     rdx, 1");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    cmp     rbx, rax");
+                complete_string(output_content, "    cmovl   rcx, rdx");
+                complete_string(output_content, "    push    rcx");
+                break;
+            }
+            case OpType::GT:
+            {
+                complete_string(output_content, "    ; -- greater --");
+                complete_string(output_content, "    mov     rcx, 0");
+                complete_string(output_content, "    mov     rdx, 1");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    cmp     rbx, rax");
+                complete_string(output_content, "    cmovg   rcx, rdx");
+                complete_string(output_content, "    push    rcx");
+                break;
+            }
+            case OpType::LE:
+            {
+                complete_string(output_content, "    ; -- less or equal --");
+                complete_string(output_content, "    mov     rcx, 0");
+                complete_string(output_content, "    mov     rdx, 1");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    cmp     rbx, rax");
+                complete_string(output_content, "    cmovle  rcx, rdx");
+                complete_string(output_content, "    push    rcx");
+                break;
+            }
+            case OpType::GE:
+            {
+                complete_string(output_content, "    ; -- greater or equal --");
+                complete_string(output_content, "    mov     rcx, 0");
+                complete_string(output_content, "    mov     rdx, 1");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    cmp     rbx, rax");
+                complete_string(output_content, "    cmovge  rcx, rdx");
+                complete_string(output_content, "    push    rcx");
+                break;
+            }
+            case OpType::IF:
+            {
+                complete_string(output_content, "    ; -- if --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    mov     rbx, 0");
+                complete_string(output_content, "    cmp     rax, rbx");
+                complete_string(output_content, "    je      addr_" + to_string(op.JumpTo));
+                break;
+            }
+            case OpType::ELSE:
+            {
+                complete_string(output_content, "    ; -- else --");
+                complete_string(output_content, "    jmp     addr_" + to_string(op.JumpTo));
+                complete_string(output_content, "    addr_" + to_string(i+1) + ":");
+                break;
+            }
+            case OpType::END:
+            {
+                complete_string(output_content, "    ; -- end --");
+                if (program[op.JumpTo].Type == OpType::WHILE)
+                {
+                    complete_string(output_content, "    jmp    addr_" + to_string(op.JumpTo));
+                }
+                complete_string(output_content, "addr_" + to_string(i));
+                break;
+            }
+            case OpType::DO:
+            {
+                complete_string(output_content, "    ; -- do --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    mov     rbx, 0");
+                complete_string(output_content, "    cmp     rax, rbx");
+                complete_string(output_content, "    je      addr_" + to_string(op.JumpTo-1));
+                break;
+            }
+            case OpType::WHILE:
+            {
+                complete_string(output_content, "    ; -- while --");
+                complete_string(output_content, "    addr_" + to_string(i) + ":");
+                break;
+            }
+            case OpType::PUT:
+            {
+                complete_string(output_content, "    ; -- put --");
+                complete_string(output_content, "    pop     rdi");
+                complete_string(output_content, "    call    put");
+                break;
+            }
+            case OpType::PUTS:
+            {
+                complete_string(output_content, "    ; -- puts --");
+                complete_string(output_content, "    mov     rax, 1");
+                complete_string(output_content, "    mov     rdi, 1");
+                complete_string(output_content, "    pop     rsi");
+                complete_string(output_content, "    pop     rdx");
+                complete_string(output_content, "    syscall");
+                break;
+            }
+            case OpType::COPY:
+            {
+                complete_string(output_content, "    ; -- copy --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    push    rax");
+                complete_string(output_content, "    push    rax");
+                break;
+            }
+            case OpType::OVER:
+            {
+                complete_string(output_content, "    ; -- over --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    push    rbx");
+                complete_string(output_content, "    push    rax");
+                complete_string(output_content, "    push    rbx");
+                break;
+            }
+            case OpType::SWAP:
+            {
+                complete_string(output_content, "    ; -- swap --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    push    rax");
+                complete_string(output_content, "    push    rbx");
+                break;
+            }
+            case OpType::DROP:
+            {
+                complete_string(output_content, "    ; -- drop --");
+                complete_string(output_content, "    pop     rax");
+                break;
+            }
+            default:
+                assert(false, "Unreachable");
+        }
+    }
+
+    complete_string(output_content, "    ; -- exit --");
+    complete_string(output_content, "    mov     rax, 60");
+    complete_string(output_content, "    mov     rdi, 0");
+    complete_string(output_content, "    syscall");
+
+    if (!strings.empty()) complete_string(output_content, "\nsection .data");
+
+    for (const auto& pair : strings) {
+        complete_string(output_content, "    str_" + to_string(pair.second) + " db '" + pair.first + "', 10");
+    }
+
+    out << output_content;
+}
+
 void run_mode(string compiler_path, vector<string> args)
 {
     if (args.empty())
@@ -1154,12 +1521,19 @@ void compile_mode(string compiler_path, vector<string> args)
         exit(1);
     }
 
+    vector<Operation> program = lex_file(file_path.string());
+
+    type_check_program(program);
+
+    generate_nasm_linux_x86_64("../output.asm", program);
+
     assert(false, "Compilation mode is not implemented yet");
 }
 
 int main(int argc, char* argv[])
 {
     vector<string> args(argv, argv + argc);
+
     string compiler_path = shift_vector(args);
 
     if (args.empty())
