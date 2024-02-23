@@ -154,7 +154,7 @@ Drops integer from top of the stack
 
 ---
 
-### System calls
+### System calls | Not migrated yet
 
 You can use `syscall<n>`, where `n` is between 1 and 3. Now supported only syscalls that accepts 1-3 arguments.
 
