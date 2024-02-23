@@ -1559,12 +1559,12 @@ void compile_mode(string compiler_path, vector<string> args)
 
     execute_command_echoed("ld -o " + filename + " " + filename + ".o");
     cout << "[INFO] Compiled to " << filename << endl;
-    
+
     return;
 #endif
 
 #ifdef __aarch64__
-    cerr << "ERROR: Suport for `arm64` architecture, will delivered in nearest future" << endl;
+    cerr << "ERROR: Support for `arm64` architecture, will delivered in nearest future" << endl;
     return;
 #endif
 
