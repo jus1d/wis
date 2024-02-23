@@ -1,2 +1,2 @@
 build: ./main.cpp
-	clang++ -std=c++20 -Wall -Wextra -o ./gollo ./main.cpp
+	g++ -std=c++23 -Wall -Wextra -o ./gollo ./main.cpp

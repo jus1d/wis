@@ -1445,7 +1445,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 {
                     complete_string(output_content, "    jmp    addr_" + to_string(op.JumpTo));
                 }
-                complete_string(output_content, "addr_" + to_string(i));
+                complete_string(output_content, "addr_" + to_string(i) + ":");
                 break;
             }
             case OpType::DO:
