@@ -33,6 +33,9 @@ enum class OpType : int {
     GT,
     LE,
     GE,
+    NOT,
+    TRUE,
+    FALSE,
     IF,
     ELSE,
     END,
@@ -40,6 +43,7 @@ enum class OpType : int {
     WHILE,
     PUT,
     PUTS,
+    HERE,
     COPY,
     OVER,
     SWAP,
@@ -66,6 +70,9 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::GT, ">"},
         {OpType::LE, "<="},
         {OpType::GE, ">="},
+        {OpType::NOT, "not"},
+        {OpType::TRUE, "true"},
+        {OpType::FALSE, "false"},
         {OpType::IF, "if"},
         {OpType::ELSE, "else"},
         {OpType::END, "end"},
@@ -73,6 +80,7 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::WHILE, "while"},
         {OpType::PUT, "put"},
         {OpType::PUTS, "puts"},
+        {OpType::HERE, "here"},
         {OpType::COPY, "copy"},
         {OpType::OVER, "over"},
         {OpType::SWAP, "swap"},
@@ -278,7 +286,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 break;
             }
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 29, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 33, "Exhaustive operations handling");
 
                 if (token.StringValue == "+")
                 {
@@ -344,6 +352,18 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 {
                     program.emplace_back(OpType::GE, token.Loc);
                 }
+                else if (token.StringValue == "not")
+                {
+                    program.emplace_back(OpType::NOT, token.Loc);
+                }
+                else if (token.StringValue == "true")
+                {
+                    program.emplace_back(OpType::TRUE, token.Loc);
+                }
+                else if (token.StringValue == "false")
+                {
+                    program.emplace_back(OpType::FALSE, token.Loc);
+                }
                 else if (token.StringValue == "if")
                 {
                     program.emplace_back(OpType::IF, token.Loc);
@@ -371,6 +391,10 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 else if (token.StringValue == "puts")
                 {
                     program.emplace_back(OpType::PUTS, token.Loc);
+                }
+                else if (token.StringValue == "here")
+                {
+                    program.emplace_back(OpType::HERE, token.Loc);
                 }
                 else if (token.StringValue == "copy")
                 {
@@ -406,7 +430,7 @@ void crossreference_blocks(vector<Operation>& program)
 {
     stack<int> crossreference_stack;
 
-    assert(static_cast<int>(OpType::COUNT) == 29, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 33, "Exhaustive operations handling. Not all operations should be handled in here");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -560,7 +584,7 @@ void type_check_program(vector<Operation> program)
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(static_cast<int>(OpType::COUNT) == 29, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 33, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -570,6 +594,7 @@ void type_check_program(vector<Operation> program)
                 break;
             }
             case OpType::PUSH_STRING:
+            case OpType::HERE:
             {
                 type_checking_stack.emplace(DataType::STRING, op.Loc);
                 break;
@@ -673,6 +698,26 @@ void type_check_program(vector<Operation> program)
                     cerr << op.Loc << ": ERROR: Only integer values can be compared. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
                     exit(1);
                 }
+                break;
+            }
+            case OpType::NOT:
+            {
+                if (type_checking_stack.empty()) {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 arguments, but found 0" << endl;
+                    exit(1);
+                }
+                Type a = type_checking_stack.top();
+                if (a.Code != DataType::BOOL)
+                {
+                    cerr << a.Loc << ": ERROR: Expected type " << HumanizedDataTypes.at(DataType::BOOL) << " for " << HumanizedOpTypes.at(OpType::NOT) << ", but found " << HumanizedDataTypes.at(a.Code) << endl;
+                    exit(1);
+                }
+                break;
+            }
+            case OpType::TRUE:
+            case OpType::FALSE:
+            {
+                type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 break;
             }
             case OpType::IF:
@@ -841,7 +886,7 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 29, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 33, "Exhaustive operations handling");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -1068,6 +1113,29 @@ void run_program(vector<Operation> program)
                 ++i;
                 break;
             }
+            case OpType::NOT:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+
+                if (a == 0) runtime_stack.push(1);
+                else if (a == 1) runtime_stack.push(0);
+                else assert(false, "unreachable");
+                ++i;
+                break;
+            }
+            case OpType::TRUE:
+            {
+                runtime_stack.push(1);
+                ++i;
+                break;
+            }
+            case OpType::FALSE:
+            {
+                runtime_stack.push(0);
+                ++i;
+                break;
+            }
             case OpType::IF:
             case OpType::DO:
             {
@@ -1122,6 +1190,24 @@ void run_program(vector<Operation> program)
                 }
 
                 cout << s;
+                ++i;
+                break;
+            }
+            case OpType::HERE:
+            {
+                const byte* bs = reinterpret_cast<const byte*>(op.Loc.c_str());
+                int n = op.Loc.length();
+
+                runtime_stack.push(n);
+
+                op.Address = strings_size;
+                runtime_stack.push(op.Address);
+
+                for (int j = 0; j < n; ++j) {
+                    memory.push_back(bs[j]);
+                }
+
+                strings_size += n;
                 ++i;
                 break;
             }
@@ -1233,7 +1319,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     complete_string(output_content, "    global _start\n");
     complete_string(output_content, "_start:");
 
-    assert(static_cast<int>(OpType::COUNT) == 29, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 33, "Exhaustive operations handling");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -1422,6 +1508,26 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    push    rcx");
                 break;
             }
+            case OpType::NOT:
+            {
+                complete_string(output_content, "    ; -- not --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    xor     rax, 1");
+                complete_string(output_content, "    push    rax");
+                break;
+            }
+            case OpType::TRUE:
+            {
+                complete_string(output_content, "    ; -- true --");
+                complete_string(output_content, "    push    1");
+                break;
+            }
+            case OpType::FALSE:
+            {
+                complete_string(output_content, "    ; -- false --");
+                complete_string(output_content, "    push    0");
+                break;
+            }
             case OpType::IF:
             {
                 complete_string(output_content, "    ; -- if --");
@@ -1479,6 +1585,19 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rsi");
                 complete_string(output_content, "    pop     rdx");
                 complete_string(output_content, "    syscall");
+                break;
+            }
+            case OpType::HERE:
+            {
+                string value = op.Loc;
+                complete_string(output_content, "    ; -- here --");
+                complete_string(output_content, "    push    " + to_string(value.size()));
+                auto it = strings.find(value);
+                if (it == strings.end())
+                {
+                    strings[value] = strings.size();
+                }
+                complete_string(output_content, "    push    str_" + to_string(strings.at(value)));
                 break;
             }
             case OpType::COPY:
