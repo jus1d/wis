@@ -6,7 +6,6 @@
 #include <stack>
 #include <map>
 #include <string>
-#include <codecvt>
 
 #include "./assert.h"
 
@@ -49,6 +48,13 @@ enum class OpType : int {
     OVER,
     SWAP,
     DROP,
+    SYSCALL0,
+    SYSCALL1,
+    SYSCALL2,
+    SYSCALL3,
+    SYSCALL4,
+    SYSCALL5,
+    SYSCALL6,
     COUNT,
 };
 
@@ -87,6 +93,13 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::OVER, "`over`"},
         {OpType::SWAP, "`swap`"},
         {OpType::DROP, "`drop`"},
+        {OpType::SYSCALL0, "`syscall0`"},
+        {OpType::SYSCALL1, "`syscall1`"},
+        {OpType::SYSCALL2, "`syscall2`"},
+        {OpType::SYSCALL3, "`syscall3`"},
+        {OpType::SYSCALL4, "`syscall4`"},
+        {OpType::SYSCALL5, "`syscall5`"},
+        {OpType::SYSCALL6, "`syscall6`"},
 };
 
 const map<string, OpType> BuiltInOps = {
@@ -122,6 +135,13 @@ const map<string, OpType> BuiltInOps = {
         {"over", OpType::OVER},
         {"swap", OpType::SWAP},
         {"drop", OpType::DROP},
+        {"syscall0", OpType::SYSCALL0},
+        {"syscall1", OpType::SYSCALL1},
+        {"syscall2", OpType::SYSCALL2},
+        {"syscall3", OpType::SYSCALL3},
+        {"syscall4", OpType::SYSCALL4},
+        {"syscall5", OpType::SYSCALL5},
+        {"syscall6", OpType::SYSCALL6},
 };
 
 class Operation {
@@ -148,6 +168,12 @@ enum class TokenType : int {
     INT,
     STRING,
     COUNT,
+};
+
+const map<TokenType, string> HumanizedTokenTypes = {
+        {TokenType::WORD, "`word`"},
+        {TokenType::INT, "`int`"},
+        {TokenType::STRING, "`string`"}
 };
 
 class Token {
@@ -327,7 +353,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 break;
             }
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 34, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 41, "Exhaustive operations handling");
 
                 if (token.StringValue == "+")
                 {
@@ -433,7 +459,23 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                         exit(1);
                     }
 
-                    string name = tokens[i].StringValue;
+                    token = tokens[i];
+
+                    if (token.Type != TokenType::WORD)
+                    {
+                        cerr << token.Loc << ": ERROR: Invalid token's type for binding's name. Expected " << HumanizedTokenTypes.at(TokenType::WORD) << ", but found " << HumanizedTokenTypes.at(token.Type) << endl;
+                        exit(1);
+                    }
+
+                    string name = token.StringValue;
+                    auto it = BuiltInOps.find(name);
+
+                    if (it != BuiltInOps.end())
+                    {
+                        cerr << token.Loc << ": ERROR: Binding name can't conflict with built in operations. Use other name, instead of `" << name << "`" << endl;
+                        exit(1);
+                    }
+
                     int open_blocks = 0;
 
                     while (++i < tokens.size() && (tokens[i].StringValue != "end" || open_blocks != 0))
@@ -458,7 +500,26 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                                 }
                                 default:
                                 {
-                                    bindings[name].emplace_back(BuiltInOps.at(token.StringValue), token.Loc);
+                                    auto iter = BuiltInOps.find(token.StringValue);
+
+                                    if (iter != BuiltInOps.end())
+                                    {
+                                        bindings[name].emplace_back(BuiltInOps.at(token.StringValue), token.Loc);
+                                        break;
+                                    }
+
+                                    auto itt = bindings.find(token.StringValue);
+                                    if (itt != bindings.end())
+                                    {
+                                        vector<Operation> binding = bindings[token.StringValue];
+                                        for (size_t j = 0; j < binding.size(); ++j) {
+                                            bindings[name].push_back(binding[j]);
+                                        }
+                                        break;
+                                    }
+
+                                    cerr << token.Loc << ": ERROR: Undefined token: '" << token.StringValue << "'" << endl;
+                                    exit(1);
                                     break;
                                 }
                             }
@@ -495,6 +556,34 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 {
                     program.emplace_back(OpType::DROP, token.Loc);
                 }
+                else if (token.StringValue == "syscall0")
+                {
+                    program.emplace_back(OpType::SYSCALL0, token.Loc);
+                }
+                else if (token.StringValue == "syscall1")
+                {
+                    program.emplace_back(OpType::SYSCALL1, token.Loc);
+                }
+                else if (token.StringValue == "syscall2")
+                {
+                    program.emplace_back(OpType::SYSCALL2, token.Loc);
+                }
+                else if (token.StringValue == "syscall3")
+                {
+                    program.emplace_back(OpType::SYSCALL3, token.Loc);
+                }
+                else if (token.StringValue == "syscall4")
+                {
+                    program.emplace_back(OpType::SYSCALL4, token.Loc);
+                }
+                else if (token.StringValue == "syscall5")
+                {
+                    program.emplace_back(OpType::SYSCALL5, token.Loc);
+                }
+                else if (token.StringValue == "syscall6")
+                {
+                    program.emplace_back(OpType::SYSCALL6, token.Loc);
+                }
                 else
                 {
                     auto it = bindings.find(token.StringValue);
@@ -524,7 +613,7 @@ void crossreference_blocks(vector<Operation>& program)
 {
     stack<int> crossreference_stack;
 
-    assert(static_cast<int>(OpType::COUNT) == 34, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 41, "Exhaustive operations handling. Not all operations should be handled in here");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -678,7 +767,7 @@ void type_check_program(vector<Operation> program)
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(static_cast<int>(OpType::COUNT) == 34, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 41, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -989,6 +1078,114 @@ void type_check_program(vector<Operation> program)
 
                 break;
             }
+            case OpType::SYSCALL0:
+            {
+                if (type_checking_stack.size() < 1)
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
+                    exit(1);
+                }
+
+                type_checking_stack.pop();
+                type_checking_stack.emplace(DataType::INT, op.Loc);
+                break;
+            }
+            case OpType::SYSCALL1:
+            {
+                int n = 1;
+
+                if (int(type_checking_stack.size()) < n + 1)
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    exit(1);
+                }
+
+                for (int j = 0; j <= n; ++j) {
+                    type_checking_stack.pop();
+                }
+                type_checking_stack.emplace(DataType::INT, op.Loc);
+                break;
+            }
+            case OpType::SYSCALL2:
+            {
+                int n = 2;
+
+                if (int(type_checking_stack.size()) < n + 1)
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    exit(1);
+                }
+
+                for (int j = 0; j <= n; ++j) {
+                    type_checking_stack.pop();
+                }
+                type_checking_stack.emplace(DataType::INT, op.Loc);
+                break;
+            }
+            case OpType::SYSCALL3:
+            {
+                int n = 3;
+
+                if (int(type_checking_stack.size()) < n + 1)
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    exit(1);
+                }
+
+                for (int j = 0; j <= n; ++j) {
+                    type_checking_stack.pop();
+                }
+                type_checking_stack.emplace(DataType::INT, op.Loc);
+                break;
+            }
+            case OpType::SYSCALL4:
+            {
+                int n = 4;
+
+                if (int(type_checking_stack.size()) < n + 1)
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    exit(1);
+                }
+
+                for (int j = 0; j <= n; ++j) {
+                    type_checking_stack.pop();
+                }
+                type_checking_stack.emplace(DataType::INT, op.Loc);
+                break;
+            }
+            case OpType::SYSCALL5:
+            {
+                int n = 5;
+
+                if (int(type_checking_stack.size()) < n + 1)
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    exit(1);
+                }
+
+                for (int j = 0; j <= n; ++j) {
+                    type_checking_stack.pop();
+                }
+                type_checking_stack.emplace(DataType::INT, op.Loc);
+                break;
+            }
+            case OpType::SYSCALL6:
+            {
+                int n = 6;
+
+                if (int(type_checking_stack.size()) < n + 1)
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    exit(1);
+                }
+
+                for (int j = 0; j <= n; ++j) {
+                    type_checking_stack.pop();
+                }
+                type_checking_stack.emplace(DataType::INT, op.Loc);
+                break;
+            }
             default:
                 assert(false, "Unreachable");
         }
@@ -1004,7 +1201,7 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 34, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 41, "Exhaustive operations handling");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -1374,6 +1571,16 @@ void run_program(vector<Operation> program)
                 ++i;
                 break;
             }
+            case OpType::SYSCALL0:
+            case OpType::SYSCALL1:
+            case OpType::SYSCALL2:
+            case OpType::SYSCALL3:
+            case OpType::SYSCALL4:
+            case OpType::SYSCALL5:
+            case OpType::SYSCALL6:
+            {
+                assert(false, "Not implemented for running mode");
+            }
             default:
                 assert(false, "Unreachable");
         }
@@ -1444,7 +1651,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     complete_string(output_content, "    global _start\n");
     complete_string(output_content, "_start:");
 
-    assert(static_cast<int>(OpType::COUNT) == 34, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 41, "Exhaustive operations handling");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -1763,6 +1970,76 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rax");
                 break;
             }
+            case OpType::SYSCALL0:
+            {
+                complete_string(output_content, "    ; -- syscall0 --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    syscall");
+                break;
+            }
+            case OpType::SYSCALL1:
+            {
+                complete_string(output_content, "    ; -- syscall1 --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rdi");
+                complete_string(output_content, "    syscall");
+                break;
+            }
+            case OpType::SYSCALL2:
+            {
+                complete_string(output_content, "    ; -- syscall2 --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rdi");
+                complete_string(output_content, "    pop     rsi");
+                complete_string(output_content, "    syscall");
+                break;
+            }
+            case OpType::SYSCALL3:
+            {
+                complete_string(output_content, "    ; -- syscall3 --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rdi");
+                complete_string(output_content, "    pop     rsi");
+                complete_string(output_content, "    pop     rdx");
+                complete_string(output_content, "    syscall");
+                break;
+            }
+            case OpType::SYSCALL4:
+            {
+                complete_string(output_content, "    ; -- syscall4 --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rdi");
+                complete_string(output_content, "    pop     rsi");
+                complete_string(output_content, "    pop     rdx");
+                complete_string(output_content, "    pop     r10");
+                complete_string(output_content, "    syscall");
+                break;
+            }
+            case OpType::SYSCALL5:
+            {
+                complete_string(output_content, "    ; -- syscall5 --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rdi");
+                complete_string(output_content, "    pop     rsi");
+                complete_string(output_content, "    pop     rdx");
+                complete_string(output_content, "    pop     r10");
+                complete_string(output_content, "    pop     r8");
+                complete_string(output_content, "    syscall");
+                break;
+            }
+            case OpType::SYSCALL6:
+            {
+                complete_string(output_content, "    ; -- syscall6 --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rdi");
+                complete_string(output_content, "    pop     rsi");
+                complete_string(output_content, "    pop     rdx");
+                complete_string(output_content, "    pop     r10");
+                complete_string(output_content, "    pop     r8");
+                complete_string(output_content, "    pop     r9");
+                complete_string(output_content, "    syscall");
+                break;
+            }
             default:
                 assert(false, "Unreachable");
         }
@@ -1833,8 +2110,9 @@ void compile(string compiler_path, string path, vector<Operation> program, bool 
 
 int main(int argc, char* argv[])
 {
-    assert(HumanizedOpTypes.size() == static_cast<int>(OpType::COUNT), "Exhaustive checking of humanized operations");
-    assert(HumanizedDataTypes.size() == static_cast<int>(DataType::COUNT), "Exhaustive checking of humanized data types");
+    assert(HumanizedOpTypes.size() == static_cast<int>(OpType::COUNT), "Exhaustive checking of humanized operations definition");
+    assert(HumanizedDataTypes.size() == static_cast<int>(DataType::COUNT), "Exhaustive checking of humanized data types definition");
+    assert(BuiltInOps.size() == static_cast<int>(OpType::COUNT) - 2, "Exhaustive checking of built in operations definition");
 
     vector<string> args(argv, argv + argc);
 
