@@ -506,7 +506,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                     }
                     else
                     {
-                        cerr << token.Loc << ": ERROR: Unexpected token: '" << token.StringValue << "'" << endl;
+                        cerr << token.Loc << ": ERROR: Undefined token: '" << token.StringValue << "'" << endl;
                         exit(1);
                     }
                 }
