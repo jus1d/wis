@@ -1,6 +1,8 @@
 // acc idx
 
-0 3 while copy 1000 < do
+bind N 1000 end
+
+0 3 while copy N < do
   copy 3 % 0 ==
   over 5 % 0 ==
   bor if
