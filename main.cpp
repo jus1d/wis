@@ -194,6 +194,7 @@ void usage(string const& compiler_path)
     cerr << "    compile [ARGS]      Compile the program into an executable" << endl;
     cerr << "      ARGS:" << endl;
     cerr << "          -r            Run compiled program after compilation" << endl;
+    cerr << "          -s            Silent mode for compiler" << endl;
 }
 
 string shift_vector(vector<string>& vec)
@@ -295,9 +296,9 @@ size_t find_col(string const& line, size_t start, bool (*predicate)(char))
     return start;
 }
 
-void execute_command_echoed(const string& command)
+void execute_command(bool silent_mode, const string& command)
 {
-    cout << "[CMD] " << command << endl;
+    if (!silent_mode) cout << "[CMD] " << command << endl;
     int exit_code = system(command.c_str());
     if (exit_code != 0)
     {
@@ -1792,55 +1793,8 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     }
 }
 
-void run_mode(string compiler_path, vector<string> args)
+void compile(string compiler_path, string path, vector<Operation> program, bool run_after_compilation, bool silent_mode)
 {
-    if (args.empty())
-    {
-        usage(compiler_path);
-        cerr << "ERROR: No path to file provided" << endl;
-        exit(1);
-    }
-
-    filesystem::path file_path(shift_vector(args));
-
-    if (!filesystem::exists(file_path))
-    {
-        usage(compiler_path);
-        cerr << "ERROR: File '" << file_path.string() << "' doesn't exists" << endl;
-        exit(1);
-    }
-
-    vector<Operation> program = lex_file(file_path.string());
-
-    type_check_program(program);
-    run_program(program);
-}
-
-void compile_mode(string compiler_path, vector<string> args)
-{
-    if (args.empty())
-    {
-        usage(compiler_path);
-        cerr << "ERROR: No path to file provided" << endl;
-        exit(1);
-    }
-
-    string path = shift_vector(args);
-
-    bool run_after_compilation = path == "-r";
-
-    if (run_after_compilation)
-    {
-        if (args.empty())
-        {
-            usage(compiler_path);
-            cerr << "ERROR: No path to file provided" << endl;
-            exit(1);
-        }
-
-        path = shift_vector(args);
-    }
-
     string filename = trim_string(path, FILE_EXTENSION);
 
     filesystem::path file_path(path);
@@ -1852,22 +1806,18 @@ void compile_mode(string compiler_path, vector<string> args)
         exit(1);
     }
 
-    vector<Operation> program = lex_file(file_path.string());
-
-    type_check_program(program);
-
 #ifdef __x86_64__
-    cout << "[INFO] Generating assembly -> " << filename << ".asm" << endl;
+    if (!silent_mode) cout << "[INFO] Generating assembly -> " << filename << ".asm" << endl;
     generate_nasm_linux_x86_64(filename + ".asm", program);
 
-    cout << "[INFO] Compiling assembly with NASM" << endl;
-    execute_command_echoed("nasm -felf64 -o " + filename + ".o " + filename + ".asm");
-    cout << "[INFO] Object file generated: " << filename << ".asm -> " << filename << ".o" << endl;
+    if (!silent_mode) cout << "[INFO] Compiling assembly with NASM" << endl;
+    execute_command(silent_mode, "nasm -felf64 -o " + filename + ".o " + filename + ".asm");
+    if (!silent_mode) cout << "[INFO] Object file generated: " << filename << ".asm -> " << filename << ".o" << endl;
 
-    execute_command_echoed("ld -o " + filename + " " + filename + ".o");
-    cout << "[INFO] Compiled to " << filename << endl;
+    execute_command(silent_mode, "ld -o " + filename + " " + filename + ".o");
+    if (!silent_mode) cout << "[INFO] Compiled to " << filename << endl;
 
-    if (run_after_compilation) execute_command_echoed(filename);
+    if (run_after_compilation) execute_command(silent_mode, filename);
     
     return;
 #endif
@@ -1889,29 +1839,47 @@ int main(int argc, char* argv[])
     vector<string> args(argv, argv + argc);
 
     string compiler_path = shift_vector(args);
-
-    if (args.empty())
+    string path;
+    string subcommand = shift_vector(args);
+    if (subcommand != "run" && subcommand != "compile")
     {
         usage(compiler_path);
-        cerr << "ERROR: No subcommand provided" << endl;
+        cerr << "ERROR: Provided unknown subcommand: '" << subcommand << "'" << endl;
         exit(1);
     }
 
-    string subcommand = shift_vector(args);
+    bool run_after_compilation;
+    bool silent_mode;
+
+    while (!args.empty())
+    {
+        string arg = shift_vector(args);
+
+        if (arg == "-r") run_after_compilation = true;
+        else if (arg == "-s") silent_mode = true;
+        else path = arg;
+    }
+
+    filesystem::path file_path(path);
+
+    if (!filesystem::exists(file_path))
+    {
+        usage(compiler_path);
+        cerr << "ERROR: File '" << file_path.string() << "' doesn't exists" << endl;
+        exit(1);
+    }
+
+    vector<Operation> program = lex_file(file_path.string());
+
+    type_check_program(program);
 
     if (subcommand == "run")
     {
-        run_mode(compiler_path, args);
+        run_program(program);
     }
     else if (subcommand == "compile")
     {
-        compile_mode(compiler_path, args);
-    }
-    else
-    {
-        usage(compiler_path);
-        cerr << "ERROR: Provided unknown subcommand: " << subcommand << endl;
-        exit(1);
+        compile(compiler_path, path, program, run_after_compilation, silent_mode);
     }
     return 0;
 }
