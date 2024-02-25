@@ -1280,6 +1280,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     }
     if (is_put_needed)
     {
+        complete_string(output_content, "; -- put --");
         complete_string(output_content, "put:");
         complete_string(output_content, "    mov     r9, -3689348814741910323");
         complete_string(output_content, "    sub     rsp, 40");
