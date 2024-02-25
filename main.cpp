@@ -1328,7 +1328,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
         {
             case OpType::PUSH_INT:
             {
-                complete_string(output_content, "    ; -- push int: " + to_string(op.IntegerValue) + " --");
+                complete_string(output_content, "    ; -- push int -- ");
                 complete_string(output_content, "    push    " + to_string(op.IntegerValue));
                 break;
             }
