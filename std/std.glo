@@ -1,3 +1,4 @@
+bind stdin    0 end
 bind stdout   1 end
 bind stderr   2 end
 
