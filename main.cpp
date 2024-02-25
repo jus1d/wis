@@ -41,6 +41,7 @@ enum class OpType : int {
     END,
     DO,
     WHILE,
+    BIND,
     PUT,
     PUTS,
     HERE,
@@ -78,6 +79,7 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::END, "end"},
         {OpType::DO, "do"},
         {OpType::WHILE, "while"},
+        {OpType::BIND, "bind"},
         {OpType::PUT, "put"},
         {OpType::PUTS, "puts"},
         {OpType::HERE, "here"},
@@ -85,6 +87,41 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::OVER, "over"},
         {OpType::SWAP, "swap"},
         {OpType::DROP, "drop"},
+};
+
+const map<string, OpType> BuiltInOps = {
+        {"+", OpType::PLUS},
+        {"-", OpType::MINUS},
+        {"*", OpType::MUL},
+        {"/", OpType::DIV},
+        {"%", OpType::MOD},
+        {"bor", OpType::BOR},
+        {"band", OpType::BAND},
+        {"xor", OpType::XOR},
+        {"shl", OpType::SHL},
+        {"shr", OpType::SHR},
+        {"==", OpType::EQ},
+        {"!=", OpType::NE},
+        {"<", OpType::LT},
+        {">", OpType::GT},
+        {"<=", OpType::LE},
+        {">=", OpType::GE},
+        {"not", OpType::NOT},
+        {"true", OpType::TRUE},
+        {"false", OpType::FALSE},
+        {"if", OpType::IF},
+        {"else", OpType::ELSE},
+        {"end", OpType::END},
+        {"do", OpType::DO},
+        {"while", OpType::WHILE},
+        {"bind", OpType::BIND},
+        {"put", OpType::PUT},
+        {"puts", OpType::PUTS},
+        {"here", OpType::HERE},
+        {"copy", OpType::COPY},
+        {"over", OpType::OVER},
+        {"swap", OpType::SWAP},
+        {"drop", OpType::DROP},
 };
 
 class Operation {
@@ -272,10 +309,13 @@ void execute_command_echoed(const string& command)
 vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 {
     vector<Operation> program;
+    map<string, vector<Operation>> bindings;
 
     assert(static_cast<int>(TokenType::COUNT) == 3, "Exhaustive token types handling");
 
-    for (const auto& token: tokens) {
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        Token token = tokens[i];
+
         switch (token.Type) {
             case TokenType::INT:
                 program.emplace_back(OpType::PUSH_INT, token.IntegerValue, token.Loc);
@@ -286,7 +326,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 break;
             }
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 33, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 34, "Exhaustive operations handling");
 
                 if (token.StringValue == "+")
                 {
@@ -384,6 +424,48 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 {
                     program.emplace_back(OpType::WHILE, token.Loc);
                 }
+                else if (token.StringValue == "bind")
+                {
+                    if (++i == tokens.size())
+                    {
+                        cerr << token.Loc << ": ERROR: Unfinished binding definition" << endl;
+                        exit(1);
+                    }
+
+                    string name = tokens[i].StringValue;
+                    int open_blocks = 0;
+
+                    while (++i < tokens.size() && (tokens[i].StringValue != "end" || open_blocks != 0))
+                    {
+                        token = tokens[i];
+                        if (token.StringValue == "if" || token.StringValue == "while") open_blocks++;
+
+                        if (token.StringValue != "end" || open_blocks > 0)
+                        {
+                            switch (token.Type)
+                            {
+                                case TokenType::STRING:
+                                {
+
+                                    bindings[name].emplace_back(OpType::PUSH_STRING, unescape_string(token.StringValue), token.Loc);
+                                    break;
+                                }
+                                case TokenType::INT:
+                                {
+                                    bindings[name].emplace_back(OpType::PUSH_INT, token.IntegerValue, token.Loc);
+                                    break;
+                                }
+                                default:
+                                {
+                                    bindings[name].emplace_back(BuiltInOps.at(token.StringValue), token.Loc);
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (open_blocks > 0 && token.StringValue == "end") open_blocks--;
+                    }
+                }
                 else if (token.StringValue == "put")
                 {
                     program.emplace_back(OpType::PUT, token.Loc);
@@ -414,8 +496,19 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 }
                 else
                 {
-                    cerr << token.Loc << ": ERROR: Unexpected token: '" << token.StringValue << "'" << endl;
-                    exit(1);
+                    auto it = bindings.find(token.StringValue);
+
+                    if (it != bindings.end())
+                    {
+                        for (auto binding : bindings.at(token.StringValue)) {
+                            program.push_back(binding);
+                        }
+                    }
+                    else
+                    {
+                        cerr << token.Loc << ": ERROR: Unexpected token: '" << token.StringValue << "'" << endl;
+                        exit(1);
+                    }
                 }
                 break;
             default:
@@ -430,7 +523,7 @@ void crossreference_blocks(vector<Operation>& program)
 {
     stack<int> crossreference_stack;
 
-    assert(static_cast<int>(OpType::COUNT) == 33, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 34, "Exhaustive operations handling. Not all operations should be handled in here");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -584,7 +677,7 @@ void type_check_program(vector<Operation> program)
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(static_cast<int>(OpType::COUNT) == 33, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 34, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -746,6 +839,11 @@ void type_check_program(vector<Operation> program)
                 // No type checking needed for these operations.
                 break;
             }
+            case OpType::BIND:
+            {
+                assert(false, "Unreachable. All bindings should be expanded at the compilation step");
+                break;
+            }
             case OpType::PUT:
             {
                 if (type_checking_stack.empty())
@@ -886,7 +984,7 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 33, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 34, "Exhaustive operations handling");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -1162,6 +1260,12 @@ void run_program(vector<Operation> program)
                 ++i;
                 break;
             }
+            case OpType::BIND:
+            {
+                assert(false, "Unreachable. All bindings should be expanded at the compilation step");
+                ++i;
+                break;
+            }
             case OpType::PUT:
             {
                 int val = runtime_stack.top();
@@ -1320,7 +1424,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     complete_string(output_content, "    global _start\n");
     complete_string(output_content, "_start:");
 
-    assert(static_cast<int>(OpType::COUNT) == 33, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 34, "Exhaustive operations handling");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -1568,6 +1672,11 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             {
                 complete_string(output_content, "    ; -- while --");
                 complete_string(output_content, "    addr_" + to_string(i) + ":");
+                break;
+            }
+            case OpType::BIND:
+            {
+                assert(false, "Unreachable. All bindings should be expanded at the compilation step");
                 break;
             }
             case OpType::PUT:
