@@ -76,7 +76,19 @@ end
 
 **Output:** `1 2 3 4 5 6 7 8 9 10`
 
+### Bindings
+
 ---
+
+**Usage:**
+
+```
+bind exit 60 syscall1 end
+
+69 exit
+```
+
+That program will exit with `69` exit code.
 
 ### Operations
 
@@ -154,7 +166,7 @@ Drops integer from top of the stack
 
 ---
 
-### System calls | Not migrated yet
+### System calls
 
 You can use `syscall<n>`, where `n` is between 1 and 3. Now supported only syscalls that accepts 1-3 arguments.
 
