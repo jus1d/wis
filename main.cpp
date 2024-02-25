@@ -53,40 +53,40 @@ enum class OpType : int {
 };
 
 const map<OpType, string> HumanizedOpTypes = {
-        {OpType::PUSH_INT, "PUSH INT"},
-        {OpType::PUSH_STRING, "PUSH STRING"},
-        {OpType::PLUS, "+"},
-        {OpType::MINUS, "-"},
-        {OpType::MUL, "*"},
-        {OpType::DIV, "/"},
-        {OpType::MOD, "%"},
-        {OpType::BOR, "binary or"},
-        {OpType::BAND, "binary and"},
-        {OpType::XOR, "xor"},
-        {OpType::SHL, "left shift"},
-        {OpType::SHR, "right shift"},
-        {OpType::EQ, "=="},
-        {OpType::NE, "!="},
-        {OpType::LT, "<"},
-        {OpType::GT, ">"},
-        {OpType::LE, "<="},
-        {OpType::GE, ">="},
-        {OpType::NOT, "not"},
-        {OpType::TRUE, "true"},
-        {OpType::FALSE, "false"},
-        {OpType::IF, "if"},
-        {OpType::ELSE, "else"},
-        {OpType::END, "end"},
-        {OpType::DO, "do"},
-        {OpType::WHILE, "while"},
-        {OpType::BIND, "bind"},
-        {OpType::PUT, "put"},
-        {OpType::PUTS, "puts"},
-        {OpType::HERE, "here"},
-        {OpType::COPY, "copy"},
-        {OpType::OVER, "over"},
-        {OpType::SWAP, "swap"},
-        {OpType::DROP, "drop"},
+        {OpType::PUSH_INT, "`PUSH INT`"},
+        {OpType::PUSH_STRING, "`PUSH STRING`"},
+        {OpType::PLUS, "`+`"},
+        {OpType::MINUS, "`-`"},
+        {OpType::MUL, "`*`"},
+        {OpType::DIV, "`/`"},
+        {OpType::MOD, "`%`"},
+        {OpType::BOR, "`binary or`"},
+        {OpType::BAND, "`binary and`"},
+        {OpType::XOR, "`xor`"},
+        {OpType::SHL, "`left shift`"},
+        {OpType::SHR, "`right shift`"},
+        {OpType::EQ, "`==`"},
+        {OpType::NE, "`!=`"},
+        {OpType::LT, "`<`"},
+        {OpType::GT, "`>`"},
+        {OpType::LE, "`<=`"},
+        {OpType::GE, "`>=`"},
+        {OpType::NOT, "`not`"},
+        {OpType::TRUE, "`true`"},
+        {OpType::FALSE, "`false`"},
+        {OpType::IF, "`if`"},
+        {OpType::ELSE, "`else`"},
+        {OpType::END, "`end`"},
+        {OpType::DO, "`do`"},
+        {OpType::WHILE, "`while`"},
+        {OpType::BIND, "`bind`"},
+        {OpType::PUT, "`put`"},
+        {OpType::PUTS, "`puts`"},
+        {OpType::HERE, "`here`"},
+        {OpType::COPY, "`copy`"},
+        {OpType::OVER, "`over`"},
+        {OpType::SWAP, "`swap`"},
+        {OpType::DROP, "`drop`"},
 };
 
 const map<string, OpType> BuiltInOps = {
@@ -166,15 +166,15 @@ public:
 
 enum class DataType : int {
     INT,
-    STRING,
+    PTR,
     BOOL,
     COUNT,
 };
 
 const map<DataType, string> HumanizedDataTypes = {
-        {DataType::INT, "int"},
-        {DataType::STRING, "string"},
-        {DataType::BOOL, "bool"}
+        {DataType::INT, "`int`"},
+        {DataType::PTR, "`ptr`"},
+        {DataType::BOOL, "`bool`"}
 };
 
 class Type {
@@ -570,7 +570,7 @@ void crossreference_blocks(vector<Operation>& program)
                     }
                     default:
                     {
-                        assert(false, "Only `if` and `while` blocks can be closed with `end`");
+                        assert(false, "Only " << HumanizedOpTypes.at(OpType::IF) << " and " << HumanizedOpTypes.at(OpType::WHILE) << " blocks can be closed with " << HumanizedOpTypes.at(OpType::END));
                     }
                 }
             }
@@ -582,7 +582,7 @@ void crossreference_blocks(vector<Operation>& program)
         int latest_pos = crossreference_stack.top();
         crossreference_stack.pop();
 
-        cerr << program[latest_pos].Loc << ": ERROR: Not all blocks was closed with `end`" << endl;
+        cerr << program[latest_pos].Loc << ": ERROR: Not all blocks was closed with " << HumanizedOpTypes.at(OpType::END) << endl;
         exit(1);
     }
 }
@@ -689,11 +689,60 @@ void type_check_program(vector<Operation> program)
             case OpType::PUSH_STRING:
             case OpType::HERE:
             {
-                type_checking_stack.emplace(DataType::STRING, op.Loc);
+                type_checking_stack.emplace(DataType::INT, op.Loc);
+                type_checking_stack.emplace(DataType::PTR, op.Loc);
                 break;
             }
             case OpType::PLUS:
+            {
+                assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
+
+                if (type_checking_stack.size() < 2) {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+                if (a.Code == DataType::INT && b.Code == DataType::INT) {
+                    type_checking_stack.emplace(DataType::INT, op.Loc);
+                }
+                else if ((a.Code == DataType::PTR && b.Code == DataType::INT) || (b.Code == DataType::PTR && a.Code == DataType::INT)) {
+                    type_checking_stack.emplace(DataType::PTR, op.Loc);
+                }
+                else {
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << "s or pair of " << HumanizedDataTypes.at(DataType::INT) << " and " << HumanizedDataTypes.at(DataType::PTR) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    exit(1);
+                }
+                break;
+            }
             case OpType::MINUS:
+            {
+                assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
+
+                if (type_checking_stack.size() < 2) {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+                if (a.Code == DataType::INT && b.Code == DataType::INT) {
+                    type_checking_stack.emplace(DataType::INT, op.Loc);
+                }
+                else if (a.Code == DataType::INT && b.Code == DataType::PTR) {
+                    type_checking_stack.emplace(DataType::PTR, op.Loc);
+                }
+                else {
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << "s, or " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << " (in this order), but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    exit(1);
+                }
+                break;
+            }
             case OpType::MUL:
             case OpType::DIV:
             case OpType::MOD:
@@ -852,29 +901,27 @@ void type_check_program(vector<Operation> program)
                     exit(1);
                 }
                 Type top = type_checking_stack.top();
-                if (top.Code != DataType::INT && top.Code != DataType::BOOL)
-                {
-                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(top.Code) << "" << endl;
-                    exit(1);
-                }
                 type_checking_stack.pop();
                 break;
             }
             case OpType::PUTS:
             {
-                if (type_checking_stack.empty())
+                if (type_checking_stack.size() < 2)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
-                Type top = type_checking_stack.top();
-                if (top.Code != DataType::STRING)
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                if (a.Code != DataType::PTR && a.Code != DataType::INT)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::STRING) << ", but found " << HumanizedDataTypes.at(top.Code) << "" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument's types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(a.Code) << " and " << HumanizedDataTypes.at(b.Code) << endl;
                     exit(1);
                 }
-                type_checking_stack.pop();
 
                 break;
             }
@@ -886,13 +933,7 @@ void type_check_program(vector<Operation> program)
                     exit(1);
                 }
 
-                Type top = type_checking_stack.top();
-                if (top.Code == DataType::STRING)
-                {
-                    cerr << op.Loc << ": ERROR: Unexpected argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(top.Code) << ". For copying strings, use 2copy instead" << endl;
-                    exit(1);
-                }
-                type_checking_stack.push(top);
+                type_checking_stack.push(type_checking_stack.top());
 
                 break;
             }
@@ -900,7 +941,7 @@ void type_check_program(vector<Operation> program)
             {
                 if (type_checking_stack.size() < 2)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 argument, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -909,17 +950,6 @@ void type_check_program(vector<Operation> program)
 
                 Type b = type_checking_stack.top();
                 type_checking_stack.pop();
-
-                if (a.Code == DataType::STRING)
-                {
-                    cerr << op.Loc << ": ERROR: Incorrect argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(a.Code) << "" << endl;
-                    exit(1);
-                }
-                else if (b.Code == DataType::STRING)
-                {
-                    cerr << op.Loc << ": ERROR: Incorrect argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(b.Code) << "" << endl;
-                    exit(1);
-                }
 
                 type_checking_stack.push(b);
                 type_checking_stack.push(a);
@@ -931,7 +961,7 @@ void type_check_program(vector<Operation> program)
             {
                 if (type_checking_stack.size() < 2)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 argument, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -940,17 +970,6 @@ void type_check_program(vector<Operation> program)
 
                 Type b = type_checking_stack.top();
                 type_checking_stack.pop();
-
-                if (a.Code == DataType::STRING)
-                {
-                    cerr << op.Loc << ": ERROR: Incorrect argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(a.Code) << "" << endl;
-                    exit(1);
-                }
-                else if (b.Code == DataType::STRING)
-                {
-                    cerr << op.Loc << ": ERROR: Incorrect argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << " or " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(b.Code) << "" << endl;
-                    exit(1);
-                }
 
                 type_checking_stack.push(a);
                 type_checking_stack.push(b);
