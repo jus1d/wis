@@ -150,6 +150,12 @@ enum class TokenType : int {
     COUNT,
 };
 
+const map<TokenType, string> HumanizedTokenTypes = {
+        {TokenType::WORD, "`word`"},
+        {TokenType::INT, "`int`"},
+        {TokenType::STRING, "`string`"}
+};
+
 class Token {
 public:
     TokenType Type;
@@ -433,7 +439,23 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                         exit(1);
                     }
 
-                    string name = tokens[i].StringValue;
+                    token = tokens[i];
+
+                    if (token.Type != TokenType::WORD)
+                    {
+                        cerr << token.Loc << ": ERROR: Invalid token's type for binding's name. Expected " << HumanizedTokenTypes.at(TokenType::WORD) << ", but found " << HumanizedTokenTypes.at(token.Type) << endl;
+                        exit(1);
+                    }
+
+                    string name = token.StringValue;
+                    auto it = BuiltInOps.find(name);
+
+                    if (it != BuiltInOps.end())
+                    {
+                        cerr << token.Loc << ": ERROR: Binding name can't conflict with built in operations. Use other name, instead of `" << name << "`" << endl;
+                        exit(1);
+                    }
+
                     int open_blocks = 0;
 
                     while (++i < tokens.size() && (tokens[i].StringValue != "end" || open_blocks != 0))
