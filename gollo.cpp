@@ -329,9 +329,9 @@ string location_view(const string& filepath, int row, int col)
     return filepath + ":" + to_string(row) + ":" + to_string(col);
 }
 
-size_t find_col(string const& line, size_t start, bool (*predicate)(char))
+int find_col(string const& line, int start, bool (*predicate)(char))
 {
-    while (start < line.size() && !predicate(line[start])) {
+    while (start < int(line.size()) && !predicate(line[start])) {
         start++;
     }
     return start;
@@ -352,8 +352,8 @@ vector<Token> lex_line(string const& filepath, int line_number, string const& li
 {
     vector<Token> tokens;
 
-    size_t col = find_col(line, 0, [](char x) { return !isspace(x); });
-    while (col < line.size())
+    int col = find_col(line, 0, [](char x) { return !isspace(x); });
+    while (col < int(line.size()))
     {
         int col_end;
         if (line[col] == '"')
@@ -613,8 +613,8 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens)
                                     if (itt != bindings.end())
                                     {
                                         vector<Operation> binding = bindings[token.StringValue];
-                                        for (size_t j = 0; j < binding.size(); ++j) {
-                                            bindings[name].push_back(binding[j]);
+                                        for (const auto & op : binding) {
+                                            bindings[name].push_back(op);
                                         }
                                         break;
                                     }
@@ -726,7 +726,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens)
 
                     if (it != bindings.end())
                     {
-                        for (auto binding : bindings.at(token.StringValue)) {
+                        for (const auto& binding : bindings.at(token.StringValue)) {
                             program.push_back(binding);
                         }
                     }
@@ -751,7 +751,7 @@ void crossreference_blocks(vector<Operation>& program)
 
     assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling. Not all operations should be handled in here");
 
-    for (size_t i = 0; i < program.size(); ++i) {
+    for (int i = 0; i < int(program.size()); ++i) {
         Operation op = program[i];
 
         switch (op.Type) {
@@ -813,15 +813,13 @@ void crossreference_blocks(vector<Operation>& program)
     }
 }
 
-void type_check_program(vector<Operation> program)
+void type_check_program(const vector<Operation>& program)
 {
     assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
     stack<Type> type_checking_stack;
 
-    for (size_t i = 0; i < program.size(); ++i) {
-        Operation op = program[i];
-
+    for (const auto& op : program) {
         assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
 
         switch (op.Type)
@@ -1161,7 +1159,7 @@ void type_check_program(vector<Operation> program)
             }
             case OpType::SYSCALL0:
             {
-                if (type_checking_stack.size() < 1)
+                if (type_checking_stack.empty())
                 {
                     cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
@@ -1272,7 +1270,7 @@ void type_check_program(vector<Operation> program)
         }
     }
 
-    if (type_checking_stack.size() != 0)
+    if (!type_checking_stack.empty())
     {
         Type top = type_checking_stack.top();
         cerr << top.Loc << ": ERROR: Unhandled data in the stack" << endl;
@@ -1302,11 +1300,11 @@ void run_program(vector<Operation> program)
             case OpType::PUSH_STRING:
             {
                 const byte* bs = reinterpret_cast<const byte*>(op.StringValue.c_str());
-                int n = op.StringValue.length();
+                int n = int(op.StringValue.length());
 
                 runtime_stack.push(n);
 
-                op.Address = strings_size;
+                op.Address = int(strings_size);
                 runtime_stack.push(op.Address);
 
                 for (int j = 0; j < n; ++j) {
@@ -1603,11 +1601,11 @@ void run_program(vector<Operation> program)
             case OpType::HERE:
             {
                 const byte* bs = reinterpret_cast<const byte*>(op.Loc.c_str());
-                int n = op.Loc.length();
+                int n = int(op.Loc.length());
 
                 runtime_stack.push(n);
 
-                op.Address = strings_size;
+                op.Address = int(strings_size);
                 runtime_stack.push(op.Address);
 
                 for (int j = 0; j < n; ++j) {
@@ -1772,7 +1770,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 auto it = strings.find(op.StringValue);
                 if (it == strings.end())
                 {
-                    strings[op.StringValue] = strings.size();
+                    strings[op.StringValue] = int(strings.size());
                 }
                 complete_string(output_content, "    push    str_" + to_string(strings.at(op.StringValue)));
                 break;
@@ -2036,7 +2034,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    push    " + to_string(value.size()));
 
                 auto it = strings.find(value);
-                if (it == strings.end()) strings[value] = strings.size();
+                if (it == strings.end()) strings[value] = int(strings.size());
 
                 complete_string(output_content, "    push    str_" + to_string(strings.at(value)));
                 break;
@@ -2185,7 +2183,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     }
 }
 
-void compile(string compiler_path, string path, vector<Operation> program, bool run_after_compilation, bool silent_mode)
+void compile(const string& compiler_path, const string& path, vector<Operation> program, bool run_after_compilation, bool silent_mode)
 {
     string filename = trim_string(path, FILE_EXTENSION);
 
@@ -2200,7 +2198,7 @@ void compile(string compiler_path, string path, vector<Operation> program, bool 
 
 #ifdef __x86_64__
     if (!silent_mode) cout << "[INFO] Generating assembly -> " << filename << ".asm" << endl;
-    generate_nasm_linux_x86_64(filename + ".asm", program);
+    generate_nasm_linux_x86_64(filename + ".asm", std::move(program));
 
     if (!silent_mode) cout << "[INFO] Compiling assembly with NASM" << endl;
     execute_command(silent_mode, "nasm -felf64 -o " + filename + ".o " + filename + ".asm");
