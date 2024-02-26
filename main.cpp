@@ -41,6 +41,7 @@ enum class OpType : int {
     DO,
     WHILE,
     BIND,
+    USE,
     PUT,
     PUTS,
     HERE,
@@ -87,6 +88,7 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::DO, "`do`"},
         {OpType::WHILE, "`while`"},
         {OpType::BIND, "`bind`"},
+        {OpType::USE, "`use`"},
         {OpType::PUT, "`put`"},
         {OpType::PUTS, "`puts`"},
         {OpType::HERE, "`here`"},
@@ -130,6 +132,7 @@ const map<string, OpType> BuiltInOps = {
         {"do", OpType::DO},
         {"while", OpType::WHILE},
         {"bind", OpType::BIND},
+        {"use", OpType::USE},
         {"put", OpType::PUT},
         {"puts", OpType::PUTS},
         {"here", OpType::HERE},
@@ -336,14 +339,91 @@ void execute_command(bool silent_mode, const string& command)
     }
 }
 
-vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
+vector<Token> lex_line(string const& filepath, int line_number, string const& line)
+{
+    vector<Token> tokens;
+
+    size_t col = find_col(line, 0, [](char x) { return !isspace(x); });
+    while (col < line.size())
+    {
+        int col_end;
+        if (line[col] == '"')
+        {
+            col_end = find_col(line, col+1, [](char x) { return x == '"'; });
+            if (line[col_end] != '"')
+            {
+                cerr << location_view(filepath, line_number, col + 1) << ": ERROR: Missed closing string literal" << endl;
+                exit(1);
+            }
+
+            string text_of_token = line.substr(col + 1, col_end - col - 1);
+            string loc = location_view(filepath, line_number, col + 1);
+            Token token(TokenType::STRING, text_of_token, loc);
+            tokens.push_back(token);
+            col = find_col(line, col_end + 1, [](char x) { return !isspace(x); });
+        }
+        else
+        {
+            col_end = find_col(line, col, [](char x) { return !!isspace(x); });
+            string text_of_token = line.substr(col, col_end - col);
+
+            try {
+                int int_value = stoi(text_of_token);
+
+                string loc = location_view(filepath, line_number, col + 1);
+                Token token(TokenType::INT, int_value, loc);
+                tokens.push_back(token);
+            }
+            catch (const invalid_argument&) {
+                string loc = location_view(filepath, line_number, col + 1);
+                Token token(TokenType::WORD, text_of_token, loc);
+                tokens.push_back(token);
+            }
+            col = find_col(line, col_end, [](char x) { return !isspace(x); });
+        }
+    }
+
+    return tokens;
+}
+
+vector<Token> lex_file(string const& path)
+{
+    fstream file(path);
+
+    if (!file.is_open())
+    {
+        cerr << "ERROR: Can't open file." << endl;
+        exit(1);
+    }
+
+    vector<Token> tokens;
+
+    string line;
+    int line_number = 1;
+    while (getline(file, line))
+    {
+        line = split_string(line, "//")[0];
+        vector<Token> line_tokens = lex_line(path, line_number, line);
+
+        for (const auto & line_token : line_tokens) {
+            tokens.push_back(line_token);
+        }
+        line_number++;
+    }
+
+    file.close();
+
+    return tokens;
+}
+
+vector<Operation> parse_tokens_as_operations(vector<Token>& tokens)
 {
     vector<Operation> program;
     map<string, vector<Operation>> bindings;
 
     assert(static_cast<int>(TokenType::COUNT) == 3, "Exhaustive token types handling");
 
-    for (size_t i = 0; i < tokens.size(); ++i) {
+    for (int i = 0; i < int(tokens.size()); ++i) {
         Token token = tokens[i];
 
         switch (token.Type) {
@@ -356,7 +436,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 break;
             }
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 42, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
 
                 if (token.StringValue == "+")
                 {
@@ -456,7 +536,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 }
                 else if (token.StringValue == "bind")
                 {
-                    if (++i == tokens.size())
+                    if (++i == int(tokens.size()))
                     {
                         cerr << token.Loc << ": ERROR: Unfinished binding definition" << endl;
                         exit(1);
@@ -481,7 +561,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 
                     int open_blocks = 0;
 
-                    while (++i < tokens.size() && (tokens[i].StringValue != "end" || open_blocks != 0))
+                    while (++i < int(tokens.size()) && (tokens[i].StringValue != "end" || open_blocks != 0))
                     {
                         token = tokens[i];
 
@@ -537,6 +617,37 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
 
                         if (open_blocks > 0 && token.StringValue == "end") open_blocks--;
                     }
+                }
+                else if (token.StringValue == "use")
+                {
+                    if (++i == int(tokens.size()))
+                    {
+                        cerr << token.Loc << ": ERROR: Unfinished using definition. Expected filepath, but found nothing" << endl;
+                        exit(1);
+                    }
+
+                    token = tokens[i];
+
+                    if (token.Type != TokenType::STRING)
+                    {
+                        cerr << token.Loc << ": ERROR: Expected type " << HumanizedTokenTypes.at(TokenType::STRING) << " after " << HumanizedOpTypes.at(OpType::USE) << " keyword, bot found " <<  HumanizedTokenTypes.at(token.Type) << endl;
+                        exit(1);
+                    }
+
+                    vector<Token> using_tokens = lex_file(token.StringValue);
+
+                    vector<Token> temp_tokens = tokens;
+
+                    tokens = using_tokens;
+
+                    for (size_t j = 0; j < temp_tokens.size(); ++j)
+                    {
+                        Token tt = temp_tokens[j];
+                        if ((tt.Type != TokenType::STRING && tt.StringValue == "use") || (j > 0 && temp_tokens[j-1].Type != TokenType::STRING && temp_tokens[j-1].StringValue == "use")) continue;
+                        tokens.push_back(tt);
+                    }
+                    i = -1;
+                    program = vector<Operation>();
                 }
                 else if (token.StringValue == "put")
                 {
@@ -627,7 +738,7 @@ void crossreference_blocks(vector<Operation>& program)
 {
     stack<int> crossreference_stack;
 
-    assert(static_cast<int>(OpType::COUNT) == 42, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling. Not all operations should be handled in here");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -691,87 +802,6 @@ void crossreference_blocks(vector<Operation>& program)
     }
 }
 
-vector<Token> lex_line(string const& filepath, int line_number, string const& line)
-{
-    vector<Token> tokens;
-
-    size_t col = find_col(line, 0, [](char x) { return !isspace(x); });
-    while (col < line.size())
-    {
-        int col_end;
-        if (line[col] == '"')
-        {
-            col_end = find_col(line, col+1, [](char x) { return x == '"'; });
-            if (line[col_end] != '"')
-            {
-                cerr << location_view(filepath, line_number, col + 1) << ": ERROR: Missed closing string literal" << endl;
-                exit(1);
-            }
-
-            string text_of_token = line.substr(col + 1, col_end - col - 1);
-            string loc = location_view(filepath, line_number, col + 1);
-            Token token(TokenType::STRING, text_of_token, loc);
-            tokens.push_back(token);
-            col = find_col(line, col_end + 1, [](char x) { return !isspace(x); });
-        }
-        else
-        {
-            col_end = find_col(line, col, [](char x) { return !!isspace(x); });
-            string text_of_token = line.substr(col, col_end - col);
-
-            try {
-                int int_value = stoi(text_of_token);
-
-                string loc = location_view(filepath, line_number, col + 1);
-                Token token(TokenType::INT, int_value, loc);
-                tokens.push_back(token);
-            }
-            catch (const invalid_argument&) {
-                string loc = location_view(filepath, line_number, col + 1);
-                Token token(TokenType::WORD, text_of_token, loc);
-                tokens.push_back(token);
-            }
-            col = find_col(line, col_end, [](char x) { return !isspace(x); });
-        }
-    }
-
-    return tokens;
-}
-
-vector<Operation> lex_file(string const& path)
-{
-    fstream file(path);
-
-    if (!file.is_open())
-    {
-        cerr << "ERROR: Can't open file." << endl;
-        exit(1);
-    }
-
-    vector<Token> tokens;
-
-    string line;
-    int line_number = 1;
-    while (getline(file, line))
-    {
-        line = split_string(line, "//")[0];
-        vector<Token> line_tokens = lex_line(path, line_number, line);
-
-        for (const auto & line_token : line_tokens) {
-            tokens.push_back(line_token);
-        }
-        line_number++;
-    }
-
-    vector<Operation> program = parse_tokens_as_operations(tokens);
-
-    crossreference_blocks(program);
-
-    file.close();
-
-    return program;
-}
-
 void type_check_program(vector<Operation> program)
 {
     assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
@@ -781,7 +811,7 @@ void type_check_program(vector<Operation> program)
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(static_cast<int>(OpType::COUNT) == 42, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -997,6 +1027,11 @@ void type_check_program(vector<Operation> program)
                 assert(false, "Unreachable. All bindings should be expanded at the compilation step");
                 break;
             }
+            case OpType::USE:
+            {
+                assert(false, "Unreachable. All `use` operations should be eliminated at the compilation step");
+                break;
+            }
             case OpType::PUT:
             {
                 if (type_checking_stack.empty())
@@ -1021,7 +1056,7 @@ void type_check_program(vector<Operation> program)
                 Type b = type_checking_stack.top();
                 type_checking_stack.pop();
 
-                if (a.Code != DataType::PTR || a.Code != DataType::INT)
+                if (a.Code != DataType::PTR || b.Code != DataType::INT)
                 {
                     cerr << op.Loc << ": ERROR: Unexpected argument's types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(a.Code) << " and " << HumanizedDataTypes.at(b.Code) << endl;
                     exit(1);
@@ -1236,7 +1271,7 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 42, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -1518,6 +1553,11 @@ void run_program(vector<Operation> program)
                 ++i;
                 break;
             }
+            case OpType::USE:
+            {
+                assert(false, "Unreachable. All `use` operations should be eliminated at the compilation step");
+                break;
+            }
             case OpType::PUT:
             {
                 int val = runtime_stack.top();
@@ -1701,7 +1741,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     complete_string(output_content, "    global _start\n");
     complete_string(output_content, "_start:");
 
-    assert(static_cast<int>(OpType::COUNT) == 42, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -1956,6 +1996,11 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 assert(false, "Unreachable. All bindings should be expanded at the compilation step");
                 break;
             }
+            case OpType::USE:
+            {
+                assert(false, "Unreachable. All `use` operations should be eliminated at the compilation step");
+                break;
+            }
             case OpType::PUT:
             {
                 complete_string(output_content, "    ; -- put --");
@@ -2206,7 +2251,11 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    vector<Operation> program = lex_file(file_path.string());
+    vector<Token> tokens = lex_file(file_path.string());
+
+    vector<Operation> program = parse_tokens_as_operations(tokens);
+
+    crossreference_blocks(program);
 
     type_check_program(program);
 

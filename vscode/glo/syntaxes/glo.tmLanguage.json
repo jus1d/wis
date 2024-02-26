@@ -22,7 +22,7 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.glo",
-				"match": "\\b(if|else|end|while|do|bind)\\b"
+				"match": "\\b(if|else|end|while|do|bind|use)\\b"
 			}]
 		},
 		"builtin": {
