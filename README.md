@@ -88,6 +88,18 @@ bind exit 60 syscall1 end
 69 exit
 ```
 
+### Usings
+
+--- 
+
+Only needed bindings will expand to operation at the compilation step
+
+```
+use "./std/std.glo"
+
+here eputs ": ERROR: some error message" eputs
+```
+
 That program will exit with `69` exit code.
 
 ### Operations

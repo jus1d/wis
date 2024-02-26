@@ -16,19 +16,28 @@
 		},
 		{
 			"include": "#comments"
+		},
+		{
+			"include": "#standard"
 		}
 	],
 	"repository": {
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.glo",
-				"match": "\\b(if|else|end|while|do|bind)\\b"
+				"match": "\\b(if|else|end|while|do|bind|use)\\b"
 			}]
 		},
 		"builtin": {
 			"patterns": [{
 				"name": "keyword.other.builtin.glo",
 				"match": "\\b(put|puts|here|copy|over|swap|drop|rot|syscall0|syscall1|syscall2|syscall3|syscall4|syscall5|syscall6)\\b"
+			}]
+		},
+		"standard": {
+			"patterns": [{
+				"name": "keyword.other.standard.glo",
+				"match": "\\b(stdin|stdout|stderr|write|exit|eputs)\\b"
 			}]
 		},
 		"strings": {
