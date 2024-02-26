@@ -6,6 +6,9 @@
 			"include": "#keywords"
 		},
 		{
+			"include": "#builtin"
+		},
+		{
 			"include": "#strings"
 		},
 		{
@@ -19,7 +22,13 @@
 		"keywords": {
 			"patterns": [{
 				"name": "keyword.control.glo",
-				"match": "\\b(if|else|end|while|do|put|puts|here|copy|over|swap|drop|rot|bind|syscall0|syscall1|syscall2|syscall3|syscall4|syscall5|syscall6)\\b"
+				"match": "\\b(if|else|end|while|do|bind)\\b"
+			}]
+		},
+		"builtin": {
+			"patterns": [{
+				"name": "keyword.other.builtin.glo",
+				"match": "\\b(put|puts|here|copy|over|swap|drop|rot|syscall0|syscall1|syscall2|syscall3|syscall4|syscall5|syscall6)\\b"
 			}]
 		},
 		"strings": {
@@ -36,7 +45,7 @@
 		"numbers": {
 			"patterns": [{
 				"name": "keyword.other.unit.integer.glo",
-				"match": "(^-?[0-9][0-9\\.]+$)"
+				"match": "\\b(-?[0-9]+\\.?[0-9]*)\\b"
 			}]
 		},
 		"comments": {
