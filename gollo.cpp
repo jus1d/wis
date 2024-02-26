@@ -2257,7 +2257,10 @@ void generate_assembly_macos_arm64(const string& output_file_path, vector<Operat
             case OpType::MUL:
             {
                 complete_string(output_content, "    ; -- multiply --");
-                assert(false, "`multiply` operation is not implemented yet");
+                complete_string(output_content, "    ldp     x0, xzr, [sp], #16");
+                complete_string(output_content, "    ldp     x1, xzr, [sp], #16");
+                complete_string(output_content, "    mul     x0, x0, x1");
+                complete_string(output_content, "    stp     x0, xzr, [sp, #-16]!");
                 break;
             }
             case OpType::DIV:
@@ -2275,19 +2278,28 @@ void generate_assembly_macos_arm64(const string& output_file_path, vector<Operat
             case OpType::BOR:
             {
                 complete_string(output_content, "    ; -- binary or --");
-                assert(false, "`bor` operation is not implemented yet");
+                complete_string(output_content, "    ldp     x1, xzr, [sp], #16");
+                complete_string(output_content, "    ldp     x2, xzr, [sp], #16");
+                complete_string(output_content, "    orr     x0, x1, x2");
+                complete_string(output_content, "    stp     x0, xzr, [sp, #-16]!");
                 break;
             }
             case OpType::BAND:
             {
                 complete_string(output_content, "    ; -- binary and --");
-                assert(false, "`band` operation is not implemented yet");
+                complete_string(output_content, "    ldp     x1, xzr, [sp], #16");
+                complete_string(output_content, "    ldp     x2, xzr, [sp], #16");
+                complete_string(output_content, "    and     x0, x1, x2");
+                complete_string(output_content, "    stp     x0, xzr, [sp, #-16]!");
                 break;
             }
             case OpType::XOR:
             {
                 complete_string(output_content, "    ; -- xor --");
-                assert(false, "`xor` operation is not implemented yet");
+                complete_string(output_content, "    ldp     x1, xzr, [sp], #16");
+                complete_string(output_content, "    ldp     x2, xzr, [sp], #16");
+                complete_string(output_content, "    eor     x0, x1, x2");
+                complete_string(output_content, "    stp     x0, xzr, [sp, #-16]!");
                 break;
             }
             case OpType::SHL:
