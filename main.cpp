@@ -1021,7 +1021,7 @@ void type_check_program(vector<Operation> program)
                 Type b = type_checking_stack.top();
                 type_checking_stack.pop();
 
-                if (a.Code != DataType::PTR && a.Code != DataType::INT)
+                if (a.Code != DataType::PTR || a.Code != DataType::INT)
                 {
                     cerr << op.Loc << ": ERROR: Unexpected argument's types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(a.Code) << " and " << HumanizedDataTypes.at(b.Code) << endl;
                     exit(1);
