@@ -2226,7 +2226,8 @@ void generate_assembly_macos_arm64(const string& output_file_path, vector<Operat
             case OpType::PUSH_INT:
             {
                 complete_string(output_content, "    ; -- push int -- ");
-                assert(false, "`push int` operation is not implemented yet");
+                complete_string(output_content, "    mov     x0, #" + to_string(op.IntegerValue));
+                complete_string(output_content, "    stp     x0, xzr, [sp, #-16]!");
                 break;
             }
             case OpType::PUSH_STRING:
@@ -2238,13 +2239,19 @@ void generate_assembly_macos_arm64(const string& output_file_path, vector<Operat
             case OpType::PLUS:
             {
                 complete_string(output_content, "    ; -- plus --");
-                assert(false, "`plus` operation is not implemented yet");
+                complete_string(output_content, "    ldp     x0, xzr, [sp], #16");
+                complete_string(output_content, "    ldp     x1, xzr, [sp], #16");
+                complete_string(output_content, "    add     x0, x0, x1");
+                complete_string(output_content, "    stp     x0, xzr, [sp, #-16]!");
                 break;
             }
             case OpType::MINUS:
             {
                 complete_string(output_content, "    ; -- minus --");
-                assert(false, "`minus` operation is not implemented yet");
+                complete_string(output_content, "    ldp     x1, xzr, [sp], #16");
+                complete_string(output_content, "    ldp     x0, xzr, [sp], #16");
+                complete_string(output_content, "    sub     x0, x0, x1");
+                complete_string(output_content, "    stp     x0, xzr, [sp, #-16]!");
                 break;
             }
             case OpType::MUL:
