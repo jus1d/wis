@@ -2184,6 +2184,332 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     }
 }
 
+void generate_assembly_macos_arm64(const string& output_file_path, vector<Operation> program)
+{
+    std::ofstream out(output_file_path);
+
+    if (!out.is_open()) {
+        cerr << "ERROR: Can't open file: " << output_file_path << endl;
+        exit(1);
+    }
+
+    map<string, int> strings;
+
+    string output_content;
+
+    complete_string(output_content, ".text");
+    complete_string(output_content, ".global _main\n");
+    complete_string(output_content, "_main:\n");
+
+    bool is_put_needed;
+    for (const auto& op : program)
+    {
+        if (op.Type == OpType::PUT)
+        {
+            is_put_needed = true;
+            break;
+        }
+    }
+    if (is_put_needed)
+    {
+        complete_string(output_content, "; -- put --");
+        assert(false, "`put` operation is not implemented yet");
+    }
+
+    assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
+
+    for (size_t i = 0; i < program.size(); ++i) {
+        Operation op = program[i];
+
+        switch (op.Type)
+        {
+            case OpType::PUSH_INT:
+            {
+                complete_string(output_content, "    ; -- push int -- ");
+                assert(false, "`push int` operation is not implemented yet");
+                break;
+            }
+            case OpType::PUSH_STRING:
+            {
+                complete_string(output_content, "    ; -- push str --");
+                assert(false, "`push str` operation is not implemented yet");
+                break;
+            }
+            case OpType::PLUS:
+            {
+                complete_string(output_content, "    ; -- plus --");
+                assert(false, "`plus` operation is not implemented yet");
+                break;
+            }
+            case OpType::MINUS:
+            {
+                complete_string(output_content, "    ; -- minus --");
+                assert(false, "`minus` operation is not implemented yet");
+                break;
+            }
+            case OpType::MUL:
+            {
+                complete_string(output_content, "    ; -- multiply --");
+                assert(false, "`multiply` operation is not implemented yet");
+                break;
+            }
+            case OpType::DIV:
+            {
+                complete_string(output_content, "    ; -- division --");
+                assert(false, "`division` operation is not implemented yet");
+                break;
+            }
+            case OpType::MOD:
+            {
+                complete_string(output_content, "    ; -- mod --");
+                assert(false, "`mod` operation is not implemented yet");
+                break;
+            }
+            case OpType::BOR:
+            {
+                complete_string(output_content, "    ; -- binary or --");
+                assert(false, "`bor` operation is not implemented yet");
+                break;
+            }
+            case OpType::BAND:
+            {
+                complete_string(output_content, "    ; -- binary and --");
+                assert(false, "`band` operation is not implemented yet");
+                break;
+            }
+            case OpType::XOR:
+            {
+                complete_string(output_content, "    ; -- xor --");
+                assert(false, "`xor` operation is not implemented yet");
+                break;
+            }
+            case OpType::SHL:
+            {
+                complete_string(output_content, "    ; -- shift left --");
+                assert(false, "`shl` operation is not implemented yet");
+                break;
+            }
+            case OpType::SHR:
+            {
+                complete_string(output_content, "    ; -- shift right --");
+                assert(false, "`shr` operation is not implemented yet");
+                break;
+            }
+            case OpType::EQ:
+            {
+                complete_string(output_content, "    ; -- equal --");
+                assert(false, "`equal` operation is not implemented yet");
+                break;
+            }
+            case OpType::NE:
+            {
+                complete_string(output_content, "    ; -- not equal --");
+                assert(false, "`not equal` operation is not implemented yet");
+                break;
+            }
+            case OpType::LT:
+            {
+                complete_string(output_content, "    ; -- less --");
+                assert(false, "`less` operation is not implemented yet");
+                break;
+            }
+            case OpType::GT:
+            {
+                complete_string(output_content, "    ; -- greater --");
+                assert(false, "`greater` operation is not implemented yet");
+                break;
+            }
+            case OpType::LE:
+            {
+                complete_string(output_content, "    ; -- less or equal --");
+                assert(false, "`less or equal` operation is not implemented yet");
+                break;
+            }
+            case OpType::GE:
+            {
+                complete_string(output_content, "    ; -- greater or equal --");
+                assert(false, "`greater or equal` operation is not implemented yet");
+                break;
+            }
+            case OpType::NOT:
+            {
+                complete_string(output_content, "    ; -- not --");
+                assert(false, "`not` operation is not implemented yet");
+                break;
+            }
+            case OpType::TRUE:
+            {
+                complete_string(output_content, "    ; -- true --");
+                assert(false, "`true` operation is not implemented yet");
+                break;
+            }
+            case OpType::FALSE:
+            {
+                complete_string(output_content, "    ; -- false --");
+                assert(false, "`false` operation is not implemented yet");
+                break;
+            }
+            case OpType::IF:
+            {
+                complete_string(output_content, "    ; -- if --");
+                assert(false, "`if` operation is not implemented yet");
+                break;
+            }
+            case OpType::ELSE:
+            {
+                complete_string(output_content, "    ; -- else --");
+                assert(false, "`else` operation is not implemented yet");
+                break;
+            }
+            case OpType::END:
+            {
+                complete_string(output_content, "    ; -- end --");
+                assert(false, "`end` operation is not implemented yet");
+                break;
+            }
+            case OpType::DO:
+            {
+                complete_string(output_content, "    ; -- do --");
+                assert(false, "`do` operation is not implemented yet");
+                break;
+            }
+            case OpType::WHILE:
+            {
+                complete_string(output_content, "    ; -- while --");
+                assert(false, "`while` operation is not implemented yet");
+                break;
+            }
+            case OpType::BIND:
+            {
+                assert(false, "Unreachable. All bindings should be expanded at the compilation step");
+                break;
+            }
+            case OpType::USE:
+            {
+                assert(false, "Unreachable. All `use` operations should be eliminated at the compilation step");
+                break;
+            }
+            case OpType::PUT:
+            {
+                complete_string(output_content, "    ; -- put --");
+                assert(false, "`put` operation is not implemented yet");
+                break;
+            }
+            case OpType::PUTS:
+            {
+                complete_string(output_content, "    ; -- puts --");
+                assert(false, "`puts` operation is not implemented yet");
+                break;
+            }
+            case OpType::HERE:
+            {
+                string value = op.Loc;
+                complete_string(output_content, "    ; -- here --");
+                assert(false, "`here` operation is not implemented yet");
+                break;
+            }
+            case OpType::COPY:
+            {
+                complete_string(output_content, "    ; -- copy --");
+                assert(false, "`copy` operation is not implemented yet");
+                break;
+            }
+            case OpType::OVER:
+            {
+                complete_string(output_content, "    ; -- over --");
+                assert(false, "`over` operation is not implemented yet");
+                break;
+            }
+            case OpType::SWAP:
+            {
+                complete_string(output_content, "    ; -- swap --");
+                assert(false, "`swap` operation is not implemented yet");
+                break;
+            }
+            case OpType::DROP:
+            {
+                complete_string(output_content, "    ; -- drop --");
+                assert(false, "`drop` operation is not implemented yet");
+                break;
+            }
+            case OpType::ROT:
+            {
+                complete_string(output_content, "    ; -- rot --");
+                assert(false, "`rot` operation is not implemented yet");
+                break;
+            }
+            case OpType::SYSCALL0:
+            {
+                complete_string(output_content, "    ; -- syscall0 --");
+                assert(false, "`syscall0` operation is not implemented yet");
+                break;
+            }
+            case OpType::SYSCALL1:
+            {
+                complete_string(output_content, "    ; -- syscall1 --");
+                assert(false, "`syscall1` operation is not implemented yet");
+                break;
+            }
+            case OpType::SYSCALL2:
+            {
+                complete_string(output_content, "    ; -- syscall2 --");
+                assert(false, "`syscall2` operation is not implemented yet");
+                break;
+            }
+            case OpType::SYSCALL3:
+            {
+                complete_string(output_content, "    ; -- syscall3 --");
+                assert(false, "`syscall3` operation is not implemented yet");
+                break;
+            }
+            case OpType::SYSCALL4:
+            {
+                complete_string(output_content, "    ; -- syscall4 --");
+                assert(false, "`syscall4` operation is not implemented yet");
+                break;
+            }
+            case OpType::SYSCALL5:
+            {
+                complete_string(output_content, "    ; -- syscall5 --");
+                assert(false, "`syscall5` operation is not implemented yet");
+                break;
+            }
+            case OpType::SYSCALL6:
+            {
+                complete_string(output_content, "    ; -- syscall6 --");
+                assert(false, "`syscall6` operation is not implemented yet");
+                break;
+            }
+            default:
+                assert(false, "Unreachable");
+        }
+    }
+
+    complete_string(output_content, "    ; -- exit --");
+    complete_string(output_content, "    mov     x0, #0");
+    complete_string(output_content, "    mov     x16, #1");
+    complete_string(output_content, "    svc     #0");
+
+//    if (!strings.empty()) complete_string(output_content, "\nsection .data");
+//
+    out << output_content;
+//
+//    for (const auto& pair : strings) {
+//        out << "    str_" << pair.second << ": db ";
+//
+//        const string& s = pair.first;
+//        for (size_t i = 0; i < s.size(); ++i) {
+//            out << "0x" << setw(2) << setfill('0') << hex << static_cast<int>(s[i]);
+//
+//            if (i < s.size() - 1) {
+//                out << ",";
+//            }
+//        }
+//
+//        out << endl;
+//    }
+}
+
 void compile(const string& compiler_path, const string& path, vector<Operation> program, bool run_after_compilation, bool silent_mode)
 {
     string filename = trim_string(path, FILE_EXTENSION);
@@ -2209,12 +2535,23 @@ void compile(const string& compiler_path, const string& path, vector<Operation> 
     if (!silent_mode) cout << "[INFO] Compiled to " << filename << endl;
 
     if (run_after_compilation) execute_command(silent_mode, filename);
-    
+
     return;
 #endif
 
 #ifdef __aarch64__
-    cerr << "ERROR: Support for `arm64` architecture, will delivered in nearest future" << endl;
+    if (!silent_mode) cout << "[INFO] Generating assembly -> " << filename << ".s" << endl;
+    generate_assembly_macos_arm64(filename + ".s", std::move(program));
+
+    if (!silent_mode) cout << "[INFO] Compiling assembly" << endl;
+    execute_command(silent_mode, "as -o " + filename + ".o " + filename + ".s");
+    if (!silent_mode) cout << "[INFO] Object file generated: " << filename << ".s -> " << filename << ".o" << endl;
+
+    execute_command(silent_mode, "ld -o " + filename + " " + filename + ".o");
+    if (!silent_mode) cout << "[INFO] Compiled to " << filename << endl;
+
+    if (run_after_compilation) execute_command(silent_mode, filename);
+
     return;
 #endif
 
