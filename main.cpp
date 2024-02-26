@@ -48,6 +48,7 @@ enum class OpType : int {
     OVER,
     SWAP,
     DROP,
+    ROT,
     SYSCALL0,
     SYSCALL1,
     SYSCALL2,
@@ -93,6 +94,7 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::OVER, "`over`"},
         {OpType::SWAP, "`swap`"},
         {OpType::DROP, "`drop`"},
+        {OpType::ROT, "`rot`"},
         {OpType::SYSCALL0, "`syscall0`"},
         {OpType::SYSCALL1, "`syscall1`"},
         {OpType::SYSCALL2, "`syscall2`"},
@@ -135,6 +137,7 @@ const map<string, OpType> BuiltInOps = {
         {"over", OpType::OVER},
         {"swap", OpType::SWAP},
         {"drop", OpType::DROP},
+        {"rot", OpType::ROT},
         {"syscall0", OpType::SYSCALL0},
         {"syscall1", OpType::SYSCALL1},
         {"syscall2", OpType::SYSCALL2},
@@ -353,7 +356,7 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 break;
             }
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 41, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 42, "Exhaustive operations handling");
 
                 if (token.StringValue == "+")
                 {
@@ -481,6 +484,13 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                     while (++i < tokens.size() && (tokens[i].StringValue != "end" || open_blocks != 0))
                     {
                         token = tokens[i];
+
+                        if (token.StringValue == name)
+                        {
+                            cerr << token.Loc << ": ERROR: Bindings are not support recursive calls" << endl;
+                            exit(1);
+                        }
+
                         if (token.StringValue == "if" || token.StringValue == "while") open_blocks++;
 
                         if (token.StringValue != "end" || open_blocks > 0)
@@ -556,6 +566,10 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                 {
                     program.emplace_back(OpType::DROP, token.Loc);
                 }
+                else if (token.StringValue == "rot")
+                {
+                    program.emplace_back(OpType::ROT, token.Loc);
+                }
                 else if (token.StringValue == "syscall0")
                 {
                     program.emplace_back(OpType::SYSCALL0, token.Loc);
@@ -613,7 +627,7 @@ void crossreference_blocks(vector<Operation>& program)
 {
     stack<int> crossreference_stack;
 
-    assert(static_cast<int>(OpType::COUNT) == 41, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 42, "Exhaustive operations handling. Not all operations should be handled in here");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -767,7 +781,7 @@ void type_check_program(vector<Operation> program)
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
 
-        assert(static_cast<int>(OpType::COUNT) == 41, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 42, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -1078,6 +1092,27 @@ void type_check_program(vector<Operation> program)
 
                 break;
             }
+            case OpType::ROT:
+            {
+                if (type_checking_stack.size() < 3)
+                {
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 3 argument, but found " << type_checking_stack.size() << endl;
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type c = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                type_checking_stack.push(a);
+                type_checking_stack.push(c);
+                type_checking_stack.push(b);
+
+                break;
+            }
             case OpType::SYSCALL0:
             {
                 if (type_checking_stack.size() < 1)
@@ -1201,7 +1236,7 @@ void type_check_program(vector<Operation> program)
 
 void run_program(vector<Operation> program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 41, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 42, "Exhaustive operations handling");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -1571,6 +1606,21 @@ void run_program(vector<Operation> program)
                 ++i;
                 break;
             }
+            case OpType::ROT:
+            {
+                int a = runtime_stack.top();
+                runtime_stack.pop();
+                int b = runtime_stack.top();
+                runtime_stack.pop();
+                int c = runtime_stack.top();
+                runtime_stack.pop();
+
+                runtime_stack.push(a);
+                runtime_stack.push(c);
+                runtime_stack.push(b);
+                ++i;
+                break;
+            }
             case OpType::SYSCALL0:
             case OpType::SYSCALL1:
             case OpType::SYSCALL2:
@@ -1651,7 +1701,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     complete_string(output_content, "    global _start\n");
     complete_string(output_content, "_start:");
 
-    assert(static_cast<int>(OpType::COUNT) == 41, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 42, "Exhaustive operations handling");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -1968,6 +2018,17 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             {
                 complete_string(output_content, "    ; -- drop --");
                 complete_string(output_content, "    pop     rax");
+                break;
+            }
+            case OpType::ROT:
+            {
+                complete_string(output_content, "    ; -- rot --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    pop     rcx");
+                complete_string(output_content, "    push    rax");
+                complete_string(output_content, "    push    rcx");
+                complete_string(output_content, "    push    rbx");
                 break;
             }
             case OpType::SYSCALL0:

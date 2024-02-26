@@ -166,6 +166,14 @@ Drops integer from top of the stack
 
 ---
 
+#### `rot`
+
+Rotates 3 values on top of the stack
+
+**Stack:** `1 2 3` => `3 1 2`
+
+---
+
 ### System calls
 
 You can use `syscall<n>`, where `n` is between 1 and 3. Now supported only syscalls that accepts 1-3 arguments.

@@ -1,0 +1,9 @@
+bind N 4000000 end
+
+0 1 2 
+while copy N <= do
+  copy 2 % 0 == if 
+    rot rot over + rot
+  end
+  swap over +
+end drop drop put
