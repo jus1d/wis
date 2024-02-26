@@ -484,6 +484,13 @@ vector<Operation> parse_tokens_as_operations(const vector<Token>& tokens)
                     while (++i < tokens.size() && (tokens[i].StringValue != "end" || open_blocks != 0))
                     {
                         token = tokens[i];
+
+                        if (token.StringValue == name)
+                        {
+                            cerr << token.Loc << ": ERROR: Bindings are not support recursive calls" << endl;
+                            exit(1);
+                        }
+
                         if (token.StringValue == "if" || token.StringValue == "while") open_blocks++;
 
                         if (token.StringValue != "end" || open_blocks > 0)
