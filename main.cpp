@@ -1979,11 +1979,10 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 string value = op.Loc;
                 complete_string(output_content, "    ; -- here --");
                 complete_string(output_content, "    push    " + to_string(value.size()));
+                
                 auto it = strings.find(value);
-                if (it == strings.end())
-                {
-                    strings[value] = strings.size();
-                }
+                if (it == strings.end()) strings[value] = strings.size();
+
                 complete_string(output_content, "    push    str_" + to_string(strings.at(value)));
                 break;
             }
