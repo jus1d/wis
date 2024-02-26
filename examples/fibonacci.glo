@@ -1,0 +1,7 @@
+bind n 10000000 end
+
+0 1
+while over n < do
+  over put
+  swap over +
+end drop drop

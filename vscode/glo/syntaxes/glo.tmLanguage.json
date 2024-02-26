@@ -37,7 +37,7 @@
 		"standard": {
 			"patterns": [{
 				"name": "keyword.other.standard.glo",
-				"match": "\\b(stdin|stdout|stderr|write|exit|eputs|2copy|2drop)\\b"
+				"match": "\\b(stdin|stdout|stderr|write|exit|eputs|assert|2copy|2drop)\\b"
 			}]
 		},
 		"strings": {

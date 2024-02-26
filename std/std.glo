@@ -19,5 +19,5 @@ bind assert
 end
 
 // Stack operation bindings
-bind 2copy over over end
-bind 2drop drop drop end
+bind 2copy    over over end
+bind 2drop    drop drop end
