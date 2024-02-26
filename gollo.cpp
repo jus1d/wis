@@ -315,6 +315,15 @@ void complete_string(string& s, const string& additional)
     s += additional + "\n";
 }
 
+bool string_to_int(const std::string& str, int& result) {
+    std::istringstream iss(str);
+
+    if (!(iss >> result)) return false;
+    if (iss.rdbuf()->in_avail() != 0) return false;
+
+    return true;
+}
+
 string location_view(const string& filepath, int row, int col)
 {
     return filepath + ":" + to_string(row) + ":" + to_string(col);
@@ -367,18 +376,20 @@ vector<Token> lex_line(string const& filepath, int line_number, string const& li
             col_end = find_col(line, col, [](char x) { return !!isspace(x); });
             string text_of_token = line.substr(col, col_end - col);
 
-            try {
-                int int_value = stoi(text_of_token);
-
+            int int_value;
+            if (string_to_int(text_of_token, int_value))
+            {
                 string loc = location_view(filepath, line_number, col + 1);
                 Token token(TokenType::INT, int_value, loc);
                 tokens.push_back(token);
             }
-            catch (const invalid_argument&) {
+            else
+            {
                 string loc = location_view(filepath, line_number, col + 1);
                 Token token(TokenType::WORD, text_of_token, loc);
                 tokens.push_back(token);
             }
+
             col = find_col(line, col_end, [](char x) { return !isspace(x); });
         }
     }
