@@ -1,8 +1,19 @@
+// Default streams
 bind stdin    0 end
 bind stdout   1 end
 bind stderr   2 end
 
+// Wrappers for common syscalls
 bind write    1 syscall3 drop end
 bind exit     60 syscall1 drop end
 
+// Wrapper for write syscall, to write to stderr
 bind eputs    stderr write end
+
+// Usage: "error message" <condition> assert
+bind assert
+  not if 
+    "Assertion error: " puts puts
+    1 exit
+  end
+end
