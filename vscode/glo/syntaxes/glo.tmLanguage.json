@@ -16,6 +16,9 @@
 		},
 		{
 			"include": "#comments"
+		},
+		{
+			"include": "#standard"
 		}
 	],
 	"repository": {
@@ -29,6 +32,12 @@
 			"patterns": [{
 				"name": "keyword.other.builtin.glo",
 				"match": "\\b(put|puts|here|copy|over|swap|drop|rot|syscall0|syscall1|syscall2|syscall3|syscall4|syscall5|syscall6)\\b"
+			}]
+		},
+		"standard": {
+			"patterns": [{
+				"name": "keyword.other.standard.glo",
+				"match": "\\b(stdin|stdout|stderr|write|exit|eputs)\\b"
 			}]
 		},
 		"strings": {
