@@ -5,5 +5,5 @@ set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 
-add_executable(gollo main.cpp
+add_executable(gollo gollo.cpp
         assert.h)

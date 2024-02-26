@@ -1,7 +1,7 @@
 CXX ?= g++
 CXXFLAGS ?= -std=c++23 -Wall -Wextra
 TARGET ?= gollo
-SOURCE ?= main.cpp
+SOURCE ?= gollo.cpp
 
 BUILD_TYPE ?= release
 
