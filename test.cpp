@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <filesystem>
+#include <fstream>
 
 using namespace std;
 
@@ -29,10 +31,60 @@ string shift_vector(vector<string>& vec)
     exit(1);
 }
 
-void run_tests_in_directory(string const& path)
-{
-    cout << "Running tests for path: " << path << endl;
-    return;
+vector<string> split_string(const string& input, char delimiter) {
+    vector<string> tokens;
+    istringstream stream(input);
+    string token;
+
+    while (getline(stream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+
+    return tokens;
+}
+
+
+void test_file(const string& filePath) {
+    string file_name = filePath.substr(0, filePath.find_last_of('.'));
+
+    vector<string> commands = {"./gollo run " + filePath, "./gollo compile -s " + filePath + " && ./" + file_name};
+
+    for (auto const& command : commands)
+    {
+        FILE* pipe = popen(command.c_str(), "r");
+        if (!pipe) {
+            cerr << "Error executing command: " << command << endl;
+            return;
+        }
+
+        string output;
+        char buffer[128];
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            output += buffer;
+        }
+
+        pclose(pipe);
+
+        string outputPath = file_name + ".output";
+
+        ifstream outputFile(outputPath);
+        string expectedOutput((istreambuf_iterator<char>(outputFile)), istreambuf_iterator<char>());
+
+        if (output == expectedOutput) {
+            cout << "[" << split_string(command, ' ')[1] << "] Test passed for file: " << filePath << endl;
+        } else {
+            cerr << "[" << split_string(command, ' ')[1] << "] Test failed for file: " << filePath << endl;
+            cerr << "  Expected output:\n" << expectedOutput << "\n  Actual output:\n" << output << endl;
+        }
+    }
+}
+
+void run_tests_in_directory(const string& directoryPath) {
+    for (const auto& entry : filesystem::directory_iterator(directoryPath)) {
+        if (entry.path().extension() == FILE_EXTENSION) {
+            test_file(entry.path().string());
+        }
+    }
 }
 
 void run_tests(vector<string> args, vector<string> paths)
@@ -68,7 +120,7 @@ void record_test_output(string const& file_path)
 int main(int argc, char* argv[])
 {
     vector<string> args(argv, argv + argc);
-    vector<string> paths = {"./tests/", "./euler/", "./examples/"};
+    vector<string> paths = {"./tests/"};
 
     string program = shift_vector(args);
 
