@@ -1,0 +1,24 @@
+// Test if/else with equal sign
+34 35 + 69 == if 
+    69 put
+else
+    420 put
+end
+
+// Test if/else with not equal sign
+34 35 + 69 != if 
+    69 put
+else
+    420 put
+end
+
+// Test nested if/else conditions
+true if 
+    false if
+        2 put
+    else
+        1 put
+    end
+else
+    0 put
+end
