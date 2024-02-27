@@ -60,11 +60,9 @@ void record_test_output(string const& file_path)
 {
     string file_name = file_path.substr(0, file_path.length() - FILE_EXTENSION.length());
 
-    cout << file_name << endl;
+    execute_command(false, "./gollo compile " + file_path);
 
-    execute_command(true, "./gollo compile " + file_path);
-
-    execute_command(true, "./" + file_path + " > " + file_name + ".output");
+    execute_command(false, "./" + file_name + " > " + file_name + ".output");
 }
 
 int main(int argc, char* argv[])
@@ -74,7 +72,7 @@ int main(int argc, char* argv[])
 
     string program = shift_vector(args);
 
-    execute_command(true, "make");
+    execute_command(false, "make");
 
     if (args.empty())
     {

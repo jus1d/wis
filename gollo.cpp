@@ -628,7 +628,6 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens)
 
                                     cerr << token.Loc << ": ERROR: Undefined token: '" << token.StringValue << "'" << endl;
                                     exit(1);
-                                    break;
                                 }
                             }
                         }
@@ -2233,6 +2232,14 @@ int main(int argc, char* argv[])
 
     string compiler_path = shift_vector(args);
     string path;
+
+    if (args.empty())
+    {
+        usage(compiler_path);
+        cerr << "ERROR: no subcommand provided" << endl;
+        exit(1);
+    }
+
     string subcommand = shift_vector(args);
     if (subcommand != "run" && subcommand != "compile")
     {
