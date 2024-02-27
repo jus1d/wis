@@ -7,8 +7,9 @@ cmake-build-debug/
 # Ignore output files
 *.o
 *.exe
-main*
 gollo*
+test*
+main*
 
 # Ignore ssembly files
 *.asm
@@ -17,3 +18,4 @@ gollo*
 # Ignore other examples
 goo*
 euler/*
+examples/*

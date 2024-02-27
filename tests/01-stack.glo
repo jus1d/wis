@@ -1,0 +1,27 @@
+use "./std/std.glo"
+
+// Test push to stack & put operations
+1 2 3 put put put
+
+// Put a big number
+123456789 put
+
+// Test push to stack & instant put operations
+1 put 2 put 3 put
+
+// Test copy operation
+1 copy copy put put put
+
+// Test swap operation
+1 2 swap put put 
+
+// Test drop operation
+1 2 drop put
+
+// Test two copy operation
+1 2 2copy
+put put put put
+
+// Test over operation
+1 2 over
+put put put

@@ -1,0 +1,19 @@
+bind n 100 end
+
+// we are haven't got elif or else-if yet
+1 while copy n <= do
+  copy 15 % 0 == if
+    "FizzBuzz\n" puts
+  else
+    copy 3 % 0 == if
+      "Fizz\n" puts
+    else
+      copy 5 % 0 == if
+        "Buzz\n" puts
+      else
+       copy put
+      end
+    end
+  end
+  1 +
+end drop

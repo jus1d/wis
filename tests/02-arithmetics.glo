@@ -1,0 +1,14 @@
+// Test sum operations
+34 35 + put
+
+// Test subtraction operations
+500 80 - put
+
+// Test multiplication operations
+2 3 * put
+
+// Test division operations
+15 5 / put
+
+// Test modulo operations
+16 5 % put

@@ -1,0 +1,9 @@
+"Hello world\n" puts
+"Other staff\n" puts
+
+"Hello world\n" "Other staff\n"
+
+puts
+puts
+
+here puts ": INFO: no error /( ._.)/\n" puts
