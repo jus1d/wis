@@ -349,50 +349,56 @@ void execute_command(bool silent_mode, const string& command)
     }
 }
 
-vector<Token> lex_line(string const& filepath, int line_number, string const& line)
+vector<Token> lex_line(string const& filepath, int line_number, string line)
 {
+    line += " ";
     vector<Token> tokens;
 
-    int col = find_col(line, 0, [](char x) { return !isspace(x); });
-    while (col < int(line.size()))
+    string cur = "";
+    int i = 0;
+    bool string_mode = false;
+
+    while (i < int(line.size()))
     {
-        int col_end;
-        if (line[col] == '"')
+        char ch = line[i];
+        if (ch == '"')
         {
-            col_end = find_col(line, col+1, [](char x) { return x == '"'; });
-            if (line[col_end] != '"')
+            if (string_mode)
             {
-                cerr << location_view(filepath, line_number, col + 1) << ": ERROR: Missed closing string literal" << endl;
-                exit(1);
+                string loc = location_view(filepath, line_number, i - int(cur.size()));
+                tokens.emplace_back(TokenType::STRING, cur, loc);
+                cur = "";
             }
-
-            string text_of_token = line.substr(col + 1, col_end - col - 1);
-            string loc = location_view(filepath, line_number, col + 1);
-            Token token(TokenType::STRING, text_of_token, loc);
-            tokens.push_back(token);
-            col = find_col(line, col_end + 1, [](char x) { return !isspace(x); });
+            string_mode = !string_mode;
         }
-        else
+        else if (ch == ' ' && !cur.empty())
         {
-            col_end = find_col(line, col, [](char x) { return !!isspace(x); });
-            string text_of_token = line.substr(col, col_end - col);
-
-            int int_value;
-            if (string_to_int(text_of_token, int_value))
+            if (string_mode)
             {
-                string loc = location_view(filepath, line_number, col + 1);
-                Token token(TokenType::INT, int_value, loc);
-                tokens.push_back(token);
+                cur += ch;
             }
             else
             {
-                string loc = location_view(filepath, line_number, col + 1);
-                Token token(TokenType::WORD, text_of_token, loc);
-                tokens.push_back(token);
+                int int_value;
+                if (string_to_int(cur, int_value))
+                {
+                    string loc = location_view(filepath, line_number, i);
+                    tokens.emplace_back(TokenType::INT, int_value, loc);
+                }
+                else
+                {
+                    string loc = location_view(filepath, line_number, i - int(cur.size()) + 1);
+                    tokens.emplace_back(TokenType::WORD, cur, loc);
+                }
+                cur = "";
             }
-
-            col = find_col(line, col_end, [](char x) { return !isspace(x); });
         }
+        else if (ch != ' ')
+        {
+            cur += ch;
+        }
+
+        ++i;
     }
 
     return tokens;
@@ -2209,12 +2215,7 @@ void compile(const string& compiler_path, const string& path, vector<Operation> 
     if (!silent_mode) cout << "[INFO] Compiled to " << filename << endl;
 
     if (run_after_compilation) execute_command(silent_mode, filename);
-    
-    return;
-#endif
 
-#ifdef __aarch64__
-    cerr << "ERROR: Support for `arm64` architecture, will delivered in nearest future" << endl;
     return;
 #endif
 

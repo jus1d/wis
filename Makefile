@@ -1,7 +1,7 @@
 CXX ?= g++
 CXXFLAGS ?= -std=c++23# -Wall -Wextra
-TARGET ?= gollo
-SOURCE ?= gollo.cpp
+TARGET ?= gollo test
+SOURCE ?= gollo.cpp test.cpp
 
 BUILD_TYPE ?= release
 
@@ -13,6 +13,7 @@ all: $(TARGET)
 
 $(TARGET): $(SOURCE)
 	$(CXX) $(CXXFLAGS) -o $@ $<
+	$(CXX) $(CXXFLAGS) -o ./test ./test.cpp
 
 .PHONY: clean
 

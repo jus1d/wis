@@ -21,3 +21,6 @@ end
 // Stack operation bindings
 bind 2copy    over over end
 bind 2drop    drop drop end
+
+// Other bindings
+bind endl "\n" end

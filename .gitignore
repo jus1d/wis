@@ -8,6 +8,8 @@ cmake-build-debug/
 *.o
 *.exe
 gollo*
+test*
+main*
 
 # Ignore ssembly files
 *.asm
