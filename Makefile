@@ -14,6 +14,9 @@ all: $(TARGET)
 $(TARGET): $(SOURCE)
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
+test: test.cpp
+	$(CXX) $(CXXFLAGS) -o ./test ./test.cpp
+
 .PHONY: clean
 
 clean:
