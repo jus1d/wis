@@ -330,14 +330,6 @@ string location_view(const string& filepath, int row, int col)
     return filepath + ":" + to_string(row) + ":" + to_string(col);
 }
 
-int find_col(string const& line, int start, bool (*predicate)(char))
-{
-    while (start < int(line.size()) && !predicate(line[start])) {
-        start++;
-    }
-    return start;
-}
-
 void execute_command(bool silent_mode, const string& command)
 {
     if (!silent_mode) cout << "[CMD] " << command << endl;
@@ -346,6 +338,21 @@ void execute_command(bool silent_mode, const string& command)
     {
         cerr << "ERROR: Executing command crashed with " << to_string(exit_code) << " exit code" << endl;
         exit(exit_code);
+    }
+}
+
+void extend_with_include_directories(string& file_path, const vector<string> include_paths)
+{
+    for (const auto& include_path : include_paths)
+    {
+        if (!filesystem::exists(include_path)) continue;
+        for (const auto& entry : filesystem::directory_iterator(include_path)) {
+            vector<string> parts = split_string(entry.path(), "/");
+            if (parts.empty()) continue;
+            string file_name = parts[parts.size() - 1];
+
+            if (file_path == file_name) file_path = entry.path();
+        }
     }
 }
 
@@ -410,7 +417,7 @@ vector<Token> lex_file(string const& path)
 
     if (!file.is_open())
     {
-        cerr << "ERROR: Can't open file." << endl;
+        cerr << "ERROR: file `" << path << "` not found in include directories" << endl;
         exit(1);
     }
 
@@ -434,7 +441,7 @@ vector<Token> lex_file(string const& path)
     return tokens;
 }
 
-vector<Operation> parse_tokens_as_operations(vector<Token>& tokens)
+vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector<string>& include_paths)
 {
     vector<Operation> program;
     map<string, vector<Operation>> bindings;
@@ -651,7 +658,11 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens)
                         exit(1);
                     }
 
-                    vector<Token> using_tokens = lex_file(token.StringValue);
+                    string file_path = token.StringValue;
+
+                    extend_with_include_directories(file_path, include_paths);
+
+                    vector<Token> using_tokens = lex_file(file_path);
 
                     vector<Token> temp_tokens = tokens;
 
@@ -2250,6 +2261,7 @@ int main(int argc, char* argv[])
 
     bool run_after_compilation;
     bool silent_mode;
+    vector<string> include_paths = {"./std/"};
 
     while (!args.empty())
     {
@@ -2257,6 +2269,16 @@ int main(int argc, char* argv[])
 
         if (arg == "-r") run_after_compilation = true;
         else if (arg == "-s") silent_mode = true;
+        else if (arg == "-I")
+        {
+            if (args.empty())
+            {
+                cerr << "ERROR: no use path provided after `-I` flag" << endl;
+                exit(1);
+            }
+
+            include_paths.push_back(shift_vector(args));
+        }
         else path = arg;
     }
 
@@ -2271,7 +2293,7 @@ int main(int argc, char* argv[])
 
     vector<Token> tokens = lex_file(file_path.string());
 
-    vector<Operation> program = parse_tokens_as_operations(tokens);
+    vector<Operation> program = parse_tokens_as_operations(tokens, include_paths);
 
     crossreference_blocks(program);
 
