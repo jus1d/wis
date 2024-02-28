@@ -42,9 +42,12 @@ enum class OpType : int {
     DO,
     WHILE,
     BIND,
+    MEM,
+    LOAD,
+    STORE,
     USE,
     PUT,
-    PUTS,
+    FPUTS,
     HERE,
     COPY,
     OVER,
@@ -89,9 +92,12 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::DO, "`do`"},
         {OpType::WHILE, "`while`"},
         {OpType::BIND, "`bind`"},
+        {OpType::MEM, "`mem`"},
+        {OpType::LOAD, "`load32`"},
+        {OpType::STORE, "`store32`"},
         {OpType::USE, "`use`"},
         {OpType::PUT, "`put`"},
-        {OpType::PUTS, "`puts`"},
+        {OpType::FPUTS, "`fputs`"},
         {OpType::HERE, "`here`"},
         {OpType::COPY, "`copy`"},
         {OpType::OVER, "`over`"},
@@ -133,9 +139,12 @@ const map<string, OpType> BuiltInOps = {
         {"do", OpType::DO},
         {"while", OpType::WHILE},
         {"bind", OpType::BIND},
+        {"mem", OpType::MEM},
+        {"load32", OpType::LOAD},
+        {"store32", OpType::STORE},
         {"use", OpType::USE},
         {"put", OpType::PUT},
-        {"puts", OpType::PUTS},
+        {"fputs", OpType::FPUTS},
         {"here", OpType::HERE},
         {"copy", OpType::COPY},
         {"over", OpType::OVER},
@@ -157,7 +166,6 @@ public:
     int IntegerValue{};
     string StringValue;
     string Loc;
-    int Address{};
     int JumpTo{};
 
     Operation(OpType type, string loc)
@@ -221,13 +229,11 @@ public:
 
 void usage(string const& compiler_path)
 {
-    cerr << "Usage: " << compiler_path << " <SUBCOMMAND> ./examples/goo.glo" << endl;
-    cerr << "SUBCOMMANDS:" << endl;
-    cerr << "    run                 Instantly run the program" << endl;
-    cerr << "    compile [ARGS]      Compile the program into an executable" << endl;
-    cerr << "      ARGS:" << endl;
-    cerr << "          -r            Run compiled program after compilation" << endl;
-    cerr << "          -s            Silent mode for compiler" << endl;
+    cerr << "Usage: " << compiler_path << " [ARGS] ./examples/goo.glo" << endl;
+    cerr << "ARGS:" << endl;
+    cerr << "    -r            Run compiled program after compilation" << endl;
+    cerr << "    -s            Silent mode for compiler" << endl;
+    cerr << "    -I <path>     Add directory to include paths list" << endl;
 }
 
 string shift_vector(vector<string>& vec)
@@ -330,14 +336,6 @@ string location_view(const string& filepath, int row, int col)
     return filepath + ":" + to_string(row) + ":" + to_string(col);
 }
 
-int find_col(string const& line, int start, bool (*predicate)(char))
-{
-    while (start < int(line.size()) && !predicate(line[start])) {
-        start++;
-    }
-    return start;
-}
-
 void execute_command(bool silent_mode, const string& command)
 {
     if (!silent_mode) cout << "[CMD] " << command << endl;
@@ -349,12 +347,27 @@ void execute_command(bool silent_mode, const string& command)
     }
 }
 
+void extend_with_include_directories(string& file_path, const vector<string>& include_paths)
+{
+    for (const auto& include_path : include_paths)
+    {
+        if (!filesystem::exists(include_path)) continue;
+        for (const auto& entry : filesystem::directory_iterator(include_path)) {
+            vector<string> parts = split_string(entry.path().string(), "/");
+            if (parts.empty()) continue;
+            string file_name = parts[parts.size() - 1];
+
+            if (file_path == file_name) file_path = entry.path().string();
+        }
+    }
+}
+
 vector<Token> lex_line(string const& filepath, int line_number, string line)
 {
     line += " ";
     vector<Token> tokens;
 
-    string cur = "";
+    string cur;
     int i = 0;
     bool string_mode = false;
 
@@ -410,7 +423,7 @@ vector<Token> lex_file(string const& path)
 
     if (!file.is_open())
     {
-        cerr << "ERROR: Can't open file." << endl;
+        cerr << "ERROR: File `" << path << "` not found in include directories" << endl;
         exit(1);
     }
 
@@ -434,7 +447,7 @@ vector<Token> lex_file(string const& path)
     return tokens;
 }
 
-vector<Operation> parse_tokens_as_operations(vector<Token>& tokens)
+vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector<string>& include_paths)
 {
     vector<Operation> program;
     map<string, vector<Operation>> bindings;
@@ -454,105 +467,9 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens)
                 break;
             }
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
 
-                if (token.StringValue == "+")
-                {
-                    program.emplace_back(OpType::PLUS, token.Loc);
-                }
-                else if (token.StringValue == "-")
-                {
-                    program.emplace_back(OpType::MINUS, token.Loc);
-                }
-                else if (token.StringValue == "*")
-                {
-                    program.emplace_back(OpType::MUL, token.Loc);
-                }
-                else if (token.StringValue == "/")
-                {
-                    program.emplace_back(OpType::DIV, token.Loc);
-                }
-                else if (token.StringValue == "%")
-                {
-                    program.emplace_back(OpType::MOD, token.Loc);
-                }
-                else if (token.StringValue == "bor")
-                {
-                    program.emplace_back(OpType::BOR, token.Loc);
-                }
-                else if (token.StringValue == "band")
-                {
-                    program.emplace_back(OpType::BAND, token.Loc);
-                }
-                else if (token.StringValue == "xor")
-                {
-                    program.emplace_back(OpType::XOR, token.Loc);
-                }
-                else if (token.StringValue == "shl")
-                {
-                    program.emplace_back(OpType::SHL, token.Loc);
-                }
-                else if (token.StringValue == "shr")
-                {
-                    program.emplace_back(OpType::SHR, token.Loc);
-                }
-                else if (token.StringValue == "==")
-                {
-                    program.emplace_back(OpType::EQ, token.Loc);
-                }
-                else if (token.StringValue == "!=")
-                {
-                    program.emplace_back(OpType::NE, token.Loc);
-                }
-                else if (token.StringValue == "<")
-                {
-                    program.emplace_back(OpType::LT, token.Loc);
-                }
-                else if (token.StringValue == ">")
-                {
-                    program.emplace_back(OpType::GT, token.Loc);
-                }
-                else if (token.StringValue == "<=")
-                {
-                    program.emplace_back(OpType::LE, token.Loc);
-                }
-                else if (token.StringValue == ">=")
-                {
-                    program.emplace_back(OpType::GE, token.Loc);
-                }
-                else if (token.StringValue == "not")
-                {
-                    program.emplace_back(OpType::NOT, token.Loc);
-                }
-                else if (token.StringValue == "true")
-                {
-                    program.emplace_back(OpType::TRUE, token.Loc);
-                }
-                else if (token.StringValue == "false")
-                {
-                    program.emplace_back(OpType::FALSE, token.Loc);
-                }
-                else if (token.StringValue == "if")
-                {
-                    program.emplace_back(OpType::IF, token.Loc);
-                }
-                else if (token.StringValue == "else")
-                {
-                    program.emplace_back(OpType::ELSE, token.Loc);
-                }
-                else if (token.StringValue == "end")
-                {
-                    program.emplace_back(OpType::END, token.Loc);
-                }
-                else if (token.StringValue == "do")
-                {
-                    program.emplace_back(OpType::DO, token.Loc);
-                }
-                else if (token.StringValue == "while")
-                {
-                    program.emplace_back(OpType::WHILE, token.Loc);
-                }
-                else if (token.StringValue == "bind")
+                if (token.StringValue == "bind")
                 {
                     if (++i == int(tokens.size()))
                     {
@@ -651,7 +568,11 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens)
                         exit(1);
                     }
 
-                    vector<Token> using_tokens = lex_file(token.StringValue);
+                    string file_path = token.StringValue;
+
+                    extend_with_include_directories(file_path, include_paths);
+
+                    vector<Token> using_tokens = lex_file(file_path);
 
                     vector<Token> temp_tokens = tokens;
 
@@ -666,80 +587,27 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens)
                     i = -1;
                     program = vector<Operation>();
                 }
-                else if (token.StringValue == "put")
-                {
-                    program.emplace_back(OpType::PUT, token.Loc);
-                }
-                else if (token.StringValue == "puts")
-                {
-                    program.emplace_back(OpType::PUTS, token.Loc);
-                }
-                else if (token.StringValue == "here")
-                {
-                    program.emplace_back(OpType::HERE, token.Loc);
-                }
-                else if (token.StringValue == "copy")
-                {
-                    program.emplace_back(OpType::COPY, token.Loc);
-                }
-                else if (token.StringValue == "over")
-                {
-                    program.emplace_back(OpType::OVER, token.Loc);
-                }
-                else if (token.StringValue == "swap")
-                {
-                    program.emplace_back(OpType::SWAP, token.Loc);
-                }
-                else if (token.StringValue == "drop")
-                {
-                    program.emplace_back(OpType::DROP, token.Loc);
-                }
-                else if (token.StringValue == "rot")
-                {
-                    program.emplace_back(OpType::ROT, token.Loc);
-                }
-                else if (token.StringValue == "syscall0")
-                {
-                    program.emplace_back(OpType::SYSCALL0, token.Loc);
-                }
-                else if (token.StringValue == "syscall1")
-                {
-                    program.emplace_back(OpType::SYSCALL1, token.Loc);
-                }
-                else if (token.StringValue == "syscall2")
-                {
-                    program.emplace_back(OpType::SYSCALL2, token.Loc);
-                }
-                else if (token.StringValue == "syscall3")
-                {
-                    program.emplace_back(OpType::SYSCALL3, token.Loc);
-                }
-                else if (token.StringValue == "syscall4")
-                {
-                    program.emplace_back(OpType::SYSCALL4, token.Loc);
-                }
-                else if (token.StringValue == "syscall5")
-                {
-                    program.emplace_back(OpType::SYSCALL5, token.Loc);
-                }
-                else if (token.StringValue == "syscall6")
-                {
-                    program.emplace_back(OpType::SYSCALL6, token.Loc);
-                }
                 else
                 {
-                    auto it = bindings.find(token.StringValue);
-
-                    if (it != bindings.end())
+                    try
                     {
-                        for (const auto& binding : bindings.at(token.StringValue)) {
-                            program.push_back(binding);
-                        }
+                        program.emplace_back(BuiltInOps.at(token.StringValue), token.Loc);
                     }
-                    else
+                    catch(...)
                     {
-                        cerr << token.Loc << ": ERROR: Undefined token: '" << token.StringValue << "'" << endl;
-                        exit(1);
+                        auto it = bindings.find(token.StringValue);
+
+                        if (it != bindings.end())
+                        {
+                            for (const auto& binding : bindings.at(token.StringValue)) {
+                                program.push_back(binding);
+                            }
+                        }
+                        else
+                        {
+                            cerr << token.Loc << ": ERROR: Undefined token: '" << token.StringValue << "'" << endl;
+                            exit(1);
+                        }
                     }
                 }
                 break;
@@ -755,7 +623,7 @@ void crossreference_blocks(vector<Operation>& program)
 {
     stack<int> crossreference_stack;
 
-    assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling. Not all operations should be handled in here");
 
     for (int i = 0; i < int(program.size()); ++i) {
         Operation op = program[i];
@@ -769,6 +637,11 @@ void crossreference_blocks(vector<Operation>& program)
             }
             case OpType::ELSE:
             {
+                if (crossreference_stack.empty())
+                {
+                    cerr << op.Loc << ": ERROR: `else` operation can only be used in `if` block" << endl;
+                    exit(1);
+                }
                 int pos = crossreference_stack.top();
                 crossreference_stack.pop();
                 program[pos].JumpTo = i + 1;
@@ -777,6 +650,11 @@ void crossreference_blocks(vector<Operation>& program)
             }
             case OpType::DO:
             {
+                if (crossreference_stack.empty())
+                {
+                    cerr << op.Loc << ": ERROR: `do` operation can only be used in `while` block" << endl;
+                    exit(1);
+                }
                 program[i].JumpTo = crossreference_stack.top();
                 crossreference_stack.pop();
                 crossreference_stack.push(i);
@@ -784,6 +662,11 @@ void crossreference_blocks(vector<Operation>& program)
             }
             case OpType::END:
             {
+                if (crossreference_stack.empty())
+                {
+                    cerr << op.Loc << ": ERROR: `end` operation can only be used to close other blocks" << endl;
+                    exit(1);
+                }
                 int pos = crossreference_stack.top();
                 crossreference_stack.pop();
 
@@ -826,7 +709,7 @@ void type_check_program(const vector<Operation>& program)
     stack<Type> type_checking_stack;
 
     for (const auto& op : program) {
-        assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -1040,12 +923,56 @@ void type_check_program(const vector<Operation>& program)
             case OpType::BIND:
             {
                 assert(false, "Unreachable. All bindings should be expanded at the compilation step");
+            }
+            case OpType::MEM:
+            {
+                type_checking_stack.emplace(DataType::PTR, op.Loc);
+                break;
+            }
+            case OpType::LOAD:
+            {
+                if (type_checking_stack.empty())
+                {
+                    cerr << op.Loc << "ERROR: Not enough arguments for `load8` operation. Expected 1 argument, but found 0" << endl;
+                    exit(1);
+                }
+
+                Type top = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                if (top.Code != DataType::PTR)
+                {
+                    cerr << op.Loc << "ERROR: Unexpected argument type for `load8` operation. Expected `ptr`, but found " << HumanizedDataTypes.at(top.Code) << endl;
+                    exit(1);
+                }
+
+                type_checking_stack.emplace(DataType::INT, op.Loc);
+
+                break;
+            }
+            case OpType::STORE:
+            {
+                if (type_checking_stack.size() < 2)
+                {
+                    cerr << op.Loc << "ERROR: Not enough arguments for `store8` operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                if (a.Code != DataType::INT || b.Code != DataType::PTR)
+                {
+                    cerr << op.Loc << "ERROR: Unexpected argument's types for `store8` operation. Expected `int` and `ptr`, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << endl;
+                    exit(1);
+                }
                 break;
             }
             case OpType::USE:
             {
                 assert(false, "Unreachable. All `use` operations should be eliminated at the compilation step");
-                break;
             }
             case OpType::PUT:
             {
@@ -1058,11 +985,11 @@ void type_check_program(const vector<Operation>& program)
                 type_checking_stack.pop();
                 break;
             }
-            case OpType::PUTS:
+            case OpType::FPUTS:
             {
-                if (type_checking_stack.size() < 2)
+                if (type_checking_stack.size() < 3)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 3 arguments, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -1070,10 +997,12 @@ void type_check_program(const vector<Operation>& program)
                 type_checking_stack.pop();
                 Type b = type_checking_stack.top();
                 type_checking_stack.pop();
+                Type c = type_checking_stack.top();
+                type_checking_stack.pop();
 
-                if (a.Code != DataType::PTR || b.Code != DataType::INT)
+                if (a.Code != DataType::INT || b.Code != DataType::PTR || c.Code != DataType::INT)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument's types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(a.Code) << " and " << HumanizedDataTypes.at(b.Code) << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument's types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << ", " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(a.Code) << " and " << HumanizedDataTypes.at(b.Code) << endl;
                     exit(1);
                 }
 
@@ -1284,414 +1213,6 @@ void type_check_program(const vector<Operation>& program)
     }
 }
 
-void run_program(vector<Operation> program)
-{
-    assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
-
-    stack<int> runtime_stack;
-    vector<byte> memory;
-    size_t strings_size = 0;
-
-    for (size_t i = 0; i < program.size();) {
-        Operation op = program[i];
-
-        switch (op.Type)
-        {
-            case OpType::PUSH_INT:
-            {
-                runtime_stack.push(op.IntegerValue);
-                ++i;
-                break;
-            }
-            case OpType::PUSH_STRING:
-            {
-                const byte* bs = reinterpret_cast<const byte*>(op.StringValue.c_str());
-                int n = int(op.StringValue.length());
-
-                runtime_stack.push(n);
-
-                op.Address = int(strings_size);
-                runtime_stack.push(op.Address);
-
-                for (int j = 0; j < n; ++j) {
-                    memory.push_back(bs[j]);
-                }
-
-                strings_size += n;
-                ++i;
-                break;
-            }
-            case OpType::PLUS:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a + b);
-                ++i;
-                break;
-            }
-            case OpType::MINUS:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b - a);
-                ++i;
-                break;
-            }
-            case OpType::MUL:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a * b);
-                ++i;
-                break;
-            }
-            case OpType::DIV:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b / a);
-                ++i;
-                break;
-            }
-            case OpType::MOD:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b % a);
-                ++i;
-                break;
-            }
-            case OpType::BOR:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a | b);
-                ++i;
-                break;
-            }
-            case OpType::BAND:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a & b);
-                ++i;
-                break;
-            }
-            case OpType::XOR:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a ^ b);
-                ++i;
-                break;
-            }
-            case OpType::SHL:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b << a);
-                ++i;
-                break;
-            }
-            case OpType::SHR:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b >> a);
-                ++i;
-                break;
-            }
-            case OpType::EQ:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a == b);
-                ++i;
-                break;
-            }
-            case OpType::NE:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a != b);
-                ++i;
-                break;
-            }
-            case OpType::LT:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b < a);
-                ++i;
-                break;
-            }
-            case OpType::GT:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b > a);
-                ++i;
-                break;
-            }
-            case OpType::LE:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b <= a);
-                ++i;
-                break;
-            }
-            case OpType::GE:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b >= a);
-                ++i;
-                break;
-            }
-            case OpType::NOT:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                if (a == 0) runtime_stack.push(1);
-                else if (a == 1) runtime_stack.push(0);
-                else assert(false, "unreachable");
-                ++i;
-                break;
-            }
-            case OpType::TRUE:
-            {
-                runtime_stack.push(1);
-                ++i;
-                break;
-            }
-            case OpType::FALSE:
-            {
-                runtime_stack.push(0);
-                ++i;
-                break;
-            }
-            case OpType::IF:
-            case OpType::DO:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                if (a == 0) i = op.JumpTo;
-                else ++i;
-                break;
-            }
-            case OpType::ELSE:
-            {
-                i = op.JumpTo;
-                break;
-            }
-            case OpType::END:
-            {
-                if (program[op.JumpTo].Type == OpType::WHILE) i = op.JumpTo;
-                else ++i;
-                break;
-            }
-            case OpType::WHILE:
-            {
-                ++i;
-                break;
-            }
-            case OpType::BIND:
-            {
-                assert(false, "Unreachable. All bindings should be expanded at the compilation step");
-                ++i;
-                break;
-            }
-            case OpType::USE:
-            {
-                assert(false, "Unreachable. All `use` operations should be eliminated at the compilation step");
-                break;
-            }
-            case OpType::PUT:
-            {
-                int val = runtime_stack.top();
-                runtime_stack.pop();
-                cout << to_string(val) << endl;
-                ++i;
-                break;
-            }
-            case OpType::PUTS:
-            {
-                int buf = runtime_stack.top();
-                runtime_stack.pop();
-                int n = runtime_stack.top();
-                runtime_stack.pop();
-
-                string s;
-                if (buf >= 0 && n >= 0 && buf + n <= static_cast<int>(memory.size())) {
-                    s.reserve(n);
-
-                    for (int j = buf; j < buf + n; ++j) {
-                        s.push_back(static_cast<char>(memory[j]));
-                    }
-                } else {
-                    cerr << op.Loc << ": ERROR: Invalid length buffer or length values" << endl;
-                    exit(1);
-                }
-
-                cout << s;
-                ++i;
-                break;
-            }
-            case OpType::HERE:
-            {
-                const byte* bs = reinterpret_cast<const byte*>(op.Loc.c_str());
-                int n = int(op.Loc.length());
-
-                runtime_stack.push(n);
-
-                op.Address = int(strings_size);
-                runtime_stack.push(op.Address);
-
-                for (int j = 0; j < n; ++j) {
-                    memory.push_back(bs[j]);
-                }
-
-                strings_size += n;
-                ++i;
-                break;
-            }
-            case OpType::COPY:
-            {
-                runtime_stack.push(runtime_stack.top());
-                ++i;
-                break;
-            }
-            case OpType::OVER:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b);
-                runtime_stack.push(a);
-                runtime_stack.push(b);
-
-                ++i;
-                break;
-            }
-            case OpType::SWAP:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a);
-                runtime_stack.push(b);
-
-                ++i;
-                break;
-            }
-            case OpType::DROP:
-            {
-                runtime_stack.pop();
-                ++i;
-                break;
-            }
-            case OpType::ROT:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-                int c = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a);
-                runtime_stack.push(c);
-                runtime_stack.push(b);
-                ++i;
-                break;
-            }
-            case OpType::SYSCALL0:
-            case OpType::SYSCALL1:
-            case OpType::SYSCALL2:
-            case OpType::SYSCALL3:
-            case OpType::SYSCALL4:
-            case OpType::SYSCALL5:
-            case OpType::SYSCALL6:
-            {
-                assert(false, "Not implemented for running mode");
-            }
-            default:
-                assert(false, "Unreachable");
-        }
-    }
-}
-
 void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation> program)
 {
     std::ofstream out(output_file_path);
@@ -1704,6 +1225,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     map<string, int> strings;
 
     string output_content;
+    complete_string(output_content, "BITS 64");
 
     bool is_put_needed;
     for (const auto& op : program)
@@ -1756,7 +1278,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     complete_string(output_content, "    global _start\n");
     complete_string(output_content, "_start:");
 
-    assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -2009,12 +1531,33 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             case OpType::BIND:
             {
                 assert(false, "Unreachable. All bindings should be expanded at the compilation step");
+            }
+            case OpType::MEM:
+            {
+                complete_string(output_content, "    ; -- mem --");
+                complete_string(output_content, "    push    mem");
+                break;
+            }
+            case OpType::LOAD:
+            {
+                complete_string(output_content, "    ; -- load32 --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    xor     rbx, rbx");
+                complete_string(output_content, "    mov     ebx, [rax]");
+                complete_string(output_content, "    push    rbx");
+                break;
+            }
+            case OpType::STORE:
+            {
+                complete_string(output_content, "    ; -- store32 --");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    mov     [rax], ebx");
                 break;
             }
             case OpType::USE:
             {
                 assert(false, "Unreachable. All `use` operations should be eliminated at the compilation step");
-                break;
             }
             case OpType::PUT:
             {
@@ -2023,11 +1566,11 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    call    put");
                 break;
             }
-            case OpType::PUTS:
+            case OpType::FPUTS:
             {
-                complete_string(output_content, "    ; -- puts --");
+                complete_string(output_content, "    ; -- fputs --");
                 complete_string(output_content, "    mov     rax, 1");
-                complete_string(output_content, "    mov     rdi, 1");
+                complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
                 complete_string(output_content, "    pop     rdx");
                 complete_string(output_content, "    syscall");
@@ -2098,7 +1641,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL1:
             {
-                complete_string(output_content, "    ; -- syscall1 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    syscall");
@@ -2106,7 +1649,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL2:
             {
-                complete_string(output_content, "    ; -- syscall2 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
@@ -2115,7 +1658,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL3:
             {
-                complete_string(output_content, "    ; -- syscall3 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
@@ -2125,7 +1668,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL4:
             {
-                complete_string(output_content, "    ; -- syscall4 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
@@ -2136,7 +1679,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL5:
             {
-                complete_string(output_content, "    ; -- syscall5 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
@@ -2148,7 +1691,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL6:
             {
-                complete_string(output_content, "    ; -- syscall6 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
@@ -2187,6 +1730,9 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
 
         out << endl;
     }
+
+    out << endl << "segment .bss" << endl;
+    out << "    mem resb 640000" << endl;
 }
 
 void compile(const string& compiler_path, const string& path, vector<Operation> program, bool run_after_compilation, bool silent_mode)
@@ -2231,25 +1777,17 @@ int main(int argc, char* argv[])
     vector<string> args(argv, argv + argc);
 
     string compiler_path = shift_vector(args);
+    vector<string> include_paths = {"./std/"};
     string path;
+    bool run_after_compilation;
+    bool silent_mode;
 
     if (args.empty())
     {
         usage(compiler_path);
-        cerr << "ERROR: no subcommand provided" << endl;
+        cerr << "ERROR: No subcommand provided" << endl;
         exit(1);
     }
-
-    string subcommand = shift_vector(args);
-    if (subcommand != "run" && subcommand != "compile")
-    {
-        usage(compiler_path);
-        cerr << "ERROR: Provided unknown subcommand: '" << subcommand << "'" << endl;
-        exit(1);
-    }
-
-    bool run_after_compilation;
-    bool silent_mode;
 
     while (!args.empty())
     {
@@ -2257,6 +1795,16 @@ int main(int argc, char* argv[])
 
         if (arg == "-r") run_after_compilation = true;
         else if (arg == "-s") silent_mode = true;
+        else if (arg == "-I")
+        {
+            if (args.empty())
+            {
+                cerr << "ERROR: No use path provided after `-I` flag" << endl;
+                exit(1);
+            }
+
+            include_paths.push_back(shift_vector(args));
+        }
         else path = arg;
     }
 
@@ -2271,19 +1819,13 @@ int main(int argc, char* argv[])
 
     vector<Token> tokens = lex_file(file_path.string());
 
-    vector<Operation> program = parse_tokens_as_operations(tokens);
+    vector<Operation> program = parse_tokens_as_operations(tokens, include_paths);
 
     crossreference_blocks(program);
 
     type_check_program(program);
 
-    if (subcommand == "run")
-    {
-        run_program(program);
-    }
-    else if (subcommand == "compile")
-    {
-        compile(compiler_path, path, program, run_after_compilation, silent_mode);
-    }
+    compile(compiler_path, path, program, run_after_compilation, silent_mode);
+
     return 0;
 }

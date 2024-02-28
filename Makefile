@@ -1,21 +1,14 @@
 CXX ?= g++
 CXXFLAGS ?= -std=c++23# -Wall -Wextra
-TARGET ?= gollo test
-SOURCE ?= gollo.cpp test.cpp
 
-BUILD_TYPE ?= release
+all: build test
 
-ifeq ($(BUILD_TYPE), debug)
-    CXXFLAGS += -g
-endif
+build: ./gollo.cpp
+	$(CXX) $(CXXFLAGS) -o ./gollo ./gollo.cpp
 
-all: $(TARGET)
-
-$(TARGET): $(SOURCE)
-	$(CXX) $(CXXFLAGS) -o $@ $<
+test: ./test.cpp
 	$(CXX) $(CXXFLAGS) -o ./test ./test.cpp
-
-.PHONY: clean
+	./test run -f ./euler/ -f ./examples/
 
 clean:
-	rm -f $(TARGET)
+	rm -f ./test ./gollo

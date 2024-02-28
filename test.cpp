@@ -2,6 +2,10 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
+#include <utility>
+#include <map>
+#include <string>
 
 using namespace std;
 
@@ -31,51 +35,33 @@ string shift_vector(vector<string>& vec)
     exit(1);
 }
 
-vector<string> split_string(const string& input, char delimiter) {
-    vector<string> tokens;
-    istringstream stream(input);
-    string token;
-
-    while (getline(stream, token, delimiter)) {
-        tokens.push_back(token);
-    }
-
-    return tokens;
-}
-
-
 void test_file(const string& filePath) {
     string file_name = filePath.substr(0, filePath.find_last_of('.'));
 
-    vector<string> commands = {"./gollo run " + filePath, "./gollo compile -s " + filePath + " && ./" + file_name};
+    string command = "./gollo -s " + filePath + " && ./" + file_name;
 
-    for (auto const& command : commands)
-    {
-        FILE* pipe = popen(command.c_str(), "r");
-        if (!pipe) {
-            cerr << "Error executing command: " << command << endl;
-            return;
-        }
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        cerr << "Error executing command: " << command << endl;
+        return;
+    }
 
-        string output;
-        char buffer[128];
-        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-            output += buffer;
-        }
+    string output;
+    char buffer[128];
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) output += buffer;
 
-        pclose(pipe);
+    pclose(pipe);
 
-        string outputPath = file_name + ".output";
+    string outputPath = file_name + ".output";
 
-        ifstream outputFile(outputPath);
-        string expectedOutput((istreambuf_iterator<char>(outputFile)), istreambuf_iterator<char>());
+    ifstream outputFile(outputPath);
+    string expectedOutput((istreambuf_iterator<char>(outputFile)), istreambuf_iterator<char>());
 
-        if (output == expectedOutput) {
-            cout << "[" << split_string(command, ' ')[1] << "] Test passed for file: " << filePath << endl;
-        } else {
-            cerr << "[" << split_string(command, ' ')[1] << "] Test failed for file: " << filePath << endl;
-            cerr << "  Expected output:\n" << expectedOutput << "\n  Actual output:\n" << output << endl;
-        }
+    if (output == expectedOutput) {
+        cout << "Test passed for file: " << filePath << endl;
+    } else {
+        cerr << "Test failed for file: " << filePath << endl;
+        cerr << "  Expected output:\n" << expectedOutput << "\n  Actual output:\n" << output << endl;
     }
 }
 
@@ -105,14 +91,14 @@ void run_tests(vector<string> args, vector<string> paths)
         }
     }
 
-    for (auto path : paths) run_tests_in_directory(path);
+    for (const auto& path : paths) run_tests_in_directory(path);
 }
 
 void record_test_output(string const& file_path)
 {
     string file_name = file_path.substr(0, file_path.length() - FILE_EXTENSION.length());
 
-    execute_command(false, "./gollo compile " + file_path);
+    execute_command(false, "./gollo -s -r " + file_path);
 
     execute_command(false, "./" + file_name + " > " + file_name + ".output");
 }
@@ -124,7 +110,7 @@ int main(int argc, char* argv[])
 
     string program = shift_vector(args);
 
-    execute_command(false, "make");
+    execute_command(false, "make build");
 
     if (args.empty())
     {

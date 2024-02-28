@@ -1,3 +1,5 @@
+use "std.glo"
+
 "Hello world\n" puts
 "Other staff\n" puts
 
@@ -6,4 +8,4 @@
 puts
 puts
 
-here puts ": INFO: no error /( ._.)/\n" puts
+"INFO: no error /( ._.)/\n" puts

@@ -1,1 +1,3 @@
+use "std.glo"
+
 "Hello, world!\n" puts
