@@ -47,7 +47,7 @@ enum class OpType : int {
     STORE,
     USE,
     PUT,
-    PUTS,
+    FPUTS,
     HERE,
     COPY,
     OVER,
@@ -97,7 +97,7 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::STORE, "`store32`"},
         {OpType::USE, "`use`"},
         {OpType::PUT, "`put`"},
-        {OpType::PUTS, "`puts`"},
+        {OpType::FPUTS, "`fputs`"},
         {OpType::HERE, "`here`"},
         {OpType::COPY, "`copy`"},
         {OpType::OVER, "`over`"},
@@ -144,7 +144,7 @@ const map<string, OpType> BuiltInOps = {
         {"store32", OpType::STORE},
         {"use", OpType::USE},
         {"put", OpType::PUT},
-        {"puts", OpType::PUTS},
+        {"fputs", OpType::FPUTS},
         {"here", OpType::HERE},
         {"copy", OpType::COPY},
         {"over", OpType::OVER},
@@ -423,7 +423,7 @@ vector<Token> lex_file(string const& path)
 
     if (!file.is_open())
     {
-        cerr << "ERROR: file `" << path << "` not found in include directories" << endl;
+        cerr << "ERROR: File `" << path << "` not found in include directories" << endl;
         exit(1);
     }
 
@@ -970,11 +970,11 @@ void type_check_program(const vector<Operation>& program)
                 type_checking_stack.pop();
                 break;
             }
-            case OpType::PUTS:
+            case OpType::FPUTS:
             {
-                if (type_checking_stack.size() < 2)
+                if (type_checking_stack.size() < 3)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 3 arguments, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -982,10 +982,12 @@ void type_check_program(const vector<Operation>& program)
                 type_checking_stack.pop();
                 Type b = type_checking_stack.top();
                 type_checking_stack.pop();
+                Type c = type_checking_stack.top();
+                type_checking_stack.pop();
 
-                if (a.Code != DataType::PTR || b.Code != DataType::INT)
+                if (a.Code != DataType::INT || b.Code != DataType::PTR || c.Code != DataType::INT)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument's types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(a.Code) << " and " << HumanizedDataTypes.at(b.Code) << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument's types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << ", " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(a.Code) << " and " << HumanizedDataTypes.at(b.Code) << endl;
                     exit(1);
                 }
 
@@ -1549,11 +1551,11 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    call    put");
                 break;
             }
-            case OpType::PUTS:
+            case OpType::FPUTS:
             {
-                complete_string(output_content, "    ; -- puts --");
+                complete_string(output_content, "    ; -- fputs --");
                 complete_string(output_content, "    mov     rax, 1");
-                complete_string(output_content, "    mov     rdi, 1");
+                complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
                 complete_string(output_content, "    pop     rdx");
                 complete_string(output_content, "    syscall");
