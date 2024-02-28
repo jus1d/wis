@@ -1768,7 +1768,7 @@ int main(int argc, char* argv[])
     if (args.empty())
     {
         usage(compiler_path);
-        cerr << "ERROR: no subcommand provided" << endl;
+        cerr << "ERROR: No subcommand provided" << endl;
         exit(1);
     }
 
@@ -1782,7 +1782,7 @@ int main(int argc, char* argv[])
         {
             if (args.empty())
             {
-                cerr << "ERROR: no use path provided after `-I` flag" << endl;
+                cerr << "ERROR: No use path provided after `-I` flag" << endl;
                 exit(1);
             }
 
