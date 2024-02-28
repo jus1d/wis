@@ -93,8 +93,8 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::WHILE, "`while`"},
         {OpType::BIND, "`bind`"},
         {OpType::MEM, "`mem`"},
-        {OpType::LOAD, "`load8`"},
-        {OpType::STORE, "`store8`"},
+        {OpType::LOAD, "`load32`"},
+        {OpType::STORE, "`store32`"},
         {OpType::USE, "`use`"},
         {OpType::PUT, "`put`"},
         {OpType::PUTS, "`puts`"},
@@ -140,8 +140,8 @@ const map<string, OpType> BuiltInOps = {
         {"while", OpType::WHILE},
         {"bind", OpType::BIND},
         {"mem", OpType::MEM},
-        {"load8", OpType::LOAD},
-        {"store8", OpType::STORE},
+        {"load32", OpType::LOAD},
+        {"store32", OpType::STORE},
         {"use", OpType::USE},
         {"put", OpType::PUT},
         {"puts", OpType::PUTS},
@@ -652,11 +652,11 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                 {
                     program.emplace_back(OpType::MEM, token.Loc);
                 }
-                else if (token.StringValue == "load8")
+                else if (token.StringValue == "load32")
                 {
                     program.emplace_back(OpType::LOAD, token.Loc);
                 }
-                else if (token.StringValue == "store8")
+                else if (token.StringValue == "store32")
                 {
                     program.emplace_back(OpType::STORE, token.Loc);
                 }
@@ -1684,19 +1684,19 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::LOAD:
             {
-                complete_string(output_content, "    ; -- load8 --");
-                complete_string(output_content, "    push    rax");
+                complete_string(output_content, "    ; -- load32 --");
+                complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    xor     rbx, rbx");
-                complete_string(output_content, "    mov     bl, [rax]");
+                complete_string(output_content, "    mov     ebx, [rax]");
                 complete_string(output_content, "    push    rbx");
                 break;
             }
             case OpType::STORE:
             {
-                complete_string(output_content, "    ; -- store8 --");
+                complete_string(output_content, "    ; -- store32 --");
                 complete_string(output_content, "    pop     rbx");
                 complete_string(output_content, "    pop     rax");
-                complete_string(output_content, "    mov     [rax], bl");
+                complete_string(output_content, "    mov     [rax], ebx");
                 break;
             }
             case OpType::USE:

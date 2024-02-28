@@ -31,7 +31,7 @@
 		"builtin": {
 			"patterns": [{
 				"name": "keyword.other.builtin.glo",
-				"match": "\\b(put|puts|here|copy|over|swap|drop|rot|syscall0|syscall1|syscall2|syscall3|syscall4|syscall5|syscall6)\\b"
+				"match": "\\b(mem|load32|store32|put|puts|here|copy|over|swap|drop|rot|syscall0|syscall1|syscall2|syscall3|syscall4|syscall5|syscall6)\\b"
 			}]
 		},
 		"standard": {
