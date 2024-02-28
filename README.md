@@ -83,10 +83,12 @@ end
 **Usage:**
 
 ```
-bind exit 60 syscall1 end
+bind exit sys_exit syscall1 end
 
 69 exit
 ```
+
+That program will exit with `69` exit code.
 
 ### Usings
 
@@ -95,12 +97,27 @@ bind exit 60 syscall1 end
 Only needed bindings will expand to operation at the compilation step
 
 ```
-use "./std/std.glo"
-
 here eputs ": ERROR: some error message" eputs
+69 exit
 ```
 
-That program will exit with `69` exit code.
+### Memory
+
+- `mem` keyword pushes a pointer to buffer, where you can write and read
+- `store32` keyword puts a 32-bit value to memory buffer
+
+```
+mem 69 store32
+```
+Puts a `69` to program's memory
+
+- `load32` keyword loads a 32-bit value from the memory buffer to the stack
+
+```
+mem load32 put
+```
+
+Loads a value from memory to the stack
 
 ### Operations
 
@@ -114,6 +131,14 @@ Pushes integer number on top of the stack
 
 ---
 
+#### `<string>`
+
+Pushes integer number that represents string's length, and pointer where string is started
+
+**Stack:** `1` => `1 size ptr`
+
+---
+
 #### `put`
 
 Removes and prints number from top of the stack
@@ -124,16 +149,17 @@ Removes and prints number from top of the stack
 
 ---
 
-#### `puts`
+#### `fputs`
 
-`puts` (put string) is a built-in shortcut for: `1 1 syscall3 drop`
+`fputs` (put string) is a built-in shortcut for: `sys_write syscall3 drop`
 
-`puts` pushes `1` to the stack, and call `write` syscall
+`fputs` call `write` syscall and drop it's return value
 
 **Example:**
 
 ```
-"Hello, world!" puts
+"Hello, world!"             stdout fputs
+"ERROR: some error message" stderr fputs
 ```
 
 ---
@@ -143,14 +169,6 @@ Removes and prints number from top of the stack
 Copies integer on top of the stack
 
 **Stack:** `1 2` => `1 2 2`
-
----
-
-#### `2copy`
-
-Copies two integers on top of the stack
-
-**Stack:** `1 2 3` => `1 2 3 2 3`
 
 ---
 
@@ -188,12 +206,14 @@ Rotates 3 values on top of the stack
 
 ### System calls
 
-You can use `syscall<n>`, where `n` is between 1 and 3. Now supported only syscalls that accepts 1-3 arguments.
+You can use `syscall<n>`, where `n` is a number between 1 and 6
 
 **Example:**
 
 Call exit syscall with non-zero exit code
 
 ```
-1 60 syscall1
+69 sys_exit syscall1
 ```
+
+This program will exit with `69` exit code
