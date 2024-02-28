@@ -166,7 +166,6 @@ public:
     int IntegerValue{};
     string StringValue;
     string Loc;
-    int Address{};
     int JumpTo{};
 
     Operation(OpType type, string loc)
@@ -230,13 +229,11 @@ public:
 
 void usage(string const& compiler_path)
 {
-    cerr << "Usage: " << compiler_path << " <SUBCOMMAND> ./examples/goo.glo" << endl;
-    cerr << "SUBCOMMANDS:" << endl;
-    cerr << "    run                 Instantly run the program" << endl;
-    cerr << "    compile [ARGS]      Compile the program into an executable" << endl;
-    cerr << "      ARGS:" << endl;
-    cerr << "          -r            Run compiled program after compilation" << endl;
-    cerr << "          -s            Silent mode for compiler" << endl;
+    cerr << "Usage: " << compiler_path << " [ARGS] ./examples/goo.glo" << endl;
+    cerr << "ARGS:" << endl;
+    cerr << "    -r            Run compiled program after compilation" << endl;
+    cerr << "    -s            Silent mode for compiler" << endl;
+    cerr << "    -I <path>     Add directory to include paths list" << endl;
 }
 
 string shift_vector(vector<string>& vec)
@@ -1360,415 +1357,6 @@ void type_check_program(const vector<Operation>& program)
     }
 }
 
-void run_program(vector<Operation> program)
-{
-    assert(static_cast<int>(OpType::COUNT) == 44, "Exhaustive operations handling");
-
-    stack<int> runtime_stack;
-    vector<byte> memory;
-    size_t strings_size = 0;
-
-    for (size_t i = 0; i < program.size();) {
-        Operation op = program[i];
-
-        switch (op.Type)
-        {
-            case OpType::PUSH_INT:
-            {
-                runtime_stack.push(op.IntegerValue);
-                ++i;
-                break;
-            }
-            case OpType::PUSH_STRING:
-            {
-                const byte* bs = reinterpret_cast<const byte*>(op.StringValue.c_str());
-                int n = int(op.StringValue.length());
-
-                runtime_stack.push(n);
-
-                op.Address = int(strings_size);
-                runtime_stack.push(op.Address);
-
-                for (int j = 0; j < n; ++j) {
-                    memory.push_back(bs[j]);
-                }
-
-                strings_size += n;
-                ++i;
-                break;
-            }
-            case OpType::PLUS:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a + b);
-                ++i;
-                break;
-            }
-            case OpType::MINUS:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b - a);
-                ++i;
-                break;
-            }
-            case OpType::MUL:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a * b);
-                ++i;
-                break;
-            }
-            case OpType::DIV:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b / a);
-                ++i;
-                break;
-            }
-            case OpType::MOD:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b % a);
-                ++i;
-                break;
-            }
-            case OpType::BOR:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a | b);
-                ++i;
-                break;
-            }
-            case OpType::BAND:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a & b);
-                ++i;
-                break;
-            }
-            case OpType::XOR:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a ^ b);
-                ++i;
-                break;
-            }
-            case OpType::SHL:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b << a);
-                ++i;
-                break;
-            }
-            case OpType::SHR:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b >> a);
-                ++i;
-                break;
-            }
-            case OpType::EQ:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a == b);
-                ++i;
-                break;
-            }
-            case OpType::NE:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a != b);
-                ++i;
-                break;
-            }
-            case OpType::LT:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b < a);
-                ++i;
-                break;
-            }
-            case OpType::GT:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b > a);
-                ++i;
-                break;
-            }
-            case OpType::LE:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b <= a);
-                ++i;
-                break;
-            }
-            case OpType::GE:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b >= a);
-                ++i;
-                break;
-            }
-            case OpType::NOT:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                if (a == 0) runtime_stack.push(1);
-                else if (a == 1) runtime_stack.push(0);
-                else assert(false, "unreachable");
-                ++i;
-                break;
-            }
-            case OpType::TRUE:
-            {
-                runtime_stack.push(1);
-                ++i;
-                break;
-            }
-            case OpType::FALSE:
-            {
-                runtime_stack.push(0);
-                ++i;
-                break;
-            }
-            case OpType::IF:
-            case OpType::DO:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-
-                if (a == 0) i = op.JumpTo;
-                else ++i;
-                break;
-            }
-            case OpType::ELSE:
-            {
-                i = op.JumpTo;
-                break;
-            }
-            case OpType::END:
-            {
-                if (program[op.JumpTo].Type == OpType::WHILE) i = op.JumpTo;
-                else ++i;
-                break;
-            }
-            case OpType::WHILE:
-            {
-                ++i;
-                break;
-            }
-            case OpType::BIND:
-            {
-                assert(false, "Unreachable. All bindings should be expanded at the compilation step");
-            }
-            case OpType::MEM:
-            {
-                assert(false, "Not implemented yet");
-            }
-            case OpType::USE:
-            {
-                assert(false, "Unreachable. All `use` operations should be eliminated at the compilation step");
-            }
-            case OpType::PUT:
-            {
-                int val = runtime_stack.top();
-                runtime_stack.pop();
-                cout << to_string(val) << endl;
-                ++i;
-                break;
-            }
-            case OpType::PUTS:
-            {
-                int buf = runtime_stack.top();
-                runtime_stack.pop();
-                int n = runtime_stack.top();
-                runtime_stack.pop();
-
-                string s;
-                if (buf >= 0 && n >= 0 && buf + n <= static_cast<int>(memory.size())) {
-                    s.reserve(n);
-
-                    for (int j = buf; j < buf + n; ++j) {
-                        s.push_back(static_cast<char>(memory[j]));
-                    }
-                } else {
-                    cerr << op.Loc << ": ERROR: Invalid length buffer or length values" << endl;
-                    exit(1);
-                }
-
-                cout << s;
-                ++i;
-                break;
-            }
-            case OpType::HERE:
-            {
-                const byte* bs = reinterpret_cast<const byte*>(op.Loc.c_str());
-                int n = int(op.Loc.length());
-
-                runtime_stack.push(n);
-
-                op.Address = int(strings_size);
-                runtime_stack.push(op.Address);
-
-                for (int j = 0; j < n; ++j) {
-                    memory.push_back(bs[j]);
-                }
-
-                strings_size += n;
-                ++i;
-                break;
-            }
-            case OpType::COPY:
-            {
-                runtime_stack.push(runtime_stack.top());
-                ++i;
-                break;
-            }
-            case OpType::OVER:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(b);
-                runtime_stack.push(a);
-                runtime_stack.push(b);
-
-                ++i;
-                break;
-            }
-            case OpType::SWAP:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a);
-                runtime_stack.push(b);
-
-                ++i;
-                break;
-            }
-            case OpType::DROP:
-            {
-                runtime_stack.pop();
-                ++i;
-                break;
-            }
-            case OpType::ROT:
-            {
-                int a = runtime_stack.top();
-                runtime_stack.pop();
-                int b = runtime_stack.top();
-                runtime_stack.pop();
-                int c = runtime_stack.top();
-                runtime_stack.pop();
-
-                runtime_stack.push(a);
-                runtime_stack.push(c);
-                runtime_stack.push(b);
-                ++i;
-                break;
-            }
-            case OpType::SYSCALL0:
-            case OpType::SYSCALL1:
-            case OpType::SYSCALL2:
-            case OpType::SYSCALL3:
-            case OpType::SYSCALL4:
-            case OpType::SYSCALL5:
-            case OpType::SYSCALL6:
-            {
-                assert(false, "Not implemented for running mode");
-            }
-            default:
-                assert(false, "Unreachable");
-        }
-    }
-}
-
 void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation> program)
 {
     std::ofstream out(output_file_path);
@@ -2304,7 +1892,7 @@ void compile(const string& compiler_path, const string& path, vector<Operation> 
         exit(1);
     }
 
-//#ifdef __x86_64__
+#ifdef __x86_64__
     if (!silent_mode) cout << "[INFO] Generating assembly -> " << filename << ".asm" << endl;
     generate_nasm_linux_x86_64(filename + ".asm", std::move(program));
 
@@ -2318,7 +1906,7 @@ void compile(const string& compiler_path, const string& path, vector<Operation> 
     if (run_after_compilation) execute_command(silent_mode, filename);
 
     return;
-//#endif
+#endif
 
     cerr << "ERROR: Your processor's architecture is not supported yet" << endl;
     exit(1);
@@ -2390,13 +1978,7 @@ int main(int argc, char* argv[])
 
     type_check_program(program);
 
-    if (subcommand == "run")
-    {
-        run_program(program);
-    }
-    else if (subcommand == "compile")
-    {
-        compile(compiler_path, path, program, run_after_compilation, silent_mode);
-    }
+    compile(compiler_path, path, program, run_after_compilation, silent_mode);
+
     return 0;
 }
