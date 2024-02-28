@@ -99,6 +99,8 @@ void record_test_output(string const& file_path)
     string file_name = file_path.substr(0, file_path.length() - FILE_EXTENSION.length());
 
     execute_command(false, "./gollo -s -r " + file_path);
+
+    execute_command(false, "./" + file_name + " > " + file_name + ".output");
 }
 
 int main(int argc, char* argv[])
