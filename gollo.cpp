@@ -637,6 +637,11 @@ void crossreference_blocks(vector<Operation>& program)
             }
             case OpType::ELSE:
             {
+                if (crossreference_stack.empty())
+                {
+                    cerr << op.Loc << ": ERROR: `else` operation can only be used in `if` block" << endl;
+                    exit(1);
+                }
                 int pos = crossreference_stack.top();
                 crossreference_stack.pop();
                 program[pos].JumpTo = i + 1;
@@ -645,6 +650,11 @@ void crossreference_blocks(vector<Operation>& program)
             }
             case OpType::DO:
             {
+                if (crossreference_stack.empty())
+                {
+                    cerr << op.Loc << ": ERROR: `do` operation can only be used in `while` block" << endl;
+                    exit(1);
+                }
                 program[i].JumpTo = crossreference_stack.top();
                 crossreference_stack.pop();
                 crossreference_stack.push(i);
@@ -652,6 +662,11 @@ void crossreference_blocks(vector<Operation>& program)
             }
             case OpType::END:
             {
+                if (crossreference_stack.empty())
+                {
+                    cerr << op.Loc << ": ERROR: `end` operation can only be used to close other blocks" << endl;
+                    exit(1);
+                }
                 int pos = crossreference_stack.top();
                 crossreference_stack.pop();
 
