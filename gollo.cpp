@@ -42,6 +42,9 @@ enum class OpType : int {
     DO,
     WHILE,
     BIND,
+    MEM,
+    LOAD,
+    STORE,
     USE,
     PUT,
     PUTS,
@@ -89,6 +92,9 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::DO, "`do`"},
         {OpType::WHILE, "`while`"},
         {OpType::BIND, "`bind`"},
+        {OpType::MEM, "`mem`"},
+        {OpType::LOAD, "`load8`"},
+        {OpType::STORE, "`store8`"},
         {OpType::USE, "`use`"},
         {OpType::PUT, "`put`"},
         {OpType::PUTS, "`puts`"},
@@ -133,6 +139,9 @@ const map<string, OpType> BuiltInOps = {
         {"do", OpType::DO},
         {"while", OpType::WHILE},
         {"bind", OpType::BIND},
+        {"mem", OpType::MEM},
+        {"load8", OpType::LOAD},
+        {"store8", OpType::STORE},
         {"use", OpType::USE},
         {"put", OpType::PUT},
         {"puts", OpType::PUTS},
@@ -461,7 +470,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                 break;
             }
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
 
                 if (token.StringValue == "+")
                 {
@@ -642,6 +651,18 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                         if (open_blocks > 0 && token.StringValue == "end") open_blocks--;
                     }
                 }
+                else if (token.StringValue == "mem")
+                {
+                    program.emplace_back(OpType::MEM, token.Loc);
+                }
+                else if (token.StringValue == "load8")
+                {
+                    program.emplace_back(OpType::LOAD, token.Loc);
+                }
+                else if (token.StringValue == "store8")
+                {
+                    program.emplace_back(OpType::STORE, token.Loc);
+                }
                 else if (token.StringValue == "use")
                 {
                     if (++i == int(tokens.size()))
@@ -766,7 +787,7 @@ void crossreference_blocks(vector<Operation>& program)
 {
     stack<int> crossreference_stack;
 
-    assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling. Not all operations should be handled in here");
 
     for (int i = 0; i < int(program.size()); ++i) {
         Operation op = program[i];
@@ -837,7 +858,7 @@ void type_check_program(const vector<Operation>& program)
     stack<Type> type_checking_stack;
 
     for (const auto& op : program) {
-        assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -1051,12 +1072,56 @@ void type_check_program(const vector<Operation>& program)
             case OpType::BIND:
             {
                 assert(false, "Unreachable. All bindings should be expanded at the compilation step");
+            }
+            case OpType::MEM:
+            {
+                type_checking_stack.emplace(DataType::PTR, op.Loc);
+                break;
+            }
+            case OpType::LOAD:
+            {
+                if (type_checking_stack.empty())
+                {
+                    cerr << op.Loc << "ERROR: Not enough arguments for `load8` operation. Expected 1 argument, but found 0" << endl;
+                    exit(1);
+                }
+
+                Type top = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                if (top.Code != DataType::PTR)
+                {
+                    cerr << op.Loc << "ERROR: Unexpected argument type for `load8` operation. Expected `ptr`, but found " << HumanizedDataTypes.at(top.Code) << endl;
+                    exit(1);
+                }
+
+                type_checking_stack.emplace(DataType::INT, op.Loc);
+
+                break;
+            }
+            case OpType::STORE:
+            {
+                if (type_checking_stack.size() < 2)
+                {
+                    cerr << op.Loc << "ERROR: Not enough arguments for `store8` operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                if (a.Code != DataType::INT || b.Code != DataType::PTR)
+                {
+                    cerr << op.Loc << "ERROR: Unexpected argument's types for `store8` operation. Expected `int` and `ptr`, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << endl;
+                    exit(1);
+                }
                 break;
             }
             case OpType::USE:
             {
                 assert(false, "Unreachable. All `use` operations should be eliminated at the compilation step");
-                break;
             }
             case OpType::PUT:
             {
@@ -1297,7 +1362,7 @@ void type_check_program(const vector<Operation>& program)
 
 void run_program(vector<Operation> program)
 {
-    assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 44, "Exhaustive operations handling");
 
     stack<int> runtime_stack;
     vector<byte> memory;
@@ -1576,13 +1641,14 @@ void run_program(vector<Operation> program)
             case OpType::BIND:
             {
                 assert(false, "Unreachable. All bindings should be expanded at the compilation step");
-                ++i;
-                break;
+            }
+            case OpType::MEM:
+            {
+                assert(false, "Not implemented yet");
             }
             case OpType::USE:
             {
                 assert(false, "Unreachable. All `use` operations should be eliminated at the compilation step");
-                break;
             }
             case OpType::PUT:
             {
@@ -1715,6 +1781,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     map<string, int> strings;
 
     string output_content;
+    complete_string(output_content, "BITS 64");
 
     bool is_put_needed;
     for (const auto& op : program)
@@ -1767,7 +1834,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     complete_string(output_content, "    global _start\n");
     complete_string(output_content, "_start:");
 
-    assert(static_cast<int>(OpType::COUNT) == 43, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -2020,12 +2087,33 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             case OpType::BIND:
             {
                 assert(false, "Unreachable. All bindings should be expanded at the compilation step");
+            }
+            case OpType::MEM:
+            {
+                complete_string(output_content, "    ; -- mem --");
+                complete_string(output_content, "    push    mem");
+                break;
+            }
+            case OpType::LOAD:
+            {
+                complete_string(output_content, "    ; -- load8 --");
+                complete_string(output_content, "    push    rax");
+                complete_string(output_content, "    xor     rbx, rbx");
+                complete_string(output_content, "    mov     bl, [rax]");
+                complete_string(output_content, "    push    rbx");
+                break;
+            }
+            case OpType::STORE:
+            {
+                complete_string(output_content, "    ; -- store8 --");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    mov     [rax], bl");
                 break;
             }
             case OpType::USE:
             {
                 assert(false, "Unreachable. All `use` operations should be eliminated at the compilation step");
-                break;
             }
             case OpType::PUT:
             {
@@ -2198,6 +2286,9 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
 
         out << endl;
     }
+
+    out << endl << "segment .bss" << endl;
+    out << "    mem resb 640000" << endl;
 }
 
 void compile(const string& compiler_path, const string& path, vector<Operation> program, bool run_after_compilation, bool silent_mode)
@@ -2213,7 +2304,7 @@ void compile(const string& compiler_path, const string& path, vector<Operation> 
         exit(1);
     }
 
-#ifdef __x86_64__
+//#ifdef __x86_64__
     if (!silent_mode) cout << "[INFO] Generating assembly -> " << filename << ".asm" << endl;
     generate_nasm_linux_x86_64(filename + ".asm", std::move(program));
 
@@ -2227,7 +2318,7 @@ void compile(const string& compiler_path, const string& path, vector<Operation> 
     if (run_after_compilation) execute_command(silent_mode, filename);
 
     return;
-#endif
+//#endif
 
     cerr << "ERROR: Your processor's architecture is not supported yet" << endl;
     exit(1);
