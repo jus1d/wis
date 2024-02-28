@@ -469,103 +469,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
             case TokenType::WORD:
                 assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
 
-                if (token.StringValue == "+")
-                {
-                    program.emplace_back(OpType::PLUS, token.Loc);
-                }
-                else if (token.StringValue == "-")
-                {
-                    program.emplace_back(OpType::MINUS, token.Loc);
-                }
-                else if (token.StringValue == "*")
-                {
-                    program.emplace_back(OpType::MUL, token.Loc);
-                }
-                else if (token.StringValue == "/")
-                {
-                    program.emplace_back(OpType::DIV, token.Loc);
-                }
-                else if (token.StringValue == "%")
-                {
-                    program.emplace_back(OpType::MOD, token.Loc);
-                }
-                else if (token.StringValue == "bor")
-                {
-                    program.emplace_back(OpType::BOR, token.Loc);
-                }
-                else if (token.StringValue == "band")
-                {
-                    program.emplace_back(OpType::BAND, token.Loc);
-                }
-                else if (token.StringValue == "xor")
-                {
-                    program.emplace_back(OpType::XOR, token.Loc);
-                }
-                else if (token.StringValue == "shl")
-                {
-                    program.emplace_back(OpType::SHL, token.Loc);
-                }
-                else if (token.StringValue == "shr")
-                {
-                    program.emplace_back(OpType::SHR, token.Loc);
-                }
-                else if (token.StringValue == "==")
-                {
-                    program.emplace_back(OpType::EQ, token.Loc);
-                }
-                else if (token.StringValue == "!=")
-                {
-                    program.emplace_back(OpType::NE, token.Loc);
-                }
-                else if (token.StringValue == "<")
-                {
-                    program.emplace_back(OpType::LT, token.Loc);
-                }
-                else if (token.StringValue == ">")
-                {
-                    program.emplace_back(OpType::GT, token.Loc);
-                }
-                else if (token.StringValue == "<=")
-                {
-                    program.emplace_back(OpType::LE, token.Loc);
-                }
-                else if (token.StringValue == ">=")
-                {
-                    program.emplace_back(OpType::GE, token.Loc);
-                }
-                else if (token.StringValue == "not")
-                {
-                    program.emplace_back(OpType::NOT, token.Loc);
-                }
-                else if (token.StringValue == "true")
-                {
-                    program.emplace_back(OpType::TRUE, token.Loc);
-                }
-                else if (token.StringValue == "false")
-                {
-                    program.emplace_back(OpType::FALSE, token.Loc);
-                }
-                else if (token.StringValue == "if")
-                {
-                    program.emplace_back(OpType::IF, token.Loc);
-                }
-                else if (token.StringValue == "else")
-                {
-                    program.emplace_back(OpType::ELSE, token.Loc);
-                }
-                else if (token.StringValue == "end")
-                {
-                    program.emplace_back(OpType::END, token.Loc);
-                }
-                else if (token.StringValue == "do")
-                {
-                    program.emplace_back(OpType::DO, token.Loc);
-                }
-                else if (token.StringValue == "while")
-                {
-                    program.emplace_back(OpType::WHILE, token.Loc);
-                }
-                else if (token.StringValue == "bind")
+                if (token.StringValue == "bind")
                 {
                     if (++i == int(tokens.size()))
                     {
@@ -648,18 +552,6 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                         if (open_blocks > 0 && token.StringValue == "end") open_blocks--;
                     }
                 }
-                else if (token.StringValue == "mem")
-                {
-                    program.emplace_back(OpType::MEM, token.Loc);
-                }
-                else if (token.StringValue == "load32")
-                {
-                    program.emplace_back(OpType::LOAD, token.Loc);
-                }
-                else if (token.StringValue == "store32")
-                {
-                    program.emplace_back(OpType::STORE, token.Loc);
-                }
                 else if (token.StringValue == "use")
                 {
                     if (++i == int(tokens.size()))
@@ -695,80 +587,27 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                     i = -1;
                     program = vector<Operation>();
                 }
-                else if (token.StringValue == "put")
-                {
-                    program.emplace_back(OpType::PUT, token.Loc);
-                }
-                else if (token.StringValue == "puts")
-                {
-                    program.emplace_back(OpType::PUTS, token.Loc);
-                }
-                else if (token.StringValue == "here")
-                {
-                    program.emplace_back(OpType::HERE, token.Loc);
-                }
-                else if (token.StringValue == "copy")
-                {
-                    program.emplace_back(OpType::COPY, token.Loc);
-                }
-                else if (token.StringValue == "over")
-                {
-                    program.emplace_back(OpType::OVER, token.Loc);
-                }
-                else if (token.StringValue == "swap")
-                {
-                    program.emplace_back(OpType::SWAP, token.Loc);
-                }
-                else if (token.StringValue == "drop")
-                {
-                    program.emplace_back(OpType::DROP, token.Loc);
-                }
-                else if (token.StringValue == "rot")
-                {
-                    program.emplace_back(OpType::ROT, token.Loc);
-                }
-                else if (token.StringValue == "syscall0")
-                {
-                    program.emplace_back(OpType::SYSCALL0, token.Loc);
-                }
-                else if (token.StringValue == "syscall1")
-                {
-                    program.emplace_back(OpType::SYSCALL1, token.Loc);
-                }
-                else if (token.StringValue == "syscall2")
-                {
-                    program.emplace_back(OpType::SYSCALL2, token.Loc);
-                }
-                else if (token.StringValue == "syscall3")
-                {
-                    program.emplace_back(OpType::SYSCALL3, token.Loc);
-                }
-                else if (token.StringValue == "syscall4")
-                {
-                    program.emplace_back(OpType::SYSCALL4, token.Loc);
-                }
-                else if (token.StringValue == "syscall5")
-                {
-                    program.emplace_back(OpType::SYSCALL5, token.Loc);
-                }
-                else if (token.StringValue == "syscall6")
-                {
-                    program.emplace_back(OpType::SYSCALL6, token.Loc);
-                }
                 else
                 {
-                    auto it = bindings.find(token.StringValue);
-
-                    if (it != bindings.end())
+                    try
                     {
-                        for (const auto& binding : bindings.at(token.StringValue)) {
-                            program.push_back(binding);
-                        }
+                        program.emplace_back(BuiltInOps.at(token.StringValue), token.Loc);
                     }
-                    else
+                    catch(...)
                     {
-                        cerr << token.Loc << ": ERROR: Undefined token: '" << token.StringValue << "'" << endl;
-                        exit(1);
+                        auto it = bindings.find(token.StringValue);
+
+                        if (it != bindings.end())
+                        {
+                            for (const auto& binding : bindings.at(token.StringValue)) {
+                                program.push_back(binding);
+                            }
+                        }
+                        else
+                        {
+                            cerr << token.Loc << ": ERROR: Undefined token: '" << token.StringValue << "'" << endl;
+                            exit(1);
+                        }
                     }
                 }
                 break;
