@@ -104,7 +104,7 @@ void run_tests(vector<string> args, vector<string> paths)
         }
     }
 
-    for (auto path : paths) run_tests_in_directory(path);
+    for (const auto& path : paths) run_tests_in_directory(path);
 }
 
 void record_test_output(string const& file_path)

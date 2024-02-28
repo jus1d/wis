@@ -350,17 +350,17 @@ void execute_command(bool silent_mode, const string& command)
     }
 }
 
-void extend_with_include_directories(string& file_path, const vector<string> include_paths)
+void extend_with_include_directories(string& file_path, const vector<string>& include_paths)
 {
     for (const auto& include_path : include_paths)
     {
         if (!filesystem::exists(include_path)) continue;
         for (const auto& entry : filesystem::directory_iterator(include_path)) {
-            vector<string> parts = split_string(entry.path(), "/");
+            vector<string> parts = split_string(entry.path().string(), "/");
             if (parts.empty()) continue;
             string file_name = parts[parts.size() - 1];
 
-            if (file_path == file_name) file_path = entry.path();
+            if (file_path == file_name) file_path = entry.path().string();
         }
     }
 }
@@ -370,7 +370,7 @@ vector<Token> lex_line(string const& filepath, int line_number, string line)
     line += " ";
     vector<Token> tokens;
 
-    string cur = "";
+    string cur;
     int i = 0;
     bool string_mode = false;
 
