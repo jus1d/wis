@@ -1626,7 +1626,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL1:
             {
-                complete_string(output_content, "    ; -- syscall1 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    syscall");
@@ -1634,7 +1634,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL2:
             {
-                complete_string(output_content, "    ; -- syscall2 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
@@ -1643,7 +1643,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL3:
             {
-                complete_string(output_content, "    ; -- syscall3 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
@@ -1653,7 +1653,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL4:
             {
-                complete_string(output_content, "    ; -- syscall4 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
@@ -1664,7 +1664,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL5:
             {
-                complete_string(output_content, "    ; -- syscall5 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
@@ -1676,7 +1676,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             }
             case OpType::SYSCALL6:
             {
-                complete_string(output_content, "    ; -- syscall6 --");
+                complete_string(output_content, "    ; -- syscall --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
