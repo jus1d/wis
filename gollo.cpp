@@ -1921,7 +1921,10 @@ int main(int argc, char* argv[])
     vector<string> args(argv, argv + argc);
 
     string compiler_path = shift_vector(args);
+    vector<string> include_paths = {"./std/"};
     string path;
+    bool run_after_compilation;
+    bool silent_mode;
 
     if (args.empty())
     {
@@ -1929,18 +1932,6 @@ int main(int argc, char* argv[])
         cerr << "ERROR: no subcommand provided" << endl;
         exit(1);
     }
-
-    string subcommand = shift_vector(args);
-    if (subcommand != "run" && subcommand != "compile")
-    {
-        usage(compiler_path);
-        cerr << "ERROR: Provided unknown subcommand: '" << subcommand << "'" << endl;
-        exit(1);
-    }
-
-    bool run_after_compilation;
-    bool silent_mode;
-    vector<string> include_paths = {"./std/"};
 
     while (!args.empty())
     {

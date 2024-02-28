@@ -38,43 +38,30 @@ string shift_vector(vector<string>& vec)
 void test_file(const string& filePath) {
     string file_name = filePath.substr(0, filePath.find_last_of('.'));
 
-    map<string, string> commands = {
-            {"run", "./gollo run " + filePath},
-            {"compile", "./gollo compile -s " + filePath + " && ./" + file_name}
-    };
+    string command = "./gollo -s " + filePath + " && ./" + file_name;
 
-    map <string, int> errors = {
-            {"run", 0},
-            {"compile", 0}
-    };
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        cerr << "Error executing command: " << command << endl;
+        return;
+    }
 
-    for (auto const& command : commands)
-    {
-        FILE* pipe = popen(command.second.c_str(), "r");
-        if (!pipe) {
-            cerr << "Error executing command: " << command.second << endl;
-            return;
-        }
+    string output;
+    char buffer[128];
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) output += buffer;
 
-        string output;
-        char buffer[128];
-        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-            output += buffer;
-        }
+    pclose(pipe);
 
-        pclose(pipe);
+    string outputPath = file_name + ".output";
 
-        string outputPath = file_name + ".output";
+    ifstream outputFile(outputPath);
+    string expectedOutput((istreambuf_iterator<char>(outputFile)), istreambuf_iterator<char>());
 
-        ifstream outputFile(outputPath);
-        string expectedOutput((istreambuf_iterator<char>(outputFile)), istreambuf_iterator<char>());
-
-        if (output == expectedOutput) {
-            cout << "[" << command.first << "] Test passed for file: " << filePath << endl;
-        } else {
-            cerr << "[" << command.first << "] Test failed for file: " << filePath << endl;
-            cerr << "  Expected output:\n" << expectedOutput << "\n  Actual output:\n" << output << endl;
-        }
+    if (output == expectedOutput) {
+        cout << "Test passed for file: " << filePath << endl;
+    } else {
+        cerr << "Test failed for file: " << filePath << endl;
+        cerr << "  Expected output:\n" << expectedOutput << "\n  Actual output:\n" << output << endl;
     }
 }
 
@@ -111,9 +98,9 @@ void record_test_output(string const& file_path)
 {
     string file_name = file_path.substr(0, file_path.length() - FILE_EXTENSION.length());
 
-    execute_command(false, "./gollo compile " + file_path);
+    execute_command(false, "./gollo -s -r " + file_path);
 
-    execute_command(false, "./" + file_name + " > " + file_name + ".output");
+//    execute_command(false, "./" + file_name + " > " + file_name + ".output");
 }
 
 int main(int argc, char* argv[])
