@@ -481,7 +481,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
 
                     if (token.Type != TokenType::WORD)
                     {
-                        cerr << token.Loc << ": ERROR: Invalid token's type for binding's name. Expected " << HumanizedTokenTypes.at(TokenType::WORD) << ", but found " << HumanizedTokenTypes.at(token.Type) << endl;
+                        cerr << token.Loc << ": ERROR: Invalid token's type for binding's name. Expected token type `word`, but found " << HumanizedTokenTypes.at(token.Type) << endl;
                         exit(1);
                     }
 
@@ -543,7 +543,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                                         break;
                                     }
 
-                                    cerr << token.Loc << ": ERROR: Undefined token: '" << token.StringValue << "'" << endl;
+                                    cerr << token.Loc << ": ERROR: Undefined token: `" << token.StringValue << "`" << endl;
                                     exit(1);
                                 }
                             }
@@ -564,7 +564,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
 
                     if (token.Type != TokenType::STRING)
                     {
-                        cerr << token.Loc << ": ERROR: Expected type " << HumanizedTokenTypes.at(TokenType::STRING) << " after " << HumanizedOpTypes.at(OpType::USE) << " keyword, bot found " <<  HumanizedTokenTypes.at(token.Type) << endl;
+                        cerr << token.Loc << ": ERROR: Expected type `string` after `use` keyword, bot found " <<  HumanizedTokenTypes.at(token.Type) << endl;
                         exit(1);
                     }
 
@@ -605,7 +605,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                         }
                         else
                         {
-                            cerr << token.Loc << ": ERROR: Undefined token: '" << token.StringValue << "'" << endl;
+                            cerr << token.Loc << ": ERROR: Undefined token: `" << token.StringValue << "`" << endl;
                             exit(1);
                         }
                     }
@@ -685,7 +685,8 @@ void crossreference_blocks(vector<Operation>& program)
                     }
                     default:
                     {
-                        assert(false, "Only " << HumanizedOpTypes.at(OpType::IF) << " and " << HumanizedOpTypes.at(OpType::WHILE) << " blocks can be closed with " << HumanizedOpTypes.at(OpType::END));
+                        cerr << op.Loc << ": ERROR: Only `if` and `while` blocks can be closed with `end` keyword";
+                        exit(1);
                     }
                 }
             }
@@ -697,7 +698,7 @@ void crossreference_blocks(vector<Operation>& program)
         int latest_pos = crossreference_stack.top();
         crossreference_stack.pop();
 
-        cerr << program[latest_pos].Loc << ": ERROR: Not all blocks was closed with " << HumanizedOpTypes.at(OpType::END) << endl;
+        cerr << program[latest_pos].Loc << ": ERROR: Not all blocks was closed with `end` keyword" << endl;
         exit(1);
     }
 }
@@ -730,7 +731,7 @@ void type_check_program(const vector<Operation>& program)
                 assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `+` operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
                     exit(1);
                 }
 
@@ -745,7 +746,7 @@ void type_check_program(const vector<Operation>& program)
                     type_checking_stack.emplace(DataType::PTR, op.Loc);
                 }
                 else {
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << "s or pair of " << HumanizedDataTypes.at(DataType::INT) << " and " << HumanizedDataTypes.at(DataType::PTR) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for `+` operation. Expected 2 `int`s or pair of `int` and `ptr`, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
                     exit(1);
                 }
                 break;
@@ -755,7 +756,7 @@ void type_check_program(const vector<Operation>& program)
                 assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `-` operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
                     exit(1);
                 }
 
@@ -770,7 +771,7 @@ void type_check_program(const vector<Operation>& program)
                     type_checking_stack.emplace(DataType::PTR, op.Loc);
                 }
                 else {
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << "s, or " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << " (in this order), but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for `-` operation. Expected 2 `int`s, or `ptr` and `int`, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << endl;
                     exit(1);
                 }
                 break;
@@ -793,7 +794,7 @@ void type_check_program(const vector<Operation>& program)
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::INT, op.Loc);
                 } else {
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `int`s, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << endl;
                     exit(1);
                 }
                 break;
@@ -819,7 +820,7 @@ void type_check_program(const vector<Operation>& program)
                 } else if (a.Code == DataType::BOOL && b.Code == DataType::BOOL) {
                     type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 } else {
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << " or 2 " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `int`s or 2 `bool`s, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
                     exit(1);
                 }
                 break;
@@ -842,7 +843,7 @@ void type_check_program(const vector<Operation>& program)
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::INT, op.Loc);
                 } else {
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 `int`s, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
                     exit(1);
                 }
                 break;
@@ -866,10 +867,10 @@ void type_check_program(const vector<Operation>& program)
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 } else if (a.Code == DataType::BOOL && b.Code == DataType::BOOL) {
-                    cerr << op.Loc << ": ERROR: Use " << HumanizedOpTypes.at(OpType::BAND) << ", " << HumanizedOpTypes.at(OpType::BOR) << " and " << HumanizedOpTypes.at(OpType::XOR) << " operations to compare booleans. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    cerr << op.Loc << ": ERROR: Use `band`, `bor` and `xor` operations to compare booleans. Expected 2 `int`s, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << endl;
                     exit(1);
                 } else {
-                    cerr << op.Loc << ": ERROR: Only integer values can be compared. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    cerr << op.Loc << ": ERROR: Only integer values can be compared. Expected 2 `int`s, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << endl;
                     exit(1);
                 }
                 break;
@@ -877,13 +878,13 @@ void type_check_program(const vector<Operation>& program)
             case OpType::NOT:
             {
                 if (type_checking_stack.empty()) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 arguments, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `not` operation. Expected 1 arguments, but found 0" << endl;
                     exit(1);
                 }
                 Type a = type_checking_stack.top();
                 if (a.Code != DataType::BOOL)
                 {
-                    cerr << a.Loc << ": ERROR: Expected type " << HumanizedDataTypes.at(DataType::BOOL) << " for " << HumanizedOpTypes.at(OpType::NOT) << ", but found " << HumanizedDataTypes.at(a.Code) << endl;
+                    cerr << a.Loc << ": ERROR: Expected type `bool` for `not` operation, but found " << HumanizedDataTypes.at(a.Code) << endl;
                     exit(1);
                 }
                 break;
@@ -908,7 +909,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (top.Code != DataType::BOOL)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected type " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(top.Code) << "" << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected type `bool`, but found " << HumanizedDataTypes.at(top.Code) << endl;
                     exit(1);
                 }
                 break;
@@ -917,7 +918,7 @@ void type_check_program(const vector<Operation>& program)
             case OpType::WHILE:
             case OpType::END:
             {
-                // No type checking needed for these operations.
+                // No type checking needed for these operations
                 break;
             }
             case OpType::BIND:
@@ -933,7 +934,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << "ERROR: Not enough arguments for `load8` operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << "ERROR: Not enough arguments for `load32` operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
 
@@ -942,7 +943,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (top.Code != DataType::PTR)
                 {
-                    cerr << op.Loc << "ERROR: Unexpected argument type for `load8` operation. Expected `ptr`, but found " << HumanizedDataTypes.at(top.Code) << endl;
+                    cerr << op.Loc << "ERROR: Unexpected argument type for `load32` operation. Expected `ptr`, but found " << HumanizedDataTypes.at(top.Code) << endl;
                     exit(1);
                 }
 
@@ -954,7 +955,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.size() < 2)
                 {
-                    cerr << op.Loc << "ERROR: Not enough arguments for `store8` operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << "ERROR: Not enough arguments for `store32` operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -965,7 +966,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (a.Code != DataType::INT || b.Code != DataType::PTR)
                 {
-                    cerr << op.Loc << "ERROR: Unexpected argument's types for `store8` operation. Expected `int` and `ptr`, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << endl;
+                    cerr << op.Loc << "ERROR: Unexpected argument's types for `store32` operation. Expected `int` and `ptr`, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << endl;
                     exit(1);
                 }
                 break;
@@ -978,7 +979,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `put` operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
                 Type top = type_checking_stack.top();
@@ -989,7 +990,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.size() < 3)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 3 arguments, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `fputs` operation. Expected 3 arguments, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -1002,7 +1003,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (a.Code != DataType::INT || b.Code != DataType::PTR || c.Code != DataType::INT)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument's types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << ", " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(a.Code) << " and " << HumanizedDataTypes.at(b.Code) << endl;
+                    cerr << op.Loc << ": ERROR: Unexpected argument's types for `fputs` operation. Expected `int`, `ptr` and `int`, but found " << HumanizedDataTypes.at(a.Code) << " and " << HumanizedDataTypes.at(b.Code) << endl;
                     exit(1);
                 }
 
@@ -1012,7 +1013,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `copy` operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
 
@@ -1024,7 +1025,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.size() < 2)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `over` operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -1044,7 +1045,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.size() < 2)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `swap` operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -1063,7 +1064,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `drop` operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
 
@@ -1075,7 +1076,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.size() < 3)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 3 argument, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `rot` operation. Expected 3 argument, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -1096,7 +1097,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `syscall0` operation. Expected 1 argument, but found 0" << endl;
                     exit(1);
                 }
 
@@ -1110,7 +1111,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `syscall1` operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -1126,7 +1127,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `syscall2` operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -1142,7 +1143,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `syscall3` operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -1158,7 +1159,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `syscall4` operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -1174,7 +1175,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `syscall5` operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -1190,7 +1191,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    cerr << op.Loc << ": ERROR: Not enough arguments for `syscall6` operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
                     exit(1);
                 }
 
@@ -1208,7 +1209,15 @@ void type_check_program(const vector<Operation>& program)
     if (!type_checking_stack.empty())
     {
         Type top = type_checking_stack.top();
-        cerr << top.Loc << ": ERROR: Unhandled data in the stack" << endl;
+        cerr << top.Loc << ": ERROR: Unhandled data in the stack." << endl <<
+            "Stack size: " << type_checking_stack.size() << endl <<
+            "Stack values:" << endl;
+        while (!type_checking_stack.empty())
+        {
+            top = type_checking_stack.top();
+            type_checking_stack.pop();
+            cerr << "  " << top.Loc << ": " << HumanizedDataTypes.at(top.Code) << endl;
+        }
         exit(1);
     }
 }
