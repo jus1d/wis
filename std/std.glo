@@ -17,7 +17,7 @@ bind eputs      stderr fputs end
 // Usage: "error message" <condition> assert
 bind assert
   not if 
-    "Assertion error: " puts puts
+    "Assertion failed: " eputs eputs
     1 exit drop
   end
 end
