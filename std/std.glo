@@ -1,4 +1,4 @@
-use "syscall.glo"
+use "sys.glo"
 
 // Default streams
 bind stdin      0 end
