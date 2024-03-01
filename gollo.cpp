@@ -415,9 +415,9 @@ vector<Token> lex_line(string const& filepath, int line_number, string line)
             }
             char_mode = !char_mode;
         }
-        else if (ch == ' ' && !cur.empty())
+        else if (ch == ' ' && (!cur.empty() || string_mode || char_mode))
         {
-            if (string_mode)
+            if (string_mode || char_mode)
             {
                 cur += ch;
             }
