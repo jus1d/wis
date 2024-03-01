@@ -17,7 +17,7 @@ void execute_command(bool silent_mode, const string& command)
     int exit_code = system(command.c_str());
     if (exit_code != 0)
     {
-        cerr << "ERROR: Executing command crashed with " << to_string(exit_code) << " exit code" << endl;
+        cerr << "[ERROR] Executing command crashed with " << to_string(exit_code) << " exit code" << endl;
         exit(exit_code);
     }
 }
@@ -31,7 +31,7 @@ string shift_vector(vector<string>& vec)
 
         return result;
     }
-    cerr << "ERROR: Can't shift empty vector" << endl;
+    cerr << "[ERROR] Can't shift empty vector" << endl;
     exit(1);
 }
 
@@ -58,9 +58,9 @@ void test_file(const string& filePath) {
     string expectedOutput((istreambuf_iterator<char>(outputFile)), istreambuf_iterator<char>());
 
     if (output == expectedOutput) {
-        cout << "Test passed for file: " << filePath << endl;
+        cout << "[INFO] Test passed for file: " << filePath << endl;
     } else {
-        cerr << "Test failed for file: " << filePath << endl;
+        cerr << "[ERROR] Test failed for file: " << filePath << endl;
         cerr << "  Expected output:\n" << expectedOutput << "\n  Actual output:\n" << output << endl;
     }
 }
@@ -83,7 +83,7 @@ void run_tests(vector<string> args, vector<string> paths)
         {
             if (args.empty())
             {
-                cerr << "ERROR: path to directory not found after `-f` flag" << endl;
+                cerr << "[ERROR] path to directory not found after `-f` flag" << endl;
                 exit(1);
             }
 
@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 
     if (args.empty())
     {
-        cerr << "ERROR: no subcommand provided" << endl;
+        cerr << "[ERROR] no subcommand provided" << endl;
         exit(1);
     }
 
@@ -128,14 +128,14 @@ int main(int argc, char* argv[])
     {
         if (args.empty())
         {
-            cerr << "ERROR: not enough arguments for `record` subcommand" << endl;
+            cerr << "[ERROR] not enough arguments for `record` subcommand" << endl;
             exit(1);
         }
         record_test_output(shift_vector(args));
     }
     else
     {
-        cerr << "ERROR: unknown subcommand provided" << endl;
+        cerr << "[ERROR] unknown subcommand provided" << endl;
         exit(1);
     }
 

@@ -26,5 +26,12 @@ end
 bind 2copy      over over end
 bind 2drop      drop drop end
 
-// Other bindings
+// Bindings related to strings
 bind endl       "\n" end
+
+bind strlen
+  0 swap
+  while copy . 0 != do
+    1 + swap 1 + swap
+  end drop
+end

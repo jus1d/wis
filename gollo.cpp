@@ -43,8 +43,10 @@ enum class OpType : int {
     WHILE,
     BIND,
     MEM,
-    LOAD,
-    STORE,
+    LOAD8,
+    STORE8,
+    LOAD64,
+    STORE64,
     USE,
     PUT,
     FPUTS,
@@ -93,8 +95,10 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::WHILE, "`while`"},
         {OpType::BIND, "`bind`"},
         {OpType::MEM, "`mem`"},
-        {OpType::LOAD, "`load32`"},
-        {OpType::STORE, "`store32`"},
+        {OpType::LOAD8, "`.`"},
+        {OpType::STORE8, "`,`"},
+        {OpType::LOAD64, "`load64`"},
+        {OpType::STORE64, "`store64`"},
         {OpType::USE, "`use`"},
         {OpType::PUT, "`put`"},
         {OpType::FPUTS, "`fputs`"},
@@ -140,8 +144,10 @@ const map<string, OpType> BuiltInOps = {
         {"while", OpType::WHILE},
         {"bind", OpType::BIND},
         {"mem", OpType::MEM},
-        {"load32", OpType::LOAD},
-        {"store32", OpType::STORE},
+        {".", OpType::LOAD8},
+        {",", OpType::STORE8},
+        {"load64", OpType::LOAD64},
+        {"store64", OpType::STORE64},
         {"use", OpType::USE},
         {"put", OpType::PUT},
         {"fputs", OpType::FPUTS},
@@ -472,7 +478,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                 break;
             }
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 48, "Exhaustive operations handling");
 
                 if (token.StringValue == "bind")
                 {
@@ -628,7 +634,7 @@ void crossreference_blocks(vector<Operation>& program)
 {
     stack<int> crossreference_stack;
 
-    assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 48, "Exhaustive operations handling. Not all operations should be handled in here");
 
     for (int i = 0; i < int(program.size()); ++i) {
         Operation op = program[i];
@@ -715,7 +721,7 @@ void type_check_program(const vector<Operation>& program)
     stack<Type> type_checking_stack;
 
     for (const auto& op : program) {
-        assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 48, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -935,11 +941,12 @@ void type_check_program(const vector<Operation>& program)
                 type_checking_stack.emplace(DataType::PTR, op.Loc);
                 break;
             }
-            case OpType::LOAD:
+            case OpType::LOAD8:
+            case OpType::LOAD64:
             {
                 if (type_checking_stack.empty())
                 {
-                    compilation_error(op.Loc, "Not enough arguments for `load32` operation. Expected 1 argument, but found 0");
+                    compilation_error(op.Loc, "Not enough arguments for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 1 argument, but found 0");
                     exit(1);
                 }
 
@@ -948,7 +955,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (top.Code != DataType::PTR)
                 {
-                    compilation_error(op.Loc, "Unexpected argument type for `load32` operation. Expected `ptr`, but found " + HumanizedDataTypes.at(top.Code));
+                    compilation_error(op.Loc, "Unexpected argument type for " + HumanizedOpTypes.at(op.Type) + " operation. Expected `ptr`, but found " + HumanizedDataTypes.at(top.Code));
                     exit(1);
                 }
 
@@ -956,11 +963,12 @@ void type_check_program(const vector<Operation>& program)
 
                 break;
             }
-            case OpType::STORE:
+            case OpType::STORE8:
+            case OpType::STORE64:
             {
                 if (type_checking_stack.size() < 2)
                 {
-                    compilation_error(op.Loc, "Not enough arguments for `store32` operation. Expected 2 arguments, but found " + to_string(type_checking_stack.size()));
+                    compilation_error(op.Loc, "Not enough arguments for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 2 arguments, but found " + to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -971,7 +979,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (a.Code != DataType::INT || b.Code != DataType::PTR)
                 {
-                    compilation_error(op.Loc, "Unexpected argument's types for `store32` operation. Expected `int` and `ptr`, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
+                    compilation_error(op.Loc, "Unexpected argument's types for " + HumanizedOpTypes.at(op.Type) + " operation. Expected `int` and `ptr`, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 }
                 break;
@@ -1292,7 +1300,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     complete_string(output_content, "    global _start\n");
     complete_string(output_content, "_start:");
 
-    assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 48, "Exhaustive operations handling");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -1552,21 +1560,38 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    push    mem");
                 break;
             }
-            case OpType::LOAD:
+            case OpType::LOAD8:
             {
-                complete_string(output_content, "    ; -- load32 --");
+                complete_string(output_content, "    ; -- load8 --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    xor     rbx, rbx");
-                complete_string(output_content, "    mov     ebx, [rax]");
+                complete_string(output_content, "    mov     bl, [rax]");
                 complete_string(output_content, "    push    rbx");
                 break;
             }
-            case OpType::STORE:
+            case OpType::STORE8:
             {
-                complete_string(output_content, "    ; -- store32 --");
+                complete_string(output_content, "    ; -- store8 --");
                 complete_string(output_content, "    pop     rbx");
                 complete_string(output_content, "    pop     rax");
-                complete_string(output_content, "    mov     [rax], ebx");
+                complete_string(output_content, "    mov     [rax], bl");
+                break;
+            }
+            case OpType::LOAD64:
+            {
+                complete_string(output_content, "    ; -- load64 --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    xor     rbx, rbx");
+                complete_string(output_content, "    mov     rbx, [rax]");
+                complete_string(output_content, "    push    rbx");
+                break;
+            }
+            case OpType::STORE64:
+            {
+                complete_string(output_content, "    ; -- store64 --");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    mov     [rax], rbx");
                 break;
             }
             case OpType::USE:
