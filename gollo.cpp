@@ -54,6 +54,7 @@ enum class OpType : int {
     COPY,
     OVER,
     SWAP,
+    SWAP2,
     DROP,
     ROT,
     SYSCALL0,
@@ -106,6 +107,7 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::COPY, "`copy`"},
         {OpType::OVER, "`over`"},
         {OpType::SWAP, "`swap`"},
+        {OpType::SWAP2, "`2swap`"},
         {OpType::DROP, "`drop`"},
         {OpType::ROT, "`rot`"},
         {OpType::SYSCALL0, "`syscall0`"},
@@ -155,6 +157,7 @@ const map<string, OpType> BuiltInOps = {
         {"copy", OpType::COPY},
         {"over", OpType::OVER},
         {"swap", OpType::SWAP},
+        {"2swap", OpType::SWAP2},
         {"drop", OpType::DROP},
         {"rot", OpType::ROT},
         {"syscall0", OpType::SYSCALL0},
@@ -478,7 +481,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                 break;
             }
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 48, "Exhaustive operations handling");
+                assert(static_cast<int>(OpType::COUNT) == 49, "Exhaustive operations handling");
 
                 if (token.StringValue == "bind")
                 {
@@ -634,7 +637,7 @@ void crossreference_blocks(vector<Operation>& program)
 {
     stack<int> crossreference_stack;
 
-    assert(static_cast<int>(OpType::COUNT) == 48, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 49, "Exhaustive operations handling. Not all operations should be handled in here");
 
     for (int i = 0; i < int(program.size()); ++i) {
         Operation op = program[i];
@@ -721,7 +724,7 @@ void type_check_program(const vector<Operation>& program)
     stack<Type> type_checking_stack;
 
     for (const auto& op : program) {
-        assert(static_cast<int>(OpType::COUNT) == 48, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 49, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -1073,6 +1076,33 @@ void type_check_program(const vector<Operation>& program)
 
                 break;
             }
+            case OpType::SWAP2:
+            {
+                if (type_checking_stack.size() < 4)
+                {
+                    compilation_error(op.Loc, "Not enough arguments for `2swap` operation. Expected 4 arguments, but found " + to_string(type_checking_stack.size()));
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                Type c = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                Type d = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                type_checking_stack.push(b);
+                type_checking_stack.push(a);
+                type_checking_stack.push(d);
+                type_checking_stack.push(c);
+
+                break;
+            }
             case OpType::DROP:
             {
                 if (type_checking_stack.empty())
@@ -1300,7 +1330,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     complete_string(output_content, "    global _start\n");
     complete_string(output_content, "_start:");
 
-    assert(static_cast<int>(OpType::COUNT) == 48, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 49, "Exhaustive operations handling");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -1652,6 +1682,19 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rbx");
                 complete_string(output_content, "    push    rax");
                 complete_string(output_content, "    push    rbx");
+                break;
+            }
+            case OpType::SWAP2:
+            {
+                complete_string(output_content, "    ; -- 2swap --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    pop     rcx");
+                complete_string(output_content, "    pop     rdx");
+                complete_string(output_content, "    push    rbx");
+                complete_string(output_content, "    push    rax");
+                complete_string(output_content, "    push    rdx");
+                complete_string(output_content, "    push    rcx");
                 break;
             }
             case OpType::DROP:
