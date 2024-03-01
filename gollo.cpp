@@ -1042,7 +1042,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (a.Code != DataType::INT || b.Code != DataType::PTR || c.Code != DataType::INT)
                 {
-                    compilation_error(op.Loc, "Unexpected argument's types for `fputs` operation. Expected `int`, `ptr` and `int`, but found " + HumanizedDataTypes.at(a.Code) + " and " + HumanizedDataTypes.at(b.Code));
+                    compilation_error(op.Loc, "Unexpected argument's types for `fputs` operation. Expected `int`, `ptr` and `int`, but found " + HumanizedDataTypes.at(a.Code) + ", " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(c.Code));
                     exit(1);
                 }
 
@@ -1742,6 +1742,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    ; -- syscall0 --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL1:
@@ -1750,6 +1751,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL2:
@@ -1759,6 +1761,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL3:
@@ -1769,6 +1772,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rsi");
                 complete_string(output_content, "    pop     rdx");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL4:
@@ -1780,6 +1784,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rdx");
                 complete_string(output_content, "    pop     r10");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL5:
@@ -1792,6 +1797,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     r10");
                 complete_string(output_content, "    pop     r8");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL6:
@@ -1805,6 +1811,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     r8");
                 complete_string(output_content, "    pop     r9");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             default:
