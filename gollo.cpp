@@ -68,8 +68,8 @@ enum class OpType : int {
 };
 
 const map<OpType, string> HumanizedOpTypes = {
-        {OpType::PUSH_INT, "`PUSH INT`"},
-        {OpType::PUSH_STRING, "`PUSH STRING`"},
+        {OpType::PUSH_INT, "`push int`"},
+        {OpType::PUSH_STRING, "`push string`"},
         {OpType::PLUS, "`+`"},
         {OpType::MINUS, "`-`"},
         {OpType::MUL, "`*`"},
@@ -191,6 +191,7 @@ enum class TokenType : int {
     WORD,
     INT,
     STRING,
+    CHAR,
     COUNT,
 };
 
@@ -384,6 +385,7 @@ vector<Token> lex_line(string const& filepath, int line_number, string line)
     string cur;
     int i = 0;
     bool string_mode = false;
+    bool char_mode = false;
 
     while (i < int(line.size()))
     {
@@ -397,6 +399,21 @@ vector<Token> lex_line(string const& filepath, int line_number, string line)
                 cur = "";
             }
             string_mode = !string_mode;
+        }
+        else if (ch == '\'')
+        {
+            if (char_mode)
+            {
+                string loc = location_view(filepath, line_number, i - int(cur.size()));
+                if (unescape_string(cur).size() != 1)
+                {
+                    compilation_error(loc, "`char` should be exactly 1 character");
+                    exit(1);
+                }
+                tokens.emplace_back(TokenType::CHAR, cur, loc);
+                cur = "";
+            }
+            char_mode = !char_mode;
         }
         else if (ch == ' ' && !cur.empty())
         {
@@ -466,10 +483,12 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
     vector<Operation> program;
     map<string, vector<Operation>> bindings;
 
-    assert(static_cast<int>(TokenType::COUNT) == 3, "Exhaustive token types handling");
+    assert(static_cast<int>(TokenType::COUNT) == 4, "Exhaustive token types handling");
 
     for (int i = 0; i < int(tokens.size()); ++i) {
         Token token = tokens[i];
+
+        assert(static_cast<int>(OpType::COUNT) == 49, "Exhaustive operations handling");
 
         switch (token.Type) {
             case TokenType::INT:
@@ -480,9 +499,13 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                 program.emplace_back(OpType::PUSH_STRING, unescape_string(token.StringValue), token.Loc);
                 break;
             }
+            case TokenType::CHAR:
+            {
+                int value = (int)unescape_string(token.StringValue)[0];
+                program.emplace_back(OpType::PUSH_INT, value, token.Loc);
+                break;
+            }
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 49, "Exhaustive operations handling");
-
                 if (token.StringValue == "bind")
                 {
                     if (++i == int(tokens.size()))
