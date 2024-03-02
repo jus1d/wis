@@ -1,0 +1,21 @@
+use "std.glo"
+
+bind NAME_CAP 20 end
+bind name     mem end
+
+"Hello, enter your name -> " puts
+NAME_CAP name stdin read
+
+while copy 1 == do
+  "Enter your name, pls ---> " puts
+  NAME_CAP name stdin read
+end swap drop
+
+copy 0 < if
+  here eputs ": ERROR: can't read data from `stdin`\n" eputs
+  1 exit drop
+end
+
+"Hello, " puts
+1 - name  puts
+"!\n"     puts
