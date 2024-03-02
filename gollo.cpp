@@ -240,10 +240,11 @@ public:
 
 void usage(string const& compiler_path)
 {
-    cerr << "Usage: " << compiler_path << " [ARGS] ./examples/goo.glo" << endl;
-    cerr << "ARGS:" << endl;
+    cerr << "Usage: " << compiler_path << " [OPTIONS] <path>" << endl;
+    cerr << "OPTIONS:" << endl;
+    cerr << "    -unsafe       Disable type checking" << endl;
     cerr << "    -r            Run compiled program after compilation" << endl;
-    cerr << "    -s            Silent mode for compiler" << endl;
+    cerr << "    -quiet        Disable any compiler's logs" << endl;
     cerr << "    -I <path>     Add directory to include paths list" << endl;
 }
 
@@ -1895,6 +1896,7 @@ int main(int argc, char* argv[])
     string path;
     bool run_after_compilation;
     bool silent_mode;
+    bool unsafe_mode;
 
     if (args.empty())
     {
@@ -1907,8 +1909,9 @@ int main(int argc, char* argv[])
     {
         string arg = shift_vector(args);
 
-        if (arg == "-r") run_after_compilation = true;
-        else if (arg == "-s") silent_mode = true;
+        if (arg == "-quiet") silent_mode = true;
+        else if (arg == "-r") run_after_compilation = true;
+        else if (arg == "-unsafe") unsafe_mode = true;
         else if (arg == "-I")
         {
             if (args.empty())
@@ -1937,7 +1940,7 @@ int main(int argc, char* argv[])
 
     crossreference_blocks(program);
 
-    type_check_program(program);
+    if (!unsafe_mode) type_check_program(program);
 
     compile(compiler_path, path, program, run_after_compilation, silent_mode);
 
