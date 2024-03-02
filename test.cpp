@@ -11,13 +11,13 @@ using std::string, std::cout, std::cerr, std::endl;
 
 const string FILE_EXTENSION = ".glo";
 
-inline bool is_file_exists(const std::string& name) {
+inline bool is_file_exists(const std::string &name) {
     std::ifstream f(name.c_str());
     return f.good();
 }
 
 
-void execute_command(bool silent_mode, const string& command)
+void execute_command(bool silent_mode, const string &command)
 {
     if (!silent_mode) cout << "[CMD] " << command << endl;
     int exit_code = system(command.c_str());
@@ -28,7 +28,7 @@ void execute_command(bool silent_mode, const string& command)
     }
 }
 
-string shift_vector(std::vector<string>& vec)
+string shift_vector(std::vector<string> &vec)
 {
     if (!vec.empty()) {
         string result = vec[0];
@@ -41,7 +41,7 @@ string shift_vector(std::vector<string>& vec)
     exit(1);
 }
 
-void test_file(const string& file_path) {
+int test_file(const string &file_path) {
     string file_name = file_path.substr(0, file_path.find_last_of('.'));
 
     string output_path = file_name + ".output";
@@ -49,15 +49,15 @@ void test_file(const string& file_path) {
     if (!is_file_exists(output_path))
     {
         cout << "[INFO] Skipping test for file: " << file_path << ". No recorded output found" << endl;
-        return;
+        return 1;
     }
 
-    string command = "./gollo -s " + file_path + " && ./" + file_name;
+    string command = "./gollo -quiet " + file_path + " && ./" + file_name;
 
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) {
-        cerr << "Error executing command: " << command << endl;
-        return;
+        cerr << "ERROR: Command execution failed: " << command << endl;
+        return -1;
     }
 
     string output;
@@ -71,17 +71,11 @@ void test_file(const string& file_path) {
 
     if (output == expected_output) {
         cout << "[INFO] Test passed for file: " << file_path << endl;
+        return 0;
     } else {
         cerr << "[ERROR] Test failed for file: " << file_path << endl;
         cerr << "  Expected output:\n" << expected_output << "\n  Actual output:\n" << output << endl;
-    }
-}
-
-void run_tests_in_directory(const string& directory_path) {
-    for (const auto& entry : std::filesystem::directory_iterator(directory_path)) {
-        if (entry.path().extension() == FILE_EXTENSION) {
-            test_file(entry.path().string());
-        }
+        return -1;
     }
 }
 
@@ -103,14 +97,40 @@ void run_tests(std::vector<string> args, std::vector<string> paths)
         }
     }
 
-    for (const auto& path : paths) run_tests_in_directory(path);
+    int failed = 0;
+    int passed = 0;
+    int skipped = 0;
+
+    for (const auto &path : paths)
+    {
+        for (const auto &entry : std::filesystem::directory_iterator(path)) {
+            if (entry.path().extension() == FILE_EXTENSION) {
+                int result = test_file(entry.path().string());
+
+                if (result == -1) failed++;
+                else if (result == 1) skipped++;
+                else passed++;
+            }
+        }
+    }
+
+    cout << endl << "Testing report:" << endl;
+    cout << "  Tests passed: " << passed << ", Tests skipped: " << skipped << ", Tests failed: " << failed << endl;
+
+    for (auto const &path: paths)
+    {
+        execute_command(true, "rm " + path + "/*.asm");
+        execute_command(true, "rm " + path + "/*.o");
+    }
+
+    if (failed > 0) exit(1);
 }
 
-void record_test_output(string const& file_path)
+void record_test_output(string const &file_path)
 {
     string file_name = file_path.substr(0, file_path.length() - FILE_EXTENSION.length());
 
-    execute_command(false, "./gollo -s -r " + file_path);
+    execute_command(false, "./gollo " + file_path);
 
     execute_command(false, "./" + file_name + " > " + file_name + ".output");
 }
