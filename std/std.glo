@@ -8,6 +8,7 @@ bind stderr     2 end
 // Wrappers for common syscalls
 bind write      sys_write syscall3 end
 bind read       sys_read syscall3 end
+bind open       sys_open syscall3 end
 bind exit       sys_exit syscall1 end
 
 // Wrappers for write syscall

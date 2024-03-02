@@ -1,0 +1,17 @@
+use "std.glo"
+
+bind filename "output.txt" swap drop end
+bind flags    0666 end
+bind mode     0 end
+
+"This text be in `output.txt` file!\n"
+
+mode flags filename open
+
+
+copy 0 < if
+  here eputs ": ERROR: file not found\n" eputs
+  1 exit drop
+end
+
+fputs
