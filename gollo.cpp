@@ -392,7 +392,7 @@ std::vector<Token> lex_line(string const& filepath, int line_number, string line
     while (i < int(line.size()))
     {
         char ch = line[i];
-        if (ch == '"')
+        if (ch == '"' && !char_mode)
         {
             if (string_mode)
             {
@@ -402,7 +402,7 @@ std::vector<Token> lex_line(string const& filepath, int line_number, string line
             }
             string_mode = !string_mode;
         }
-        else if (ch == '\'')
+        else if (ch == '\'' && !string_mode)
         {
             if (char_mode)
             {

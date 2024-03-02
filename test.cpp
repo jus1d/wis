@@ -7,9 +7,15 @@
 #include <map>
 #include <string>
 
-using namespace std;
+using std::string, std::cout, std::cerr, std::endl;
 
 const string FILE_EXTENSION = ".glo";
+
+inline bool is_file_exists(const std::string& name) {
+    std::ifstream f(name.c_str());
+    return f.good();
+}
+
 
 void execute_command(bool silent_mode, const string& command)
 {
@@ -17,12 +23,12 @@ void execute_command(bool silent_mode, const string& command)
     int exit_code = system(command.c_str());
     if (exit_code != 0)
     {
-        cerr << "[ERROR] Executing command crashed with " << to_string(exit_code) << " exit code" << endl;
+        cerr << "[ERROR] Executing command crashed with " << std::to_string(exit_code) << " exit code" << endl;
         exit(exit_code);
     }
 }
 
-string shift_vector(vector<string>& vec)
+string shift_vector(std::vector<string>& vec)
 {
     if (!vec.empty()) {
         string result = vec[0];
@@ -38,6 +44,14 @@ string shift_vector(vector<string>& vec)
 void test_file(const string& file_path) {
     string file_name = file_path.substr(0, file_path.find_last_of('.'));
 
+    string output_path = file_name + ".output";
+
+    if (!is_file_exists(output_path))
+    {
+        cout << "[INFO] Skipping test for file: " << file_path << ". No recorded output found" << endl;
+        return;
+    }
+
     string command = "./gollo -s " + file_path + " && ./" + file_name;
 
     FILE* pipe = popen(command.c_str(), "r");
@@ -52,10 +66,8 @@ void test_file(const string& file_path) {
 
     pclose(pipe);
 
-    string output_path = file_name + ".output";
-
-    ifstream outputFile(output_path);
-    string expected_output((istreambuf_iterator<char>(outputFile)), istreambuf_iterator<char>());
+    std::ifstream outputFile(output_path);
+    string expected_output((std::istreambuf_iterator<char>(outputFile)), std::istreambuf_iterator<char>());
 
     if (output == expected_output) {
         cout << "[INFO] Test passed for file: " << file_path << endl;
@@ -66,14 +78,14 @@ void test_file(const string& file_path) {
 }
 
 void run_tests_in_directory(const string& directory_path) {
-    for (const auto& entry : filesystem::directory_iterator(directory_path)) {
+    for (const auto& entry : std::filesystem::directory_iterator(directory_path)) {
         if (entry.path().extension() == FILE_EXTENSION) {
             test_file(entry.path().string());
         }
     }
 }
 
-void run_tests(vector<string> args, vector<string> paths)
+void run_tests(std::vector<string> args, std::vector<string> paths)
 {
     int i = 0;
     while (i < args.size())
@@ -105,8 +117,8 @@ void record_test_output(string const& file_path)
 
 int main(int argc, char* argv[])
 {
-    vector<string> args(argv, argv + argc);
-    vector<string> paths = {"./tests/"};
+    std::vector<string> args(argv, argv + argc);
+    std::vector<string> paths = {"./tests/"};
 
     string program = shift_vector(args);
 
