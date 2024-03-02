@@ -1911,9 +1911,9 @@ int main(int argc, char* argv[])
     string compiler_path = shift_vector(args);
     std::vector<string> include_paths = {"./std/", "./use/"};
     string path;
-    bool run_after_compilation;
-    bool silent_mode;
-    bool unsafe_mode;
+    bool run_after_compilation = false;
+    bool silent_mode = false;
+    bool unsafe_mode = false;
 
     if (args.empty())
     {
