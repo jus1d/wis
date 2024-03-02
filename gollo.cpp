@@ -941,6 +941,7 @@ void type_check_program(const std::vector<Operation>& program)
                 type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 break;
             }
+            case OpType::IF:
             case OpType::DO:
             {
                 if (type_checking_stack.empty())
@@ -959,7 +960,6 @@ void type_check_program(const std::vector<Operation>& program)
                 }
                 break;
             }
-            case OpType::IF:
             case OpType::ELSE:
             case OpType::WHILE:
             case OpType::END:
@@ -1912,9 +1912,9 @@ int main(int argc, char* argv[])
     string compiler_path = shift_vector(args);
     std::vector<string> include_paths = {"./std/", "./use/"};
     string path;
-    bool run_after_compilation;
-    bool silent_mode;
-    bool unsafe_mode;
+    bool run_after_compilation = false;
+    bool silent_mode = false;
+    bool unsafe_mode = false;
 
     if (args.empty())
     {
