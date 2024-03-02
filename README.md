@@ -43,6 +43,8 @@ Removes and prints unsigned integer from top of the stack
 
 Built-in shortcut for sequence of operations: `sys_write syscall3 drop`. The o reason why it is a built-in operation and not a standard binding, to save type checking for this puts operations. Because we can't correctly check types of syscalls' arguments
 
+---
+
 ### Basic stack manipulations
 
 `copy`
@@ -91,6 +93,8 @@ Swaps 2 pairs of arguments on top of the stack
 
 **Stack:** `1 2 3 4` => `3 4 1 2`
 
+---
+
 ### Memory manipulation
 
 - `mem` operation pushes to the stack a pointer to memory buffer, where you can read and write some data
@@ -98,6 +102,8 @@ Swaps 2 pairs of arguments on top of the stack
 - `,` and `store64` opereations puts a byte ot 64-bit value to the memory buffer
 
 See examples [here](./tests/09-memory.glo) and [here](./tests/10-64bit-memory.glo)
+
+---
 
 ### Bindings
 
@@ -119,6 +125,52 @@ Actually, that program after compilation will turn to that view:
 34 35 + put
 ```
 
+---
+
+### Control flows
+
+`if` statement
+
+**Usage:**
+
+```
+34 35 + 69 == if
+  1 put
+else
+  0 put
+end
+```
+
+`if` statement currently have no `elif`, but uou can combine block like below:
+
+```
+false if
+  1 put
+else true if 
+  2 put
+else
+  3 put
+end end
+```
+
+But it always will end with this ugly `end`-trail
+
+---
+
+`while` loop
+
+**Usage:**
+
+```
+1 while copy 10 <= do
+  copy put
+end drop
+```
+
+This program will print numbers from 0 to 10
+
+---
+
 ### Other
 
 `use` keyword provide an ability to include outer file to current. If you have ANY operations outside the bindings in the including file, they will NOT ingore by the compiler.
@@ -139,6 +191,8 @@ Actually, that program after compilation will turn to that view:
 That simple program will print "Some data" to `stdout` and exit with 69 exit code
 
 For now, I have no idea how to create proper type checking for syscalls' arguments, so now we are just checking their amount only
+
+---
 
 ### Standard library
 
