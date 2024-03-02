@@ -35,10 +35,10 @@ string shift_vector(vector<string>& vec)
     exit(1);
 }
 
-void test_file(const string& filePath) {
-    string file_name = filePath.substr(0, filePath.find_last_of('.'));
+void test_file(const string& file_path) {
+    string file_name = file_path.substr(0, file_path.find_last_of('.'));
 
-    string command = "./gollo -s " + filePath + " && ./" + file_name;
+    string command = "./gollo -s " + file_path + " && ./" + file_name;
 
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) {
@@ -52,21 +52,21 @@ void test_file(const string& filePath) {
 
     pclose(pipe);
 
-    string outputPath = file_name + ".output";
+    string output_path = file_name + ".output";
 
-    ifstream outputFile(outputPath);
-    string expectedOutput((istreambuf_iterator<char>(outputFile)), istreambuf_iterator<char>());
+    ifstream outputFile(output_path);
+    string expected_output((istreambuf_iterator<char>(outputFile)), istreambuf_iterator<char>());
 
-    if (output == expectedOutput) {
-        cout << "[INFO] Test passed for file: " << filePath << endl;
+    if (output == expected_output) {
+        cout << "[INFO] Test passed for file: " << file_path << endl;
     } else {
-        cerr << "[ERROR] Test failed for file: " << filePath << endl;
-        cerr << "  Expected output:\n" << expectedOutput << "\n  Actual output:\n" << output << endl;
+        cerr << "[ERROR] Test failed for file: " << file_path << endl;
+        cerr << "  Expected output:\n" << expected_output << "\n  Actual output:\n" << output << endl;
     }
 }
 
-void run_tests_in_directory(const string& directoryPath) {
-    for (const auto& entry : filesystem::directory_iterator(directoryPath)) {
+void run_tests_in_directory(const string& directory_path) {
+    for (const auto& entry : filesystem::directory_iterator(directory_path)) {
         if (entry.path().extension() == FILE_EXTENSION) {
             test_file(entry.path().string());
         }
