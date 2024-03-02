@@ -117,6 +117,12 @@ void run_tests(std::vector<string> args, std::vector<string> paths)
     cout << endl << "Testing report:" << endl;
     cout << "  Tests passed: " << passed << ", Tests skipped: " << skipped << ", Tests failed: " << failed << endl;
 
+    for (auto const &path: paths)
+    {
+        execute_command(false, "rm " + path + "/*.asm");
+        execute_command(false, "rm " + path + "/*.o");
+    }
+
     if (failed > 0) exit(1);
 }
 
