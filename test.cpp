@@ -119,8 +119,8 @@ void run_tests(std::vector<string> args, std::vector<string> paths)
 
     for (auto const &path: paths)
     {
-        execute_command(false, "rm " + path + "/*.asm");
-        execute_command(false, "rm " + path + "/*.o");
+        execute_command(true, "rm " + path + "/*.asm");
+        execute_command(true, "rm " + path + "/*.o");
     }
 
     if (failed > 0) exit(1);
