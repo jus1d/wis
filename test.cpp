@@ -11,13 +11,13 @@ using std::string, std::cout, std::cerr, std::endl;
 
 const string FILE_EXTENSION = ".glo";
 
-inline bool is_file_exists(const std::string& name) {
+inline bool is_file_exists(const std::string &name) {
     std::ifstream f(name.c_str());
     return f.good();
 }
 
 
-void execute_command(bool silent_mode, const string& command)
+void execute_command(bool silent_mode, const string &command)
 {
     if (!silent_mode) cout << "[CMD] " << command << endl;
     int exit_code = system(command.c_str());
@@ -28,7 +28,7 @@ void execute_command(bool silent_mode, const string& command)
     }
 }
 
-string shift_vector(std::vector<string>& vec)
+string shift_vector(std::vector<string> &vec)
 {
     if (!vec.empty()) {
         string result = vec[0];
@@ -41,7 +41,7 @@ string shift_vector(std::vector<string>& vec)
     exit(1);
 }
 
-int test_file(const string& file_path) {
+int test_file(const string &file_path) {
     string file_name = file_path.substr(0, file_path.find_last_of('.'));
 
     string output_path = file_name + ".output";
@@ -101,9 +101,9 @@ void run_tests(std::vector<string> args, std::vector<string> paths)
     int passed = 0;
     int skipped = 0;
 
-    for (const auto& path : paths)
+    for (const auto &path : paths)
     {
-        for (const auto& entry : std::filesystem::directory_iterator(path)) {
+        for (const auto &entry : std::filesystem::directory_iterator(path)) {
             if (entry.path().extension() == FILE_EXTENSION) {
                 int result = test_file(entry.path().string());
 
@@ -126,7 +126,7 @@ void run_tests(std::vector<string> args, std::vector<string> paths)
     if (failed > 0) exit(1);
 }
 
-void record_test_output(string const& file_path)
+void record_test_output(string const &file_path)
 {
     string file_name = file_path.substr(0, file_path.length() - FILE_EXTENSION.length());
 
