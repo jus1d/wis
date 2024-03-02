@@ -122,8 +122,6 @@ int main(int argc, char* argv[])
 
     string program = shift_vector(args);
 
-    execute_command(false, "make build");
-
     if (args.empty())
     {
         cerr << "[ERROR] no subcommand provided" << endl;
