@@ -809,13 +809,12 @@ void type_check_program(const std::vector<Operation> &program)
                 type_checking_stack.pop();
                 Type b = type_checking_stack.top();
                 type_checking_stack.pop();
-                if (a.Code == DataType::INT && b.Code == DataType::INT) {
+
+                if (a.Code == b.Code && (a.Code == DataType::INT || a.Code == DataType::PTR)) {
                     type_checking_stack.emplace(DataType::INT, op.Loc);
-                }
-                else if (a.Code == DataType::INT && b.Code == DataType::PTR) {
+                } else if (a.Code == DataType::INT && b.Code == DataType::PTR) {
                     type_checking_stack.emplace(DataType::PTR, op.Loc);
-                }
-                else {
+                } else {
                     compilation_error(op.Loc, "Invalid arguments types for `-` operation. Expected 2 `int`s, or `ptr` and `int`, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 }
