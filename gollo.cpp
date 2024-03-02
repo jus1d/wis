@@ -238,7 +238,7 @@ public:
             : Code(code), Loc(std::move(loc)) {}
 };
 
-void usage(string const &compiler_path)
+void usage(string const& compiler_path)
 {
     cerr << "Usage: " << compiler_path << " [OPTIONS] <path>" << endl;
     cerr << "OPTIONS:" << endl;
@@ -248,17 +248,17 @@ void usage(string const &compiler_path)
     cerr << "    -I <path>     Add directory to include paths list" << endl;
 }
 
-void compilation_error(const string &message)
+void compilation_error(const string& message)
 {
     cerr << "ERROR: " << message << endl;
 }
 
-void compilation_error(const string &loc, const string &message)
+void compilation_error(const string& loc, const string& message)
 {
     cerr << loc << ": ERROR: " << message << endl;
 }
 
-string shift_vector(std::vector<string> &vec)
+string shift_vector(std::vector<string>& vec)
 {
     if (!vec.empty()) {
         string result = vec[0];
@@ -272,7 +272,7 @@ string shift_vector(std::vector<string> &vec)
     exit(1);
 }
 
-std::vector<string> split_string(const string &input, const string &delimiter) {
+std::vector<string> split_string(const string& input, const string& delimiter) {
     std::vector<string> result;
     size_t start = 0;
     size_t end = input.find(delimiter);
@@ -288,7 +288,7 @@ std::vector<string> split_string(const string &input, const string &delimiter) {
     return result;
 }
 
-string trim_string(string s, const string &substring) {
+string trim_string(string s, const string& substring) {
     size_t pos = s.find(substring);
     if (pos != string::npos) {
         s.erase(pos, substring.length());
@@ -296,7 +296,7 @@ string trim_string(string s, const string &substring) {
     return s;
 }
 
-string unescape_string(const string &s) {
+string unescape_string(const string& s) {
     std::stringstream ss;
     for (size_t i = 0; i < s.length(); ++i) {
         if (s[i] == '\\' && i + 1 < s.length()) {
@@ -340,12 +340,12 @@ string unescape_string(const string &s) {
     return ss.str();
 }
 
-void complete_string(string &s, const string &additional)
+void complete_string(string& s, const string& additional)
 {
     s += additional + "\n";
 }
 
-bool string_to_int(const std::string &str, int &result) {
+bool string_to_int(const std::string& str, int& result) {
     std::istringstream iss(str);
 
     if (!(iss >> result)) return false;
@@ -354,12 +354,12 @@ bool string_to_int(const std::string &str, int &result) {
     return true;
 }
 
-string location_view(const string &filepath, int row, int col)
+string location_view(const string& filepath, int row, int col)
 {
     return filepath + ":" + std::to_string(row) + ":" + std::to_string(col);
 }
 
-void execute_command(bool silent_mode, const string &command)
+void execute_command(bool silent_mode, const string& command)
 {
     if (!silent_mode) cout << "[CMD] " << command << endl;
     int res = system(command.c_str());
@@ -370,12 +370,12 @@ void execute_command(bool silent_mode, const string &command)
     }
 }
 
-void extend_with_include_directories(string &file_path, const std::vector<string> &include_paths)
+void extend_with_include_directories(string& file_path, const std::vector<string>& include_paths)
 {
-    for (const auto &include_path: include_paths)
+    for (const auto& include_path : include_paths)
     {
         if (!std::filesystem::exists(include_path)) continue;
-        for (const auto &entry: std::filesystem::directory_iterator(include_path)) {
+        for (const auto& entry : std::filesystem::directory_iterator(include_path)) {
             std::vector<string> parts = split_string(entry.path().string(), "/");
             if (parts.empty()) continue;
             string file_name = parts[parts.size() - 1];
@@ -385,7 +385,7 @@ void extend_with_include_directories(string &file_path, const std::vector<string
     }
 }
 
-std::vector<Token> lex_line(string const &filepath, int line_number, string line)
+std::vector<Token> lex_line(string const& filepath, int line_number, string line)
 {
     line += " ";
     std::vector<Token> tokens;
@@ -456,7 +456,7 @@ std::vector<Token> lex_line(string const &filepath, int line_number, string line
     return tokens;
 }
 
-std::vector<Token> lex_file(string const &path)
+std::vector<Token> lex_file(string const& path)
 {
     std::fstream file(path);
 
@@ -475,7 +475,7 @@ std::vector<Token> lex_file(string const &path)
         line = split_string(line, "//")[0];
         std::vector<Token> line_tokens = lex_line(path, line_number, line);
 
-        for (const auto  &line_token: line_tokens) {
+        for (const auto & line_token : line_tokens) {
             tokens.push_back(line_token);
         }
         line_number++;
@@ -486,7 +486,7 @@ std::vector<Token> lex_file(string const &path)
     return tokens;
 }
 
-std::vector<Operation> parse_tokens_as_operations(std::vector<Token> &tokens, const std::vector<string> &include_paths)
+std::vector<Operation> parse_tokens_as_operations(std::vector<Token>& tokens, const std::vector<string>& include_paths)
 {
     std::vector<Operation> program;
     std::map<string, std::vector<Operation>> bindings;
@@ -582,7 +582,7 @@ std::vector<Operation> parse_tokens_as_operations(std::vector<Token> &tokens, co
                                     if (itt != bindings.end())
                                     {
                                         std::vector<Operation> binding = bindings[token.StringValue];
-                                        for (const auto  &op: binding) {
+                                        for (const auto & op : binding) {
                                             bindings[name].push_back(op);
                                         }
                                         break;
@@ -644,7 +644,7 @@ std::vector<Operation> parse_tokens_as_operations(std::vector<Token> &tokens, co
 
                         if (it != bindings.end())
                         {
-                            for (const auto &binding: bindings.at(token.StringValue)) {
+                            for (const auto& binding : bindings.at(token.StringValue)) {
                                 program.push_back(binding);
                             }
                         }
@@ -664,7 +664,7 @@ std::vector<Operation> parse_tokens_as_operations(std::vector<Token> &tokens, co
     return program;
 }
 
-void crossreference_blocks(std::vector<Operation> &program)
+void crossreference_blocks(std::vector<Operation>& program)
 {
     std::stack<int> crossreference_stack;
 
@@ -700,7 +700,8 @@ void crossreference_blocks(std::vector<Operation> &program)
                     compilation_error(op.Loc, "`do` operation can only be used in `while` block");
                     exit(1);
                 }
-                program[i].JumpTo = crossreference_stack.top();
+                int top = crossreference_stack.top();
+                program[i].JumpTo = top;
                 crossreference_stack.pop();
                 crossreference_stack.push(i);
                 break;
@@ -748,13 +749,13 @@ void crossreference_blocks(std::vector<Operation> &program)
     }
 }
 
-void type_check_program(const std::vector<Operation> &program)
+void type_check_program(const std::vector<Operation>& program)
 {
     assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
     std::stack<Type> type_checking_stack;
 
-    for (const auto &op: program) {
+    for (const auto& op : program) {
         assert(static_cast<int>(OpType::COUNT) == 49, "Exhaustive operations handling");
 
         switch (op.Type)
@@ -809,12 +810,13 @@ void type_check_program(const std::vector<Operation> &program)
                 type_checking_stack.pop();
                 Type b = type_checking_stack.top();
                 type_checking_stack.pop();
-
-                if (a.Code == b.Code && (a.Code == DataType::INT || a.Code == DataType::PTR)) {
+                if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::INT, op.Loc);
-                } else if (a.Code == DataType::INT && b.Code == DataType::PTR) {
+                }
+                else if (a.Code == DataType::INT && b.Code == DataType::PTR) {
                     type_checking_stack.emplace(DataType::PTR, op.Loc);
-                } else {
+                }
+                else {
                     compilation_error(op.Loc, "Invalid arguments types for `-` operation. Expected 2 `int`s, or `ptr` and `int`, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 }
@@ -939,7 +941,6 @@ void type_check_program(const std::vector<Operation> &program)
                 type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 break;
             }
-            case OpType::IF:
             case OpType::DO:
             {
                 if (type_checking_stack.empty())
@@ -958,6 +959,7 @@ void type_check_program(const std::vector<Operation> &program)
                 }
                 break;
             }
+            case OpType::IF:
             case OpType::ELSE:
             case OpType::WHILE:
             case OpType::END:
@@ -1295,7 +1297,7 @@ void type_check_program(const std::vector<Operation> &program)
     }
 }
 
-void generate_nasm_linux_x86_64(const string &output_file_path, std::vector<Operation> program)
+void generate_nasm_linux_x86_64(const string& output_file_path, std::vector<Operation> program)
 {
     std::ofstream out(output_file_path);
 
@@ -1310,7 +1312,7 @@ void generate_nasm_linux_x86_64(const string &output_file_path, std::vector<Oper
     complete_string(output_content, "BITS 64");
 
     bool is_put_needed;
-    for (const auto &op: program)
+    for (const auto& op : program)
     {
         if (op.Type == OpType::PUT)
         {
@@ -1835,10 +1837,10 @@ void generate_nasm_linux_x86_64(const string &output_file_path, std::vector<Oper
 
     out << output_content;
 
-    for (const auto &pair: strings) {
+    for (const auto& pair : strings) {
         out << "    str_" << pair.second << ": db ";
 
-        const string &s = pair.first;
+        const string& s = pair.first;
         for (size_t i = 0; i < s.size(); ++i) {
             out << "0x" << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(s[i]);
 
@@ -1854,7 +1856,7 @@ void generate_nasm_linux_x86_64(const string &output_file_path, std::vector<Oper
     out << "    mem resb 640000" << endl;
 }
 
-void compile(const string &compiler_path, const string &path, std::vector<Operation> program, bool run_after_compilation, bool silent_mode)
+void compile(const string& compiler_path, const string& path, std::vector<Operation> program, bool run_after_compilation, bool silent_mode)
 {
     string filename = trim_string(path, FILE_EXTENSION);
 
@@ -1910,9 +1912,9 @@ int main(int argc, char* argv[])
     string compiler_path = shift_vector(args);
     std::vector<string> include_paths = {"./std/", "./use/"};
     string path;
-    bool run_after_compilation = false;
-    bool silent_mode = false;
-    bool unsafe_mode = false;
+    bool run_after_compilation;
+    bool silent_mode;
+    bool unsafe_mode;
 
     if (args.empty())
     {
