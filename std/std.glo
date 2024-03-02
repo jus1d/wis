@@ -15,6 +15,13 @@ bind exit       sys_exit syscall1 end
 bind puts       stdout fputs end
 bind eputs      stderr fputs end
 
+bind putd
+  copy 0 < if
+    "-" puts -1 *
+  end
+  put
+end
+
 // Usage: "error message" <condition> assert
 bind assert
   not if 
