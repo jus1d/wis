@@ -7,10 +7,10 @@
 #include <stack>
 #include <map>
 #include <string>
+#include <chrono>
 
 #include "./assert.h"
 
-//using namespace std;
 using std::string, std::cout, std::cerr, std::endl;
 
 const string FILE_EXTENSION = ".glo";
@@ -1864,15 +1864,27 @@ void compile(const string& compiler_path, const string& path, std::vector<Operat
     }
 
 #ifdef __x86_64__
+    auto compilation_start = std::chrono::high_resolution_clock::now();
     if (!silent_mode) cout << "[INFO] Generating assembly -> " << filename << ".asm" << endl;
+    auto start = std::chrono::high_resolution_clock::now();
     generate_nasm_linux_x86_64(filename + ".asm", std::move(program));
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = duration_cast<std::chrono::nanoseconds>(stop - start);
+    if (!silent_mode) cout << "[INFO] Generating assembly took " << (float)duration.count() / 1000000000.0f << " secs" << endl;
 
     if (!silent_mode) cout << "[INFO] Compiling assembly with NASM" << endl;
+    start = std::chrono::high_resolution_clock::now();
     execute_command(silent_mode, "nasm -felf64 -o " + filename + ".o " + filename + ".asm");
+    stop = std::chrono::high_resolution_clock::now();
+    duration = duration_cast<std::chrono::nanoseconds>(stop - start);
     if (!silent_mode) cout << "[INFO] Object file generated: " << filename << ".asm -> " << filename << ".o" << endl;
+    if (!silent_mode) cout << "[INFO] Object file generation took " << (float)duration.count() / 1000000000.0f << " secs" << endl;
 
     execute_command(silent_mode, "ld -o " + filename + " " + filename + ".o");
     if (!silent_mode) cout << "[INFO] Compiled to " << filename << endl;
+    auto compilation_stop = std::chrono::high_resolution_clock::now();
+    duration = duration_cast<std::chrono::nanoseconds>(compilation_stop - compilation_start);
+    if (!silent_mode) cout << "[INFO] Compilation took " << (float)duration.count() / 1000000000.0f << " secs" << endl;
 
     if (run_after_compilation) execute_command(silent_mode, filename);
 
@@ -1892,7 +1904,7 @@ int main(int argc, char* argv[])
     std::vector<string> args(argv, argv + argc);
 
     string compiler_path = shift_vector(args);
-    std::vector<string> include_paths = {"./std/"};
+    std::vector<string> include_paths = {"./std/", "./use/"};
     string path;
     bool run_after_compilation;
     bool silent_mode;
