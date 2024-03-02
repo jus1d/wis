@@ -362,7 +362,12 @@ string location_view(const string& filepath, int row, int col)
 void execute_command(bool silent_mode, const string& command)
 {
     if (!silent_mode) cout << "[CMD] " << command << endl;
-    system(command.c_str());
+    int res = system(command.c_str());
+    if (res != 0)
+    {
+        cerr << "ERROR: command execution failed" << endl;
+        exit(1);
+    }
 }
 
 void extend_with_include_directories(string& file_path, const std::vector<string>& include_paths)
