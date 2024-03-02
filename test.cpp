@@ -7,9 +7,15 @@
 #include <map>
 #include <string>
 
-using namespace std;
+using std::string, std::cout, std::cerr, std::endl;
 
 const string FILE_EXTENSION = ".glo";
+
+inline bool is_file_exists(const std::string& name) {
+    std::ifstream f(name.c_str());
+    return f.good();
+}
+
 
 void execute_command(bool silent_mode, const string& command)
 {
@@ -17,12 +23,12 @@ void execute_command(bool silent_mode, const string& command)
     int exit_code = system(command.c_str());
     if (exit_code != 0)
     {
-        cerr << "ERROR: Executing command crashed with " << to_string(exit_code) << " exit code" << endl;
+        cerr << "[ERROR] Executing command crashed with " << std::to_string(exit_code) << " exit code" << endl;
         exit(exit_code);
     }
 }
 
-string shift_vector(vector<string>& vec)
+string shift_vector(std::vector<string>& vec)
 {
     if (!vec.empty()) {
         string result = vec[0];
@@ -31,14 +37,22 @@ string shift_vector(vector<string>& vec)
 
         return result;
     }
-    cerr << "ERROR: Can't shift empty vector" << endl;
+    cerr << "[ERROR] Can't shift empty vector" << endl;
     exit(1);
 }
 
-void test_file(const string& filePath) {
-    string file_name = filePath.substr(0, filePath.find_last_of('.'));
+void test_file(const string& file_path) {
+    string file_name = file_path.substr(0, file_path.find_last_of('.'));
 
-    string command = "./gollo -s " + filePath + " && ./" + file_name;
+    string output_path = file_name + ".output";
+
+    if (!is_file_exists(output_path))
+    {
+        cout << "[INFO] Skipping test for file: " << file_path << ". No recorded output found" << endl;
+        return;
+    }
+
+    string command = "./gollo -s " + file_path + " && ./" + file_name;
 
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) {
@@ -52,28 +66,26 @@ void test_file(const string& filePath) {
 
     pclose(pipe);
 
-    string outputPath = file_name + ".output";
+    std::ifstream outputFile(output_path);
+    string expected_output((std::istreambuf_iterator<char>(outputFile)), std::istreambuf_iterator<char>());
 
-    ifstream outputFile(outputPath);
-    string expectedOutput((istreambuf_iterator<char>(outputFile)), istreambuf_iterator<char>());
-
-    if (output == expectedOutput) {
-        cout << "Test passed for file: " << filePath << endl;
+    if (output == expected_output) {
+        cout << "[INFO] Test passed for file: " << file_path << endl;
     } else {
-        cerr << "Test failed for file: " << filePath << endl;
-        cerr << "  Expected output:\n" << expectedOutput << "\n  Actual output:\n" << output << endl;
+        cerr << "[ERROR] Test failed for file: " << file_path << endl;
+        cerr << "  Expected output:\n" << expected_output << "\n  Actual output:\n" << output << endl;
     }
 }
 
-void run_tests_in_directory(const string& directoryPath) {
-    for (const auto& entry : filesystem::directory_iterator(directoryPath)) {
+void run_tests_in_directory(const string& directory_path) {
+    for (const auto& entry : std::filesystem::directory_iterator(directory_path)) {
         if (entry.path().extension() == FILE_EXTENSION) {
             test_file(entry.path().string());
         }
     }
 }
 
-void run_tests(vector<string> args, vector<string> paths)
+void run_tests(std::vector<string> args, std::vector<string> paths)
 {
     int i = 0;
     while (i < args.size())
@@ -83,7 +95,7 @@ void run_tests(vector<string> args, vector<string> paths)
         {
             if (args.empty())
             {
-                cerr << "ERROR: path to directory not found after `-f` flag" << endl;
+                cerr << "[ERROR] path to directory not found after `-f` flag" << endl;
                 exit(1);
             }
 
@@ -105,16 +117,14 @@ void record_test_output(string const& file_path)
 
 int main(int argc, char* argv[])
 {
-    vector<string> args(argv, argv + argc);
-    vector<string> paths = {"./tests/"};
+    std::vector<string> args(argv, argv + argc);
+    std::vector<string> paths = {"./tests/"};
 
     string program = shift_vector(args);
 
-    execute_command(false, "make build");
-
     if (args.empty())
     {
-        cerr << "ERROR: no subcommand provided" << endl;
+        cerr << "[ERROR] no subcommand provided" << endl;
         exit(1);
     }
 
@@ -128,14 +138,14 @@ int main(int argc, char* argv[])
     {
         if (args.empty())
         {
-            cerr << "ERROR: not enough arguments for `record` subcommand" << endl;
+            cerr << "[ERROR] not enough arguments for `record` subcommand" << endl;
             exit(1);
         }
         record_test_output(shift_vector(args));
     }
     else
     {
-        cerr << "ERROR: unknown subcommand provided" << endl;
+        cerr << "[ERROR] unknown subcommand provided" << endl;
         exit(1);
     }
 

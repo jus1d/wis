@@ -3,25 +3,44 @@ use "./std/std.glo"
 // Test push to stack & put operations
 1 2 3 put put put
 
+"--------------------\n" puts
+
 // Put a big number
 123456789 put
+
+"--------------------\n" puts
 
 // Test push to stack & instant put operations
 1 put 2 put 3 put
 
+"--------------------\n" puts
+
 // Test copy operation
 1 copy copy put put put
+
+"--------------------\n" puts
 
 // Test swap operation
 1 2 swap put put 
 
+"--------------------\n" puts
+
 // Test drop operation
 1 2 drop put
+
+"--------------------\n" puts
 
 // Test two copy operation
 1 2 2copy
 put put put put
 
+"--------------------\n" puts
+
 // Test over operation
 1 2 over
 put put put
+
+"--------------------\n" puts
+
+1 2 3 4 put put put put 
+1 2 3 4 2swap put put put put

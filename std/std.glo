@@ -1,4 +1,4 @@
-use "syscall.glo"
+use "sys.glo"
 
 // Default streams
 bind stdin      0 end
@@ -8,6 +8,7 @@ bind stderr     2 end
 // Wrappers for common syscalls
 bind write      sys_write syscall3 end
 bind read       sys_read syscall3 end
+bind open       sys_open syscall3 end
 bind exit       sys_exit syscall1 end
 
 // Wrappers for write syscall
@@ -17,7 +18,7 @@ bind eputs      stderr fputs end
 // Usage: "error message" <condition> assert
 bind assert
   not if 
-    "Assertion error: " puts puts
+    "Assertion failed: " eputs eputs
     1 exit drop
   end
 end
@@ -26,5 +27,12 @@ end
 bind 2copy      over over end
 bind 2drop      drop drop end
 
-// Other bindings
+// Bindings related to strings
 bind endl       "\n" end
+
+bind strlen
+  0 swap
+  while copy . 0 != do
+    1 + swap 1 + swap
+  end drop
+end

@@ -1,10 +1,10 @@
-mem 69 store32
-mem load32 put
+mem 69 ,
+mem . put
 
-mem 4 +  1992 store32
-mem 4 + load32 put
+mem 1 + 122 ,
+mem 1 + . put
 
-mem 8 +  69420 store32
-mem 8 + load32 put
+mem 2 + 254 ,
+mem 2 + . put
 
-mem load32 put
+mem . put

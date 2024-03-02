@@ -1,7 +1,0 @@
-// Syscalls numbers
-bind sys_read    0 end
-bind sys_write   1 end
-bind sys_open    2 end
-bind sys_close   3 end
-bind sys_stat    4 end
-bind sys_exit    60 end

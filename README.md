@@ -104,20 +104,22 @@ here eputs ": ERROR: some error message" eputs
 ### Memory
 
 - `mem` keyword pushes a pointer to buffer, where you can write and read
-- `store32` keyword puts a 32-bit value to memory buffer
+- `,` and `store64` operations puts a byte or 64-bit values to memory buffer
 
 ```
-mem 69 store32
+mem 69 store64
 ```
 Puts a `69` to program's memory
 
-- `load32` keyword loads a 32-bit value from the memory buffer to the stack
+- `.` and `load64` operations loads a byte or 64-bit value from the memory buffer to the stack
 
 ```
-mem load32 put
+mem load64 put
 ```
 
 Loads a value from memory to the stack
+
+`,` and `.` operations has similar behaivor as in the [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck).
 
 ### Operations
 

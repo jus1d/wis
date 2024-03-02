@@ -1,14 +1,13 @@
 CXX ?= g++
 CXXFLAGS ?= -std=c++23# -Wall -Wextra
 
-all: build test
-
-build: ./gollo.cpp
+build: ./gollo.cpp ./test.cpp
 	$(CXX) $(CXXFLAGS) -o ./gollo ./gollo.cpp
-
-test: ./test.cpp
 	$(CXX) $(CXXFLAGS) -o ./test ./test.cpp
-	./test run -f ./euler/ -f ./examples/
+
+test: build
+	./test run -f ./examples/ -f ./euler/
+	
 
 clean:
 	rm -f ./test ./gollo

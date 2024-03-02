@@ -10,7 +10,8 @@
 
 #include "./assert.h"
 
-using namespace std;
+//using namespace std;
+using std::string, std::cout, std::cerr, std::endl;
 
 const string FILE_EXTENSION = ".glo";
 
@@ -43,8 +44,10 @@ enum class OpType : int {
     WHILE,
     BIND,
     MEM,
-    LOAD,
-    STORE,
+    LOAD8,
+    STORE8,
+    LOAD64,
+    STORE64,
     USE,
     PUT,
     FPUTS,
@@ -52,6 +55,7 @@ enum class OpType : int {
     COPY,
     OVER,
     SWAP,
+    SWAP2,
     DROP,
     ROT,
     SYSCALL0,
@@ -64,9 +68,9 @@ enum class OpType : int {
     COUNT,
 };
 
-const map<OpType, string> HumanizedOpTypes = {
-        {OpType::PUSH_INT, "`PUSH INT`"},
-        {OpType::PUSH_STRING, "`PUSH STRING`"},
+const std::map<OpType, string> HumanizedOpTypes = {
+        {OpType::PUSH_INT, "`push int`"},
+        {OpType::PUSH_STRING, "`push string`"},
         {OpType::PLUS, "`+`"},
         {OpType::MINUS, "`-`"},
         {OpType::MUL, "`*`"},
@@ -93,8 +97,10 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::WHILE, "`while`"},
         {OpType::BIND, "`bind`"},
         {OpType::MEM, "`mem`"},
-        {OpType::LOAD, "`load32`"},
-        {OpType::STORE, "`store32`"},
+        {OpType::LOAD8, "`.`"},
+        {OpType::STORE8, "`,`"},
+        {OpType::LOAD64, "`load64`"},
+        {OpType::STORE64, "`store64`"},
         {OpType::USE, "`use`"},
         {OpType::PUT, "`put`"},
         {OpType::FPUTS, "`fputs`"},
@@ -102,6 +108,7 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::COPY, "`copy`"},
         {OpType::OVER, "`over`"},
         {OpType::SWAP, "`swap`"},
+        {OpType::SWAP2, "`2swap`"},
         {OpType::DROP, "`drop`"},
         {OpType::ROT, "`rot`"},
         {OpType::SYSCALL0, "`syscall0`"},
@@ -113,7 +120,7 @@ const map<OpType, string> HumanizedOpTypes = {
         {OpType::SYSCALL6, "`syscall6`"},
 };
 
-const map<string, OpType> BuiltInOps = {
+const std::map<string, OpType> BuiltInOps = {
         {"+", OpType::PLUS},
         {"-", OpType::MINUS},
         {"*", OpType::MUL},
@@ -140,8 +147,10 @@ const map<string, OpType> BuiltInOps = {
         {"while", OpType::WHILE},
         {"bind", OpType::BIND},
         {"mem", OpType::MEM},
-        {"load32", OpType::LOAD},
-        {"store32", OpType::STORE},
+        {".", OpType::LOAD8},
+        {",", OpType::STORE8},
+        {"load64", OpType::LOAD64},
+        {"store64", OpType::STORE64},
         {"use", OpType::USE},
         {"put", OpType::PUT},
         {"fputs", OpType::FPUTS},
@@ -149,6 +158,7 @@ const map<string, OpType> BuiltInOps = {
         {"copy", OpType::COPY},
         {"over", OpType::OVER},
         {"swap", OpType::SWAP},
+        {"2swap", OpType::SWAP2},
         {"drop", OpType::DROP},
         {"rot", OpType::ROT},
         {"syscall0", OpType::SYSCALL0},
@@ -182,10 +192,11 @@ enum class TokenType : int {
     WORD,
     INT,
     STRING,
+    CHAR,
     COUNT,
 };
 
-const map<TokenType, string> HumanizedTokenTypes = {
+const std::map<TokenType, string> HumanizedTokenTypes = {
         {TokenType::WORD, "`word`"},
         {TokenType::INT, "`int`"},
         {TokenType::STRING, "`string`"}
@@ -212,7 +223,7 @@ enum class DataType : int {
     COUNT,
 };
 
-const map<DataType, string> HumanizedDataTypes = {
+const std::map<DataType, string> HumanizedDataTypes = {
         {DataType::INT, "`int`"},
         {DataType::PTR, "`ptr`"},
         {DataType::BOOL, "`bool`"}
@@ -236,7 +247,17 @@ void usage(string const& compiler_path)
     cerr << "    -I <path>     Add directory to include paths list" << endl;
 }
 
-string shift_vector(vector<string>& vec)
+void compilation_error(const string& message)
+{
+    cerr << "ERROR: " << message << endl;
+}
+
+void compilation_error(const string& loc, const string& message)
+{
+    cerr << loc << ": ERROR: " << message << endl;
+}
+
+string shift_vector(std::vector<string>& vec)
 {
     if (!vec.empty()) {
         string result = vec[0];
@@ -245,12 +266,13 @@ string shift_vector(vector<string>& vec)
 
         return result;
     }
-    cerr << "ERROR: Can't shift empty vector" << endl;
+    compilation_error("Can't shift empty vector");
+    compilation_error("Can't shift empty vector");
     exit(1);
 }
 
-vector<string> split_string(const string& input, const string& delimiter) {
-    vector<string> result;
+std::vector<string> split_string(const string& input, const string& delimiter) {
+    std::vector<string> result;
     size_t start = 0;
     size_t end = input.find(delimiter);
 
@@ -274,7 +296,7 @@ string trim_string(string s, const string& substring) {
 }
 
 string unescape_string(const string& s) {
-    stringstream ss;
+    std::stringstream ss;
     for (size_t i = 0; i < s.length(); ++i) {
         if (s[i] == '\\' && i + 1 < s.length()) {
             switch (s[i + 1]) {
@@ -293,13 +315,13 @@ string unescape_string(const string& s) {
                 default:
                     if (isdigit(s[i + 1])) {
                         int value = 0;
-                        ss << oct << s[i + 1];
+                        ss << std::oct << s[i + 1];
                         ss >> value;
                         ss.clear();
                         ss << static_cast<char>(value);
                     } else if (s[i + 1] == 'x' || s[i + 1] == 'X') {
                         int value = 0;
-                        ss << hex << s.substr(i + 2, 2);
+                        ss << std::hex << s.substr(i + 2, 2);
                         ss >> value;
                         ss.clear();
                         ss << static_cast<char>(value);
@@ -333,27 +355,22 @@ bool string_to_int(const std::string& str, int& result) {
 
 string location_view(const string& filepath, int row, int col)
 {
-    return filepath + ":" + to_string(row) + ":" + to_string(col);
+    return filepath + ":" + std::to_string(row) + ":" + std::to_string(col);
 }
 
 void execute_command(bool silent_mode, const string& command)
 {
     if (!silent_mode) cout << "[CMD] " << command << endl;
-    int exit_code = system(command.c_str());
-    if (exit_code != 0)
-    {
-        cerr << "ERROR: Executing command crashed with " << to_string(exit_code) << " exit code" << endl;
-        exit(exit_code);
-    }
+    system(command.c_str());
 }
 
-void extend_with_include_directories(string& file_path, const vector<string>& include_paths)
+void extend_with_include_directories(string& file_path, const std::vector<string>& include_paths)
 {
     for (const auto& include_path : include_paths)
     {
-        if (!filesystem::exists(include_path)) continue;
-        for (const auto& entry : filesystem::directory_iterator(include_path)) {
-            vector<string> parts = split_string(entry.path().string(), "/");
+        if (!std::filesystem::exists(include_path)) continue;
+        for (const auto& entry : std::filesystem::directory_iterator(include_path)) {
+            std::vector<string> parts = split_string(entry.path().string(), "/");
             if (parts.empty()) continue;
             string file_name = parts[parts.size() - 1];
 
@@ -362,19 +379,20 @@ void extend_with_include_directories(string& file_path, const vector<string>& in
     }
 }
 
-vector<Token> lex_line(string const& filepath, int line_number, string line)
+std::vector<Token> lex_line(string const& filepath, int line_number, string line)
 {
     line += " ";
-    vector<Token> tokens;
+    std::vector<Token> tokens;
 
     string cur;
     int i = 0;
     bool string_mode = false;
+    bool char_mode = false;
 
     while (i < int(line.size()))
     {
         char ch = line[i];
-        if (ch == '"')
+        if (ch == '"' && !char_mode)
         {
             if (string_mode)
             {
@@ -384,9 +402,24 @@ vector<Token> lex_line(string const& filepath, int line_number, string line)
             }
             string_mode = !string_mode;
         }
-        else if (ch == ' ' && !cur.empty())
+        else if (ch == '\'' && !string_mode)
         {
-            if (string_mode)
+            if (char_mode)
+            {
+                string loc = location_view(filepath, line_number, i - int(cur.size()));
+                if (unescape_string(cur).size() != 1)
+                {
+                    compilation_error(loc, "`char` should be exactly 1 character");
+                    exit(1);
+                }
+                tokens.emplace_back(TokenType::CHAR, cur, loc);
+                cur = "";
+            }
+            char_mode = !char_mode;
+        }
+        else if (ch == ' ' && (!cur.empty() || string_mode || char_mode))
+        {
+            if (string_mode || char_mode)
             {
                 cur += ch;
             }
@@ -417,24 +450,24 @@ vector<Token> lex_line(string const& filepath, int line_number, string line)
     return tokens;
 }
 
-vector<Token> lex_file(string const& path)
+std::vector<Token> lex_file(string const& path)
 {
-    fstream file(path);
+    std::fstream file(path);
 
     if (!file.is_open())
     {
-        cerr << "ERROR: File `" << path << "` not found in include directories" << endl;
+        compilation_error("File `" + path + "` not found in include directories");
         exit(1);
     }
 
-    vector<Token> tokens;
+    std::vector<Token> tokens;
 
     string line;
     int line_number = 1;
     while (getline(file, line))
     {
         line = split_string(line, "//")[0];
-        vector<Token> line_tokens = lex_line(path, line_number, line);
+        std::vector<Token> line_tokens = lex_line(path, line_number, line);
 
         for (const auto & line_token : line_tokens) {
             tokens.push_back(line_token);
@@ -447,15 +480,17 @@ vector<Token> lex_file(string const& path)
     return tokens;
 }
 
-vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector<string>& include_paths)
+std::vector<Operation> parse_tokens_as_operations(std::vector<Token>& tokens, const std::vector<string>& include_paths)
 {
-    vector<Operation> program;
-    map<string, vector<Operation>> bindings;
+    std::vector<Operation> program;
+    std::map<string, std::vector<Operation>> bindings;
 
-    assert(static_cast<int>(TokenType::COUNT) == 3, "Exhaustive token types handling");
+    assert(static_cast<int>(TokenType::COUNT) == 4, "Exhaustive token types handling");
 
     for (int i = 0; i < int(tokens.size()); ++i) {
         Token token = tokens[i];
+
+        assert(static_cast<int>(OpType::COUNT) == 49, "Exhaustive operations handling");
 
         switch (token.Type) {
             case TokenType::INT:
@@ -466,14 +501,18 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                 program.emplace_back(OpType::PUSH_STRING, unescape_string(token.StringValue), token.Loc);
                 break;
             }
+            case TokenType::CHAR:
+            {
+                int value = (int)unescape_string(token.StringValue)[0];
+                program.emplace_back(OpType::PUSH_INT, value, token.Loc);
+                break;
+            }
             case TokenType::WORD:
-                assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
-
                 if (token.StringValue == "bind")
                 {
                     if (++i == int(tokens.size()))
                     {
-                        cerr << token.Loc << ": ERROR: Unfinished binding definition" << endl;
+                        compilation_error(token.Loc, "Unfinished binding definition");
                         exit(1);
                     }
 
@@ -481,7 +520,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
 
                     if (token.Type != TokenType::WORD)
                     {
-                        cerr << token.Loc << ": ERROR: Invalid token's type for binding's name. Expected " << HumanizedTokenTypes.at(TokenType::WORD) << ", but found " << HumanizedTokenTypes.at(token.Type) << endl;
+                        compilation_error(token.Loc, "Invalid token's type for binding's name. Expected token type `word`, but found " + HumanizedTokenTypes.at(token.Type));
                         exit(1);
                     }
 
@@ -490,7 +529,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
 
                     if (it != BuiltInOps.end())
                     {
-                        cerr << token.Loc << ": ERROR: Binding name can't conflict with built in operations. Use other name, instead of `" << name << "`" << endl;
+                        compilation_error(token.Loc, "Binding name can't conflict with built in operations. Use other name, instead of `" + name + "`");
                         exit(1);
                     }
 
@@ -502,7 +541,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
 
                         if (token.StringValue == name)
                         {
-                            cerr << token.Loc << ": ERROR: Bindings are not support recursive calls" << endl;
+                            compilation_error(token.Loc, "Bindings are not support recursive calls");
                             exit(1);
                         }
 
@@ -536,14 +575,14 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                                     auto itt = bindings.find(token.StringValue);
                                     if (itt != bindings.end())
                                     {
-                                        vector<Operation> binding = bindings[token.StringValue];
+                                        std::vector<Operation> binding = bindings[token.StringValue];
                                         for (const auto & op : binding) {
                                             bindings[name].push_back(op);
                                         }
                                         break;
                                     }
 
-                                    cerr << token.Loc << ": ERROR: Undefined token: '" << token.StringValue << "'" << endl;
+                                    compilation_error(token.Loc, "Undefined token: `" + token.StringValue + "`");
                                     exit(1);
                                 }
                             }
@@ -556,7 +595,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                 {
                     if (++i == int(tokens.size()))
                     {
-                        cerr << token.Loc << ": ERROR: Unfinished using definition. Expected filepath, but found nothing" << endl;
+                        compilation_error(token.Loc, "Unfinished using definition. Expected filepath, but found nothing");
                         exit(1);
                     }
 
@@ -564,7 +603,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
 
                     if (token.Type != TokenType::STRING)
                     {
-                        cerr << token.Loc << ": ERROR: Expected type " << HumanizedTokenTypes.at(TokenType::STRING) << " after " << HumanizedOpTypes.at(OpType::USE) << " keyword, bot found " <<  HumanizedTokenTypes.at(token.Type) << endl;
+                        compilation_error(token.Loc, "Expected type `string` after `use` keyword, bot found " + HumanizedTokenTypes.at(token.Type));
                         exit(1);
                     }
 
@@ -572,9 +611,9 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
 
                     extend_with_include_directories(file_path, include_paths);
 
-                    vector<Token> using_tokens = lex_file(file_path);
+                    std::vector<Token> using_tokens = lex_file(file_path);
 
-                    vector<Token> temp_tokens = tokens;
+                    std::vector<Token> temp_tokens = tokens;
 
                     tokens = using_tokens;
 
@@ -585,7 +624,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                         tokens.push_back(tt);
                     }
                     i = -1;
-                    program = vector<Operation>();
+                    program = std::vector<Operation>();
                 }
                 else
                 {
@@ -605,7 +644,7 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
                         }
                         else
                         {
-                            cerr << token.Loc << ": ERROR: Undefined token: '" << token.StringValue << "'" << endl;
+                            compilation_error(token.Loc, "Undefined token: `" + token.StringValue + "`");
                             exit(1);
                         }
                     }
@@ -619,11 +658,11 @@ vector<Operation> parse_tokens_as_operations(vector<Token>& tokens, const vector
     return program;
 }
 
-void crossreference_blocks(vector<Operation>& program)
+void crossreference_blocks(std::vector<Operation>& program)
 {
-    stack<int> crossreference_stack;
+    std::stack<int> crossreference_stack;
 
-    assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling. Not all operations should be handled in here");
+    assert(static_cast<int>(OpType::COUNT) == 49, "Exhaustive operations handling. Not all operations should be handled in here");
 
     for (int i = 0; i < int(program.size()); ++i) {
         Operation op = program[i];
@@ -639,7 +678,7 @@ void crossreference_blocks(vector<Operation>& program)
             {
                 if (crossreference_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: `else` operation can only be used in `if` block" << endl;
+                    compilation_error(op.Loc, "`else` operation can only be used in `if` block");
                     exit(1);
                 }
                 int pos = crossreference_stack.top();
@@ -652,7 +691,7 @@ void crossreference_blocks(vector<Operation>& program)
             {
                 if (crossreference_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: `do` operation can only be used in `while` block" << endl;
+                    compilation_error(op.Loc, "`do` operation can only be used in `while` block");
                     exit(1);
                 }
                 program[i].JumpTo = crossreference_stack.top();
@@ -664,7 +703,7 @@ void crossreference_blocks(vector<Operation>& program)
             {
                 if (crossreference_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: `end` operation can only be used to close other blocks" << endl;
+                    compilation_error(op.Loc, "`end` operation can only be used to close other blocks");
                     exit(1);
                 }
                 int pos = crossreference_stack.top();
@@ -685,7 +724,8 @@ void crossreference_blocks(vector<Operation>& program)
                     }
                     default:
                     {
-                        assert(false, "Only " << HumanizedOpTypes.at(OpType::IF) << " and " << HumanizedOpTypes.at(OpType::WHILE) << " blocks can be closed with " << HumanizedOpTypes.at(OpType::END));
+                        compilation_error(op.Loc, "Only `if` and `while` blocks can be closed with `end` keyword");
+                        exit(1);
                     }
                 }
             }
@@ -697,19 +737,19 @@ void crossreference_blocks(vector<Operation>& program)
         int latest_pos = crossreference_stack.top();
         crossreference_stack.pop();
 
-        cerr << program[latest_pos].Loc << ": ERROR: Not all blocks was closed with " << HumanizedOpTypes.at(OpType::END) << endl;
+        compilation_error(program[latest_pos].Loc, "Not all blocks was closed with `end` keyword");
         exit(1);
     }
 }
 
-void type_check_program(const vector<Operation>& program)
+void type_check_program(const std::vector<Operation>& program)
 {
     assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
-    stack<Type> type_checking_stack;
+    std::stack<Type> type_checking_stack;
 
     for (const auto& op : program) {
-        assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
+        assert(static_cast<int>(OpType::COUNT) == 49, "Exhaustive operations handling");
 
         switch (op.Type)
         {
@@ -730,7 +770,7 @@ void type_check_program(const vector<Operation>& program)
                 assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `+` operation. Expected 2 arguments, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -745,7 +785,7 @@ void type_check_program(const vector<Operation>& program)
                     type_checking_stack.emplace(DataType::PTR, op.Loc);
                 }
                 else {
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << "s or pair of " << HumanizedDataTypes.at(DataType::INT) << " and " << HumanizedDataTypes.at(DataType::PTR) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    compilation_error(op.Loc, "Invalid arguments types for `+` operation. Expected 2 `int`s or pair of `int` and `ptr`, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 }
                 break;
@@ -755,7 +795,7 @@ void type_check_program(const vector<Operation>& program)
                 assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `-` operation. Expected 2 arguments, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -770,7 +810,7 @@ void type_check_program(const vector<Operation>& program)
                     type_checking_stack.emplace(DataType::PTR, op.Loc);
                 }
                 else {
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << "s, or " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << " (in this order), but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    compilation_error(op.Loc, "Invalid arguments types for `-` operation. Expected 2 `int`s, or `ptr` and `int`, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 }
                 break;
@@ -782,7 +822,7 @@ void type_check_program(const vector<Operation>& program)
                 assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
+                    compilation_error(op.Loc, "Not enough arguments for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 2 arguments, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -793,7 +833,7 @@ void type_check_program(const vector<Operation>& program)
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::INT, op.Loc);
                 } else {
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    compilation_error(op.Loc, "Invalid arguments types for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 2 `int`s, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 }
                 break;
@@ -805,7 +845,7 @@ void type_check_program(const vector<Operation>& program)
                 assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
+                    compilation_error(op.Loc, "Not enough arguments for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 2 arguments, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -819,7 +859,7 @@ void type_check_program(const vector<Operation>& program)
                 } else if (a.Code == DataType::BOOL && b.Code == DataType::BOOL) {
                     type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 } else {
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << " or 2 " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    compilation_error(op.Loc, "Invalid arguments types for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 2 `int`s or 2 `bool`s, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 }
                 break;
@@ -830,7 +870,7 @@ void type_check_program(const vector<Operation>& program)
                 assert(static_cast<int>(DataType::COUNT) == 3, "Exhaustive data types handling");
 
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
+                    compilation_error(op.Loc, "Not enough arguments for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 2 arguments, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -842,7 +882,7 @@ void type_check_program(const vector<Operation>& program)
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::INT, op.Loc);
                 } else {
-                    cerr << op.Loc << ": ERROR: Invalid arguments types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    compilation_error(op.Loc, "Invalid arguments types for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 2 `int`s, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 }
                 break;
@@ -855,7 +895,7 @@ void type_check_program(const vector<Operation>& program)
             case OpType::GE:
             {
                 if (type_checking_stack.size() < 2) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << to_string(type_checking_stack.size()) << endl;
+                    compilation_error(op.Loc, "Not enough arguments for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 2 arguments, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -866,10 +906,10 @@ void type_check_program(const vector<Operation>& program)
                 if (a.Code == DataType::INT && b.Code == DataType::INT) {
                     type_checking_stack.emplace(DataType::BOOL, op.Loc);
                 } else if (a.Code == DataType::BOOL && b.Code == DataType::BOOL) {
-                    cerr << op.Loc << ": ERROR: Use " << HumanizedOpTypes.at(OpType::BAND) << ", " << HumanizedOpTypes.at(OpType::BOR) << " and " << HumanizedOpTypes.at(OpType::XOR) << " operations to compare booleans. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    compilation_error(op.Loc, "Use `band`, `bor` and `xor` operations to compare booleans. Expected 2 `int`s, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 } else {
-                    cerr << op.Loc << ": ERROR: Only integer values can be compared. Expected 2 " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << "" << endl;
+                    compilation_error(op.Loc, "Only integer values can be compared. Expected 2 `int`s, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 }
                 break;
@@ -877,13 +917,13 @@ void type_check_program(const vector<Operation>& program)
             case OpType::NOT:
             {
                 if (type_checking_stack.empty()) {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 arguments, but found 0" << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `not` operation. Expected 1 arguments, but found 0");
                     exit(1);
                 }
                 Type a = type_checking_stack.top();
                 if (a.Code != DataType::BOOL)
                 {
-                    cerr << a.Loc << ": ERROR: Expected type " << HumanizedDataTypes.at(DataType::BOOL) << " for " << HumanizedOpTypes.at(OpType::NOT) << ", but found " << HumanizedDataTypes.at(a.Code) << endl;
+                    compilation_error(op.Loc, "Expected type `bool` for `not` operation, but found " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 }
                 break;
@@ -899,7 +939,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
+                    compilation_error(op.Loc, "Not enough arguments for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 1 argument, but found 0");
                     exit(1);
                 }
 
@@ -908,7 +948,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (top.Code != DataType::BOOL)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument's type for " << HumanizedOpTypes.at(op.Type) << " operation. Expected type " << HumanizedDataTypes.at(DataType::BOOL) << ", but found " << HumanizedDataTypes.at(top.Code) << "" << endl;
+                    compilation_error(op.Loc, "Unexpected argument's type for " + HumanizedOpTypes.at(op.Type) + " operation. Expected type `bool`, but found " + HumanizedDataTypes.at(top.Code));
                     exit(1);
                 }
                 break;
@@ -917,7 +957,7 @@ void type_check_program(const vector<Operation>& program)
             case OpType::WHILE:
             case OpType::END:
             {
-                // No type checking needed for these operations.
+                // No type checking needed for these operations
                 break;
             }
             case OpType::BIND:
@@ -929,11 +969,12 @@ void type_check_program(const vector<Operation>& program)
                 type_checking_stack.emplace(DataType::PTR, op.Loc);
                 break;
             }
-            case OpType::LOAD:
+            case OpType::LOAD8:
+            case OpType::LOAD64:
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << "ERROR: Not enough arguments for `load8` operation. Expected 1 argument, but found 0" << endl;
+                    compilation_error(op.Loc, "Not enough arguments for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 1 argument, but found 0");
                     exit(1);
                 }
 
@@ -942,7 +983,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (top.Code != DataType::PTR)
                 {
-                    cerr << op.Loc << "ERROR: Unexpected argument type for `load8` operation. Expected `ptr`, but found " << HumanizedDataTypes.at(top.Code) << endl;
+                    compilation_error(op.Loc, "Unexpected argument type for " + HumanizedOpTypes.at(op.Type) + " operation. Expected `ptr`, but found " + HumanizedDataTypes.at(top.Code));
                     exit(1);
                 }
 
@@ -950,11 +991,12 @@ void type_check_program(const vector<Operation>& program)
 
                 break;
             }
-            case OpType::STORE:
+            case OpType::STORE8:
+            case OpType::STORE64:
             {
                 if (type_checking_stack.size() < 2)
                 {
-                    cerr << op.Loc << "ERROR: Not enough arguments for `store8` operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
+                    compilation_error(op.Loc, "Not enough arguments for " + HumanizedOpTypes.at(op.Type) + " operation. Expected 2 arguments, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -965,7 +1007,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (a.Code != DataType::INT || b.Code != DataType::PTR)
                 {
-                    cerr << op.Loc << "ERROR: Unexpected argument's types for `store8` operation. Expected `int` and `ptr`, but found " << HumanizedDataTypes.at(b.Code) << " and " << HumanizedDataTypes.at(a.Code) << endl;
+                    compilation_error(op.Loc, "Unexpected argument's types for " + HumanizedOpTypes.at(op.Type) + " operation. Expected `int` and `ptr`, but found " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(a.Code));
                     exit(1);
                 }
                 break;
@@ -978,7 +1020,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `put` operation. Expected 1 argument, but found 0");
                     exit(1);
                 }
                 Type top = type_checking_stack.top();
@@ -989,7 +1031,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.size() < 3)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 3 arguments, but found " << type_checking_stack.size() << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `fputs` operation. Expected 3 arguments, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -1002,7 +1044,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (a.Code != DataType::INT || b.Code != DataType::PTR || c.Code != DataType::INT)
                 {
-                    cerr << op.Loc << ": ERROR: Unexpected argument's types for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << HumanizedDataTypes.at(DataType::INT) << ", " << HumanizedDataTypes.at(DataType::PTR) << " and " << HumanizedDataTypes.at(DataType::INT) << ", but found " << HumanizedDataTypes.at(a.Code) << " and " << HumanizedDataTypes.at(b.Code) << endl;
+                    compilation_error(op.Loc, "Unexpected argument's types for `fputs` operation. Expected `int`, `ptr` and `int`, but found " + HumanizedDataTypes.at(a.Code) + ", " + HumanizedDataTypes.at(b.Code) + " and " + HumanizedDataTypes.at(c.Code));
                     exit(1);
                 }
 
@@ -1012,7 +1054,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `copy` operation. Expected 1 argument, but found 0");
                     exit(1);
                 }
 
@@ -1024,7 +1066,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.size() < 2)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `over` operation. Expected 2 arguments, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -1044,7 +1086,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.size() < 2)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 2 arguments, but found " << type_checking_stack.size() << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `swap` operation. Expected 2 arguments, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -1059,11 +1101,38 @@ void type_check_program(const vector<Operation>& program)
 
                 break;
             }
+            case OpType::SWAP2:
+            {
+                if (type_checking_stack.size() < 4)
+                {
+                    compilation_error(op.Loc, "Not enough arguments for `2swap` operation. Expected 4 arguments, but found " + std::to_string(type_checking_stack.size()));
+                    exit(1);
+                }
+
+                Type a = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                Type b = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                Type c = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                Type d = type_checking_stack.top();
+                type_checking_stack.pop();
+
+                type_checking_stack.push(b);
+                type_checking_stack.push(a);
+                type_checking_stack.push(d);
+                type_checking_stack.push(c);
+
+                break;
+            }
             case OpType::DROP:
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `drop` operation. Expected 1 argument, but found 0");
                     exit(1);
                 }
 
@@ -1075,7 +1144,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.size() < 3)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 3 argument, but found " << type_checking_stack.size() << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `rot` operation. Expected 3 argument, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -1096,7 +1165,7 @@ void type_check_program(const vector<Operation>& program)
             {
                 if (type_checking_stack.empty())
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected 1 argument, but found 0" << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `syscall0` operation. Expected 1 argument, but found 0");
                     exit(1);
                 }
 
@@ -1110,7 +1179,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `syscall1` operation. Expected " + std::to_string((n + 1)) + " argument, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -1126,7 +1195,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `syscall2` operation. Expected " + std::to_string((n + 1)) + " argument, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -1142,7 +1211,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `syscall3` operation. Expected " + std::to_string((n + 1)) + " argument, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -1158,7 +1227,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `syscall4` operation. Expected " + std::to_string((n + 1)) + " argument, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -1174,7 +1243,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `syscall5` operation. Expected " + std::to_string((n + 1)) + " argument, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -1190,7 +1259,7 @@ void type_check_program(const vector<Operation>& program)
 
                 if (int(type_checking_stack.size()) < n + 1)
                 {
-                    cerr << op.Loc << ": ERROR: Not enough arguments for " << HumanizedOpTypes.at(op.Type) << " operation. Expected " << n + 1 << " argument, but found " << type_checking_stack.size() << endl;
+                    compilation_error(op.Loc, "Not enough arguments for `syscall6` operation. Expected " + std::to_string((n + 1)) + " argument, but found " + std::to_string(type_checking_stack.size()));
                     exit(1);
                 }
 
@@ -1208,21 +1277,29 @@ void type_check_program(const vector<Operation>& program)
     if (!type_checking_stack.empty())
     {
         Type top = type_checking_stack.top();
-        cerr << top.Loc << ": ERROR: Unhandled data in the stack" << endl;
+        cerr << top.Loc << ": ERROR: Unhandled data in the stack." << endl <<
+            "Stack size: " << type_checking_stack.size() << endl <<
+            "Stack values:" << endl;
+        while (!type_checking_stack.empty())
+        {
+            top = type_checking_stack.top();
+            type_checking_stack.pop();
+            cerr << "  " << top.Loc << ": " << HumanizedDataTypes.at(top.Code) << endl;
+        }
         exit(1);
     }
 }
 
-void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation> program)
+void generate_nasm_linux_x86_64(const string& output_file_path, std::vector<Operation> program)
 {
     std::ofstream out(output_file_path);
 
     if (!out.is_open()) {
-        cerr << "ERROR: Can't open file: " << output_file_path << endl;
+        compilation_error("Can't open file: " + output_file_path);
         exit(1);
     }
 
-    map<string, int> strings;
+    std::map<string, int> strings;
 
     string output_content;
     complete_string(output_content, "BITS 64");
@@ -1278,7 +1355,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     complete_string(output_content, "    global _start\n");
     complete_string(output_content, "_start:");
 
-    assert(static_cast<int>(OpType::COUNT) == 46, "Exhaustive operations handling");
+    assert(static_cast<int>(OpType::COUNT) == 49, "Exhaustive operations handling");
 
     for (size_t i = 0; i < program.size(); ++i) {
         Operation op = program[i];
@@ -1288,19 +1365,19 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             case OpType::PUSH_INT:
             {
                 complete_string(output_content, "    ; -- push int -- ");
-                complete_string(output_content, "    push    " + to_string(op.IntegerValue));
+                complete_string(output_content, "    push    " + std::to_string(op.IntegerValue));
                 break;
             }
             case OpType::PUSH_STRING:
             {
                 complete_string(output_content, "    ; -- push str --");
-                complete_string(output_content, "    push    " + to_string(op.StringValue.size()));
+                complete_string(output_content, "    push    " + std::to_string(op.StringValue.size()));
                 auto it = strings.find(op.StringValue);
                 if (it == strings.end())
                 {
                     strings[op.StringValue] = int(strings.size());
                 }
-                complete_string(output_content, "    push    str_" + to_string(strings.at(op.StringValue)));
+                complete_string(output_content, "    push    str_" + std::to_string(strings.at(op.StringValue)));
                 break;
             }
             case OpType::PLUS:
@@ -1493,14 +1570,14 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    mov     rbx, 0");
                 complete_string(output_content, "    cmp     rax, rbx");
-                complete_string(output_content, "    je      addr_" + to_string(op.JumpTo));
+                complete_string(output_content, "    je      addr_" + std::to_string(op.JumpTo));
                 break;
             }
             case OpType::ELSE:
             {
                 complete_string(output_content, "    ; -- else --");
-                complete_string(output_content, "    jmp     addr_" + to_string(op.JumpTo));
-                complete_string(output_content, "    addr_" + to_string(i+1) + ":");
+                complete_string(output_content, "    jmp     addr_" + std::to_string(op.JumpTo));
+                complete_string(output_content, "    addr_" + std::to_string(i+1) + ":");
                 break;
             }
             case OpType::END:
@@ -1508,9 +1585,9 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    ; -- end --");
                 if (program[op.JumpTo].Type == OpType::WHILE)
                 {
-                    complete_string(output_content, "    jmp    addr_" + to_string(op.JumpTo));
+                    complete_string(output_content, "    jmp    addr_" + std::to_string(op.JumpTo));
                 }
-                complete_string(output_content, "addr_" + to_string(i) + ":");
+                complete_string(output_content, "addr_" + std::to_string(i) + ":");
                 break;
             }
             case OpType::DO:
@@ -1519,13 +1596,13 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    mov     rbx, 0");
                 complete_string(output_content, "    cmp     rax, rbx");
-                complete_string(output_content, "    je      addr_" + to_string(op.JumpTo-1));
+                complete_string(output_content, "    je      addr_" + std::to_string(op.JumpTo-1));
                 break;
             }
             case OpType::WHILE:
             {
                 complete_string(output_content, "    ; -- while --");
-                complete_string(output_content, "    addr_" + to_string(i) + ":");
+                complete_string(output_content, "    addr_" + std::to_string(i) + ":");
                 break;
             }
             case OpType::BIND:
@@ -1538,21 +1615,38 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    push    mem");
                 break;
             }
-            case OpType::LOAD:
+            case OpType::LOAD8:
             {
-                complete_string(output_content, "    ; -- load32 --");
+                complete_string(output_content, "    ; -- load8 --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    xor     rbx, rbx");
-                complete_string(output_content, "    mov     ebx, [rax]");
+                complete_string(output_content, "    mov     bl, [rax]");
                 complete_string(output_content, "    push    rbx");
                 break;
             }
-            case OpType::STORE:
+            case OpType::STORE8:
             {
-                complete_string(output_content, "    ; -- store32 --");
+                complete_string(output_content, "    ; -- store8 --");
                 complete_string(output_content, "    pop     rbx");
                 complete_string(output_content, "    pop     rax");
-                complete_string(output_content, "    mov     [rax], ebx");
+                complete_string(output_content, "    mov     [rax], bl");
+                break;
+            }
+            case OpType::LOAD64:
+            {
+                complete_string(output_content, "    ; -- load64 --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    xor     rbx, rbx");
+                complete_string(output_content, "    mov     rbx, [rax]");
+                complete_string(output_content, "    push    rbx");
+                break;
+            }
+            case OpType::STORE64:
+            {
+                complete_string(output_content, "    ; -- store64 --");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    mov     [rax], rbx");
                 break;
             }
             case OpType::USE:
@@ -1580,12 +1674,12 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
             {
                 string value = op.Loc;
                 complete_string(output_content, "    ; -- here --");
-                complete_string(output_content, "    push    " + to_string(value.size()));
+                complete_string(output_content, "    push    " + std::to_string(value.size()));
 
                 auto it = strings.find(value);
                 if (it == strings.end()) strings[value] = int(strings.size());
 
-                complete_string(output_content, "    push    str_" + to_string(strings.at(value)));
+                complete_string(output_content, "    push    str_" + std::to_string(strings.at(value)));
                 break;
             }
             case OpType::COPY:
@@ -1615,6 +1709,19 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    push    rbx");
                 break;
             }
+            case OpType::SWAP2:
+            {
+                complete_string(output_content, "    ; -- 2swap --");
+                complete_string(output_content, "    pop     rax");
+                complete_string(output_content, "    pop     rbx");
+                complete_string(output_content, "    pop     rcx");
+                complete_string(output_content, "    pop     rdx");
+                complete_string(output_content, "    push    rbx");
+                complete_string(output_content, "    push    rax");
+                complete_string(output_content, "    push    rdx");
+                complete_string(output_content, "    push    rcx");
+                break;
+            }
             case OpType::DROP:
             {
                 complete_string(output_content, "    ; -- drop --");
@@ -1637,6 +1744,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    ; -- syscall0 --");
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL1:
@@ -1645,6 +1753,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rax");
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL2:
@@ -1654,6 +1763,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rdi");
                 complete_string(output_content, "    pop     rsi");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL3:
@@ -1664,6 +1774,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rsi");
                 complete_string(output_content, "    pop     rdx");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL4:
@@ -1675,6 +1786,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     rdx");
                 complete_string(output_content, "    pop     r10");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL5:
@@ -1687,6 +1799,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     r10");
                 complete_string(output_content, "    pop     r8");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             case OpType::SYSCALL6:
@@ -1700,6 +1813,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
                 complete_string(output_content, "    pop     r8");
                 complete_string(output_content, "    pop     r9");
                 complete_string(output_content, "    syscall");
+                complete_string(output_content, "    push    rax");
                 break;
             }
             default:
@@ -1721,7 +1835,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
 
         const string& s = pair.first;
         for (size_t i = 0; i < s.size(); ++i) {
-            out << "0x" << setw(2) << setfill('0') << hex << static_cast<int>(s[i]);
+            out << "0x" << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(s[i]);
 
             if (i < s.size() - 1) {
                 out << ",";
@@ -1735,16 +1849,16 @@ void generate_nasm_linux_x86_64(const string& output_file_path, vector<Operation
     out << "    mem resb 640000" << endl;
 }
 
-void compile(const string& compiler_path, const string& path, vector<Operation> program, bool run_after_compilation, bool silent_mode)
+void compile(const string& compiler_path, const string& path, std::vector<Operation> program, bool run_after_compilation, bool silent_mode)
 {
     string filename = trim_string(path, FILE_EXTENSION);
 
-    filesystem::path file_path(path);
+    std::filesystem::path file_path(path);
 
-    if (!filesystem::exists(file_path))
+    if (!std::filesystem::exists(file_path))
     {
         usage(compiler_path);
-        cerr << "ERROR: File '" << file_path.string() << "' doesn't exists" << endl;
+        compilation_error("File '" + file_path.string() + "' doesn't exists");
         exit(1);
     }
 
@@ -1764,7 +1878,7 @@ void compile(const string& compiler_path, const string& path, vector<Operation> 
     return;
 #endif
 
-    cerr << "ERROR: Your processor's architecture is not supported yet" << endl;
+    compilation_error("Your processor's architecture is not supported yet");
     exit(1);
 }
 
@@ -1774,10 +1888,10 @@ int main(int argc, char* argv[])
     assert(HumanizedDataTypes.size() == static_cast<int>(DataType::COUNT), "Exhaustive checking of humanized data types definition");
     assert(BuiltInOps.size() == static_cast<int>(OpType::COUNT) - 2, "Exhaustive checking of built in operations definition");
 
-    vector<string> args(argv, argv + argc);
+    std::vector<string> args(argv, argv + argc);
 
     string compiler_path = shift_vector(args);
-    vector<string> include_paths = {"./std/"};
+    std::vector<string> include_paths = {"./std/"};
     string path;
     bool run_after_compilation;
     bool silent_mode;
@@ -1785,7 +1899,7 @@ int main(int argc, char* argv[])
     if (args.empty())
     {
         usage(compiler_path);
-        cerr << "ERROR: No subcommand provided" << endl;
+        compilation_error("No subcommand provided");
         exit(1);
     }
 
@@ -1799,7 +1913,7 @@ int main(int argc, char* argv[])
         {
             if (args.empty())
             {
-                cerr << "ERROR: No use path provided after `-I` flag" << endl;
+                compilation_error("No path provided after `-I` flag");
                 exit(1);
             }
 
@@ -1808,18 +1922,18 @@ int main(int argc, char* argv[])
         else path = arg;
     }
 
-    filesystem::path file_path(path);
+    std::filesystem::path file_path(path);
 
-    if (!filesystem::exists(file_path))
+    if (!std::filesystem::exists(file_path))
     {
         usage(compiler_path);
-        cerr << "ERROR: File '" << file_path.string() << "' doesn't exists" << endl;
+        compilation_error("File '" + file_path.string() + "' doesn't exists");
         exit(1);
     }
 
-    vector<Token> tokens = lex_file(file_path.string());
+    std::vector<Token> tokens = lex_file(file_path.string());
 
-    vector<Operation> program = parse_tokens_as_operations(tokens, include_paths);
+    std::vector<Operation> program = parse_tokens_as_operations(tokens, include_paths);
 
     crossreference_blocks(program);
 
