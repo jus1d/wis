@@ -83,6 +83,14 @@ Rotate top 3 values on the stack to right direction
 
 **Stack:** `1 2 3` => `3 1 2`
 
+---
+
+`2swap`
+
+Swaps 2 pairs of arguments on top of the stack
+
+**Stack:** `1 2 3 4` => `3 4 1 2`
+
 ### Memory manipulation
 
 - `mem` operation pushes to the stack a pointer to memory buffer, where you can read and write some data
@@ -131,3 +139,26 @@ Actually, that program after compilation will turn to that view:
 That simple program will print "Some data" to `stdout` and exit with 69 exit code
 
 For now, I have no idea how to create proper type checking for syscalls' arguments, so now we are just checking their amount only
+
+### Standard library
+
+#### Constants
+
+- `stdin`, `sydout` and `stderr` are constants for default streams
+
+#### Wrappers
+
+- `write`, `read`, `open` and `exit` are wrappers for common and used syscalls
+- `puts` wrapper for printing strings to `stdout`
+- `eputs` wrapper for printing strings to `stderr`
+- `putd` is a binding for printing signed integers
+
+#### Stack operations
+
+- `2copy`: Stack: `1 2` => `1 2 1 2`
+- `2drop`: Stack: `1 2 3` => `1`
+
+#### String bindgings
+
+- `strlen` - binding for calculate string's length
+- `endl` just shortcut for "\n" symbol
