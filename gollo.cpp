@@ -248,6 +248,12 @@ void usage(string const& compiler_path)
     cerr << "    -I <path>     Add directory to include paths list" << endl;
 }
 
+string get_file_extension(const string &filename) {
+    size_t pos = filename.find_last_of('.');
+    if (pos != string::npos) return filename.substr(pos + 1);
+    return "";
+}
+
 void compilation_error(const string& message)
 {
     cerr << "ERROR: " << message << endl;
@@ -1944,6 +1950,13 @@ int main(int argc, char* argv[])
     }
 
     std::filesystem::path file_path(path);
+
+    if (get_file_extension(file_path.string()) != FILE_EXTENSION)
+    {
+        usage(compiler_path);
+        compilation_error("Compiler only supports files with .glo extension");
+        exit(1);
+    }
 
     if (!std::filesystem::exists(file_path))
     {

@@ -10,7 +10,7 @@ Running mode is deprecated now. So only compilation mode is currently available.
 
 ```console
 $ cat ./goo.glo
-use "std.glo
+use "std.glo"
 "Hello, world!\n" puts
 
 $ ./gollo -quiet -r ./goo.glo
