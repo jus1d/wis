@@ -13,7 +13,7 @@
 
 using std::string, std::cout, std::cerr, std::endl;
 
-const string FILE_EXTENSION = ".glo";
+const string FILE_EXTENSION = "glo";
 
 enum class OpType : int {
     PUSH_INT,
@@ -1951,7 +1951,7 @@ int main(int argc, char* argv[])
 
     std::filesystem::path file_path(path);
 
-    if (get_file_extension(file_path.string()) != FILE_EXTENSION)
+    if (get_file_extension(path) != FILE_EXTENSION)
     {
         usage(compiler_path);
         compilation_error("Compiler only supports files with .glo extension");

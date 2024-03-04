@@ -43,3 +43,6 @@ bind strlen
     1 + swap 1 + swap
   end drop
 end
+
+// Sizes of data types
+bind sizeof(int64) 8 end
