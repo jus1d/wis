@@ -1864,7 +1864,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, std::vector<Oper
 
 void compile(const string& compiler_path, const string& path, std::vector<Operation> program, bool run_after_compilation, bool silent_mode)
 {
-    string filename = trim_string(path, FILE_EXTENSION);
+    string filename = trim_string(path, "." + FILE_EXTENSION);
 
     std::filesystem::path file_path(path);
 
@@ -1951,7 +1951,7 @@ int main(int argc, char* argv[])
 
     std::filesystem::path file_path(path);
 
-    if (get_file_extension(path) != FILE_EXTENSION)
+    if (get_file_extension(file_path.string()) != FILE_EXTENSION)
     {
         usage(compiler_path);
         compilation_error("Compiler only supports files with .glo extension");
