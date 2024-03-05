@@ -6,7 +6,7 @@ build: ./wis.cpp ./test.cpp
 	$(CXX) $(CXXFLAGS) -o ./test ./test.cpp
 
 test: build
-	./test run -f ./examples/ -f ./euler/
+	./test run -f ./examples/
 	
 
 clean:
