@@ -1,0 +1,25 @@
+{
+  "name": "wis",
+  "displayName": "WIS",
+  "description": "WIS Programming Language",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.86.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "wis",
+      "aliases": ["WIS", "wis"],
+      "extensions": [".wis"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "wis",
+      "scopeName": "source.wis",
+      "path": "./syntaxes/wis.tmLanguage.json"
+    }]
+  }
+}

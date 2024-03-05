@@ -1,6 +1,6 @@
-# glo README
+# wis README
 
-This is the README for your extension "glo". After writing up a brief description, we recommend including the following sections.
+This is the README for your extension "wis". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 

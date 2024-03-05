@@ -7,9 +7,9 @@ cmake-build-debug/
 # Ignore output files
 *.o
 *.exe
-gollo*
+wis.cpp
 test*
-main*
+wis*
 
 # Ignore ssembly files
 *.asm

@@ -13,7 +13,7 @@
 
 using std::string, std::cout, std::cerr, std::endl;
 
-const string FILE_EXTENSION = ".glo";
+const string FILE_EXTENSION = "wis";
 
 enum class OpType : int {
     PUSH_INT,
@@ -246,6 +246,12 @@ void usage(string const& compiler_path)
     cerr << "    -r            Run compiled program after compilation" << endl;
     cerr << "    -quiet        Disable any compiler's logs" << endl;
     cerr << "    -I <path>     Add directory to include paths list" << endl;
+}
+
+string get_file_extension(const string &filename) {
+    size_t pos = filename.find_last_of('.');
+    if (pos != string::npos) return filename.substr(pos + 1);
+    return "";
 }
 
 void compilation_error(const string& message)
@@ -1858,7 +1864,7 @@ void generate_nasm_linux_x86_64(const string& output_file_path, std::vector<Oper
 
 void compile(const string& compiler_path, const string& path, std::vector<Operation> program, bool run_after_compilation, bool silent_mode)
 {
-    string filename = trim_string(path, FILE_EXTENSION);
+    string filename = trim_string(path, "." + FILE_EXTENSION);
 
     std::filesystem::path file_path(path);
 
@@ -1944,6 +1950,13 @@ int main(int argc, char* argv[])
     }
 
     std::filesystem::path file_path(path);
+
+    if (get_file_extension(file_path.string()) != FILE_EXTENSION)
+    {
+        usage(compiler_path);
+        compilation_error("Compiler only supports files with `.wis` extension");
+        exit(1);
+    }
 
     if (!std::filesystem::exists(file_path))
     {

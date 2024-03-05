@@ -1,221 +1,218 @@
-# Gollo
+# WIS
 
-**Gollo** - is a  concatenative, stack-oriented programming language inspired by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)). I never wrote anything in Forth, though. So **gollo** is just a concatenative, stack-based programming language.
-
-## Features
-- [x] Stack-based
-- [x] Compile for `x86_64` architecture
-- [ ] ~~Compile for `arm64` architecture~~ (maybe in the future, but now i dont wanna fuck with `arm64` assembly)
-- [ ] Turing-complete
+**WIS** is a concatenative, stack-based programming language inspired by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)).
 
 ## Quick Start
 
-### Run
+Running mode is deprecated now. So only compilation mode is currently available.
 
-Run just interprets the program.
-
-```console
-$ cat ./examples/goo.glo
-34 35 + 69 == put
-
-$ ./gollo run ./examples/goo.glo
-1
-```
-
----
-
-### Compile
-
-Compile mode compiles `.glo` into an assembly code for your architecture. Be sure that you have `nasm` if you're on x86_64, or `as` if you're on arm64 architecture.
+### Compilation
 
 ```console
-$ cat ./examples/goo.glo
-34 35 + 69 == put
+$ cat ./goo.wis
+use "std.wis"
+"Hello, world!\n" puts
 
-$ ./gollo compile ./examples/goo.glo
-$ ./examples/goo
-1
+$ ./wis -quiet -r ./goo.wis
+Hello, world!
 ```
 
-## Language Describe
+## Language
 
-### Control Flows
+### Basic operations
+
+`<int>`
+
+Pushes an integer number to the stack
 
 ---
 
-#### `if-else` - default condition workflow
+`<string>`
 
-`if` pops the value on top of the stack. If popped value is zero, program jumps to `else` or `end` of current block. Otherwise, program will go into the `if` branch
-
-**Usage:**
-
-```
-34 35 + 69 == if
-  69 put
-else
-  420 put
-end
-```
-
-**Output:** `69`
+Pushes size of string represented as `int` value, and `ptr` where string starts at
 
 ---
 
-#### `while` - loops with condition
+`put`
 
-`do` pops the value from top of the stack. If popped value is zero, program jumps to `end` of current block. Otherwise, program jump into the `while` block
-
-**Usage:**
-
-```
-1
-while copy 10 <= do
-  copy put
-end
-```
-
-**Output:** `1 2 3 4 5 6 7 8 9 10`
-
-### Bindings
+Removes and prints unsigned integer from top of the stack
 
 ---
 
-**Usage:**
+`fputs`
 
-```
-bind exit sys_exit syscall1 end
-
-69 exit
-```
-
-That program will exit with `69` exit code.
-
-### Usings
-
---- 
-
-Only needed bindings will expand to operation at the compilation step
-
-```
-here eputs ": ERROR: some error message" eputs
-69 exit
-```
-
-### Memory
-
-- `mem` keyword pushes a pointer to buffer, where you can write and read
-- `,` and `store64` operations puts a byte or 64-bit values to memory buffer
-
-```
-mem 69 store64
-```
-Puts a `69` to program's memory
-
-- `.` and `load64` operations loads a byte or 64-bit value from the memory buffer to the stack
-
-```
-mem load64 put
-```
-
-Loads a value from memory to the stack
-
-`,` and `.` operations has similar behaivor as in the [Brainfuck](https://en.wikipedia.org/wiki/Brainfuck).
-
-### Operations
+Built-in shortcut for sequence of operations: `sys_write syscall3 drop`. The o reason why it is a built-in operation and not a standard binding, to save type checking for this puts operations. Because we can't correctly check types of syscalls' arguments
 
 ---
 
-#### `<int>`
+### Basic stack manipulations
 
-Pushes integer number on top of the stack
+`copy`
 
-**Stack:** `1` => `1 2`
-
----
-
-#### `<string>`
-
-Pushes integer number that represents string's length, and pointer where string is started
-
-**Stack:** `1` => `1 size ptr`
-
----
-
-#### `put`
-
-Removes and prints number from top of the stack
-
-**Stack:** `1 2` => `1`
-
-**Output:** `2`
-
----
-
-#### `fputs`
-
-`fputs` (put string) is a built-in shortcut for: `sys_write syscall3 drop`
-
-`fputs` call `write` syscall and drop it's return value
-
-**Example:**
-
-```
-"Hello, world!"             stdout fputs
-"ERROR: some error message" stderr fputs
-```
-
----
-
-#### `copy`
-
-Copies integer on top of the stack
+Duplicates a value on top of the stack
 
 **Stack:** `1 2` => `1 2 2`
 
 ---
 
-#### `over`
+`over`
 
-Copies previous integer from stack to top
+Duplicates previous value from stack to top
 
 **Stack:** `1 2` => `1 2 1`
 
 ---
 
-#### `swap`
+`swap`
 
-Swaps two integers on top of the stack
+Swaps around 2 top values in the stack
 
 **Stack:** `1 2` => `2 1`
 
 ---
 
-#### `drop`
+`drop`
 
-Drops integer from top of the stack
+Removes top value from the stack
 
-**Stack:** `1 2 3` => `1 2`
+**Stack:** `1 2` => `1`
 
 ---
 
-#### `rot`
+`rot`
 
-Rotates 3 values on top of the stack
+Rotate top 3 values on the stack to right direction
 
 **Stack:** `1 2 3` => `3 1 2`
 
 ---
 
-### System calls
+`2swap`
 
-You can use `syscall<n>`, where `n` is a number between 1 and 6
+Swaps 2 pairs of arguments on top of the stack
+
+**Stack:** `1 2 3 4` => `3 4 1 2`
+
+---
+
+### Memory manipulation
+
+- `mem` operation pushes to the stack a pointer to memory buffer, where you can read and write some data
+- `.` and `load64` operations loads a byte or 64-bit value from provided pointer and pushes this value to the stack
+- `,` and `store64` opereations puts a byte ot 64-bit value to the memory buffer
+
+See examples [here](./tests/09-memory.wis) and [here](./tests/10-64bit-memory.wis)
+
+---
+
+### Bindings
+
+`bind` keyword provide an ability to create some sort of inline procedures (VERY WEIRD, OFC), but al least that is something.
+
+At the compilation step, name of binding will expand to operations, bind to that name
 
 **Example:**
 
-Call exit syscall with non-zero exit code
+```
+bind print-sum + put end
+
+34 35 print-sum
+```
+
+Actually, that program after compilation will turn to that view:
 
 ```
-69 sys_exit syscall1
+34 35 + put
 ```
 
-This program will exit with `69` exit code
+---
+
+### Control flows
+
+`if` statement
+
+**Usage:**
+
+```
+34 35 + 69 == if
+  1 put
+else
+  0 put
+end
+```
+
+`if` statement currently have no `elif`, but uou can combine block like below:
+
+```
+false if
+  1 put
+else true if 
+  2 put
+else
+  3 put
+end end
+```
+
+But it always will end with this ugly `end`-trail
+
+---
+
+`while` loop
+
+**Usage:**
+
+```
+1 while copy 10 <= do
+  copy put
+end drop
+```
+
+This program will print numbers from 0 to 10
+
+---
+
+### Other
+
+`use` keyword provide an ability to include outer file to current. If you have ANY operations outside the bindings in the including file, they will NOT ingore by the compiler.
+
+---
+
+`syscal<n>` allows you to manipulate directly with linux kernel. 
+
+**Example:**
+
+`syscall3` accepts 3 arguments and 1 additional argument for syscall number
+
+```
+"Some data\n" 1 1 syscall3
+69 60 syscall1
+```
+
+That simple program will print "Some data" to `stdout` and exit with 69 exit code
+
+For now, I have no idea how to create proper type checking for syscalls' arguments, so now we are just checking their amount only
+
+---
+
+### Standard library
+
+#### Constants
+
+- `stdin`, `sydout` and `stderr` are constants for default streams
+
+#### Wrappers
+
+- `write`, `read`, `open` and `exit` are wrappers for common and used syscalls
+- `puts` wrapper for printing strings to `stdout`
+- `eputs` wrapper for printing strings to `stderr`
+- `putd` is a binding for printing signed integers
+
+#### Stack operations
+
+- `2copy`: Stack: `1 2` => `1 2 1 2`
+- `2drop`: Stack: `1 2 3` => `1`
+
+#### String bindgings
+
+- `strlen` - binding for calculate string's length
+- `endl` just shortcut for "\n" symbol

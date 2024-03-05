@@ -1,4 +1,4 @@
-use "std.glo"
+use "std.wis"
 
 "Hello world\n" puts
 "Other staff\n" puts

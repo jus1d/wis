@@ -9,7 +9,7 @@
 
 using std::string, std::cout, std::cerr, std::endl;
 
-const string FILE_EXTENSION = ".glo";
+const string FILE_EXTENSION = ".wis";
 
 inline bool is_file_exists(const std::string &name) {
     std::ifstream f(name.c_str());
@@ -52,7 +52,7 @@ int test_file(const string &file_path) {
         return 1;
     }
 
-    string command = "./gollo -quiet " + file_path + " && ./" + file_name;
+    string command = "./wis -quiet " + file_path + " && ./" + file_name;
 
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) {
@@ -130,7 +130,7 @@ void record_test_output(string const &file_path)
 {
     string file_name = file_path.substr(0, file_path.length() - FILE_EXTENSION.length());
 
-    execute_command(false, "./gollo " + file_path);
+    execute_command(false, "./wis " + file_path);
 
     execute_command(false, "./" + file_name + " > " + file_name + ".output");
 }

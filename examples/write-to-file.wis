@@ -1,4 +1,4 @@
-use "std.glo"
+use "std.wis"
 
 bind filename "output.txt" swap drop end
 bind flags    0666 end
