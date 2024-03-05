@@ -1,4 +1,4 @@
-use "sys.glo"
+use "sys.wis"
 
 // Default streams
 bind stdin      0 end

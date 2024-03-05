@@ -1,4 +1,4 @@
-use "./std/std.glo"
+use "std.wis"
 
 // Test push to stack & put operations
 1 2 3 put put put

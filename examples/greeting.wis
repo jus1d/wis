@@ -1,4 +1,4 @@
-use "std.glo"
+use "std.wis"
 
 bind NAME_CAP 20 end
 bind name     mem end

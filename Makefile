@@ -1,8 +1,8 @@
 CXX ?= g++
 CXXFLAGS ?= -std=c++23# -Wall -Wextra
 
-build: ./gollo.cpp ./test.cpp
-	$(CXX) $(CXXFLAGS) -o ./gollo ./gollo.cpp
+build: ./wis.cpp ./test.cpp
+	$(CXX) $(CXXFLAGS) -o ./wis ./wis.cpp
 	$(CXX) $(CXXFLAGS) -o ./test ./test.cpp
 
 test: build
@@ -10,4 +10,4 @@ test: build
 	
 
 clean:
-	rm -f ./test ./gollo
+	rm -f ./test ./wis

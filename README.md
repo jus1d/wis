@@ -1,6 +1,6 @@
-# Gollo
+# WIS
 
-**Gollo** is a concatenative, stack-based programming language inspired by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)).
+**WIS** is a concatenative, stack-based programming language inspired by [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)).
 
 ## Quick Start
 
@@ -9,11 +9,11 @@ Running mode is deprecated now. So only compilation mode is currently available.
 ### Compilation
 
 ```console
-$ cat ./goo.glo
-use "std.glo"
+$ cat ./goo.wis
+use "std.wis"
 "Hello, world!\n" puts
 
-$ ./gollo -quiet -r ./goo.glo
+$ ./gollo -quiet -r ./goo.wis
 Hello, world!
 ```
 
@@ -101,7 +101,7 @@ Swaps 2 pairs of arguments on top of the stack
 - `.` and `load64` operations loads a byte or 64-bit value from provided pointer and pushes this value to the stack
 - `,` and `store64` opereations puts a byte ot 64-bit value to the memory buffer
 
-See examples [here](./tests/09-memory.glo) and [here](./tests/10-64bit-memory.glo)
+See examples [here](./tests/09-memory.wis) and [here](./tests/10-64bit-memory.wis)
 
 ---
 
