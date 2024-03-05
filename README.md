@@ -153,7 +153,7 @@ else
 end end
 ```
 
-But it always will end with this ugly `end`-trail
+But it always will end with this weird `end`-trail
 
 ---
 
