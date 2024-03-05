@@ -13,7 +13,7 @@ $ cat ./goo.wis
 use "std.wis"
 "Hello, world!\n" puts
 
-$ ./gollo -quiet -r ./goo.wis
+$ ./wis -quiet -r ./goo.wis
 Hello, world!
 ```
 

@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-	"name": "Gollo",
+	"name": "WIS",
 	"patterns": [
 		{
 			"include": "#keywords"
@@ -24,47 +24,47 @@
 	"repository": {
 		"keywords": {
 			"patterns": [{
-				"name": "keyword.control.glo",
+				"name": "keyword.control.wis",
 				"match": "\\b(if|else|end|while|do|bind|use)\\b"
 			}]
 		},
 		"builtin": {
 			"patterns": [{
-				"name": "keyword.other.builtin.glo",
+				"name": "keyword.other.builtin.wis",
 				"match": "\\b(mem|load64|store64|put|fputs|here|copy|over|swap|2swap|drop|rot|syscall0|syscall1|syscall2|syscall3|syscall4|syscall5|syscall6)\\b"
 			}]
 		},
 		"standard": {
 			"patterns": [{
-				"name": "keyword.other.standard.glo",
+				"name": "keyword.other.standard.wis",
 				"match": "\\b(stdin|stdout|stderr|write|read|open|exit|puts|eputs|putd|assert|2copy|2drop|endl|strlen)\\b"
 			}]
 		},
 		"strings": {
-			"name": "string.quoted.double.glo",
+			"name": "string.quoted.double.wis",
 			"begin": "\"",
 			"end": "\"",
 			"patterns": [
 				{
-					"name": "constant.character.escape.glo",
+					"name": "constant.character.escape.wis",
 					"match": "\\\\."
 				}
 			]
 		},
 		"numbers": {
 			"patterns": [{
-				"name": "keyword.other.unit.integer.glo",
+				"name": "keyword.other.unit.integer.wis",
 				"match": "\\b(-?[0-9]+\\.?[0-9]*)\\b"
 			}]
 		},
 		"comments": {
 			"patterns": [
 				{
-					"name": "comment.line.glo",
+					"name": "comment.line.wis",
 					"match": "//.*?$"
 				}
 			]
 		}
 	},
-	"scopeName": "source.glo"
+	"scopeName": "source.wis"
 }
