@@ -1,10 +1,10 @@
-mem 69 ,
-mem . put
+mem 69 !8
+mem @8 put
 
-mem 1 + 122 ,
-mem 1 + . put
+mem 1 + 122 !8
+mem 1 + @8 put
 
-mem 2 + 254 ,
-mem 2 + . put
+mem 2 + 254 !8
+mem 2 + @8 put
 
-mem . put
+mem @8 put

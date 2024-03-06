@@ -39,7 +39,7 @@ bind endl       "\n" end
 
 bind strlen
   0 swap
-  while copy . 0 != do
+  while copy @8 0 != do
     1 + swap 1 + swap
   end drop
 end

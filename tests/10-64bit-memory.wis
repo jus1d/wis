@@ -1,10 +1,10 @@
-mem 69 store64
-mem load64 put
+mem 69 !64
+mem @64 put
 
-mem 8  +  1992 store64
-mem 8  + load64 put
+mem 8  + 1992 !64
+mem 8  + @64 put
 
-mem 16 +  69420 store64
-mem 16 + load64 put
+mem 16 +  69420 !64
+mem 16 + @64 put
 
-mem load64 put
+mem @64 put
