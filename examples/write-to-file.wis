@@ -1,7 +1,7 @@
 use "std.wis"
 
 bind filename "output.txt" swap drop end
-bind flags    0666 end
+bind flags    666 end
 bind mode     0 end
 
 "This text be in `output.txt` file!\n"
